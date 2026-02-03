@@ -2,7 +2,9 @@ export type TweakScope = 'UnitDefsLoop' | 'UnitDef_Post';
 
 export type TweakCondition =
   | { type: 'nameMatch'; regex: string }
+  | { type: 'nameNotMatch'; regex: string }
   | { type: 'nameStartsWith'; prefix: string }
+  | { type: 'nameEndsWith'; suffix: string }
   | { type: 'customParam'; key: string; value: string | number | boolean }
   | { type: 'category'; value: string };
 

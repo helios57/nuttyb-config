@@ -1,9 +1,9 @@
-import { generateLuaTweak } from './utils';
 import { MAX_SECTION_LENGTH } from './constants';
 import { GameConfigs, FormOptionsConfig, CustomTweak, GeneratedCommands } from './types';
 import { compileTweak } from './lua-compiler';
 import { validateLua } from './lua-validator';
 import { TweakDefinition } from './tweak-dsl';
+import { getQhpTweak, getHpTweak, getBossHpTweak, getScavHpTweak } from './tweak-definitions';
 
 export interface CommandGeneratorInput {
     gameConfigs: GameConfigs;
@@ -29,7 +29,7 @@ export interface CommandGeneratorInput {
         id: string;
         dataset: any;
         commandBlocks?: string[];
-        tweakDefinition?: TweakDefinition; // Added for DSL support
+        tweakDefinition?: TweakDefinition;
     }[];
     raptorOptions: {
         value: string;
@@ -66,57 +66,46 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     const standardCommands: string[] = [];
     const customTweaksToProcess: CustomTweak[] = [];
     
+    // Process Form Elements
     formElements.forEach(el => {
         if (el.isCustom) {
             if (el.checked && el.customData) customTweaksToProcess.push(el.customData);
         } 
         else if (el.tweakDefinition && el.checked) {
-            // DSL Tweak Processing
-            const luaCode = compileTweak(el.tweakDefinition);
-            const validation = validateLua(luaCode);
-            
-            if (validation.valid) {
-                // Encode to Base64 (assuming generateLuaTweak handles raw Lua string wrapping if needed, 
-                // or we manually wrap it. generateLuaTweak seems to take type and multiplier.
-                // We likely need a way to just base64 encode the raw Lua code for !bset.
-                // Assuming we can use a utility or just btoa if in browser env, but here we are in TS.
-                // Let's assume we treat it as a custom tweak for now or use a helper.
-                // Since generateLuaTweak is specific to HP, we might need a new helper or adapt.
-                // For now, let's assume we construct a CustomTweak object dynamically.
-                
-                // We need to base64 encode the luaCode.
-                // In a browser environment: btoa(luaCode). In Node: Buffer.from(luaCode).toString('base64').
-                // Since this is likely a web app (index.html), btoa is safe.
-                // However, to be safe with the "expert developer" persona, I'll check if we have a helper.
-                // I'll assume btoa is available or I should use a helper if one exists.
-                // Looking at utils.ts might be good, but I'll use btoa for now as it's standard in JS/TS for web.
-                
-                const base64Code = btoa(luaCode);
-                
-                // Determine slot type based on scope? 
-                // UnitDefsLoop -> tweakdefs (usually)
-                // UnitDef_Post -> tweakunits (usually, or tweakdefs depending on engine)
-                // Let's default to tweakdefs for UnitDefsLoop and tweakunits for PostHook if not specified.
-                const type = el.tweakDefinition.scope === 'UnitDefsLoop' ? 'tweakdefs' : 'tweakunits';
-                
-                customTweaksToProcess.push({
-                    type: type,
-                    tweak: base64Code
-                });
-            } else {
-                console.error(`Lua validation failed for tweak ${el.tweakDefinition.name}: ${validation.error} at line ${validation.line}`);
-            }
+            processTweakDefinition(el.tweakDefinition, customTweaksToProcess);
         }
         else if (el.isHpGenerator || el.isScavHpGenerator) {
-            const multiplier = el.value;
-            if (multiplier) {
+            const multiplier = parseFloat(el.value || "0");
+            if (multiplier > 0) {
                 const type = el.hpType!;
-                const slot = el.slot!;
-                const slotType = el.slotType!;
-                const commandSlot = `${slotType}${slot}`;
-                const base64string = generateLuaTweak(type, multiplier);
-                if (!base64string.startsWith("Error")) {
-                    standardCommands.push(`!bset ${commandSlot} ${base64string}`);
+                if (type === 'qhp') {
+                    const tweak = getQhpTweak(multiplier, el.value!);
+                    processTweakDefinition(tweak, customTweaksToProcess);
+                } else if (type === 'hp') {
+                    let metalCostFactor = 1;
+                    let workerTimeMultiplier = 0.5;
+
+                    switch (multiplier) {
+                        case 1.3: metalCostFactor = 0.576923077; workerTimeMultiplier = 0.5; break;
+                        case 1.5: metalCostFactor = 0.466666667; workerTimeMultiplier = 0.5; break;
+                        case 1.7: metalCostFactor = 0.411764706; workerTimeMultiplier = 0.5; break;
+                        case 2:   metalCostFactor = 0.35;        workerTimeMultiplier = 0.5; break;
+                        case 2.5: metalCostFactor = 0.3;         workerTimeMultiplier = 0.6; break;
+                        case 3:   metalCostFactor = 0.25;        workerTimeMultiplier = 0.55; break;
+                        case 4:   metalCostFactor = 0.1875;      workerTimeMultiplier = 0.45; break;
+                        case 5:   metalCostFactor = 0.15;        workerTimeMultiplier = 0.25; break;
+                        default:  metalCostFactor = 1;           workerTimeMultiplier = 0.5; break; 
+                    }
+                    
+                    const tweaks = getHpTweak(multiplier, workerTimeMultiplier, metalCostFactor, el.value!);
+                    tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
+                    
+                } else if (type === 'bosshp') {
+                    const tweak = getBossHpTweak(multiplier, el.value!);
+                    processTweakDefinition(tweak, customTweaksToProcess);
+                } else if (type === 'scavhp') {
+                    const tweaks = getScavHpTweak(multiplier, el.value!);
+                    tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
                 }
             }
         }
@@ -258,4 +247,34 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     const finalSections = sectionsData.map(section => section.commands.join('\n'));
     
     return { lobbyName: (anyOptionSelected ? renameCommand : 'No Options Selected'), sections: finalSections };
+}
+
+function processTweakDefinition(tweak: TweakDefinition, customTweaksToProcess: CustomTweak[]) {
+    const luaCode = compileTweak(tweak);
+    const validation = validateLua(luaCode);
+    
+    if (validation.valid) {
+        // Minify logic could be added here if needed, but for now we just base64 encode.
+        // The original code used luamin.minify. If we want to keep that, we need to import luamin.
+        // However, the generated code is already quite clean.
+        // If size is a concern, we can add minification later.
+        // For now, we just base64 encode.
+        
+        // Note: The original code did:
+        // const utf8SafeString = unescape(encodeURIComponent(finalCodeToEncode));
+        // const base64String = btoa(utf8SafeString);
+        // We should replicate this UTF-8 safe encoding.
+        
+        const utf8SafeString = unescape(encodeURIComponent(luaCode));
+        const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        
+        const type = tweak.scope === 'UnitDefsLoop' ? 'tweakdefs' : 'tweakunits';
+        
+        customTweaksToProcess.push({
+            type: type,
+            tweak: base64Code
+        });
+    } else {
+        console.error(`Lua validation failed for tweak ${tweak.name}: ${validation.error} at line ${validation.line}`);
+    }
 }

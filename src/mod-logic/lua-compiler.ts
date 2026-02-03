@@ -54,12 +54,12 @@ export class LuaBlockBuilder {
 export function compileTweak(tweak: TweakDefinition): string {
     const builder = new LuaBlockBuilder();
 
-    // Header Optimization
+    // 1. Global Optimization: Localize standard library functions
     const usedGlobals = new Set<string>();
     
     for (const cond of tweak.conditions) {
-        if (cond.type === 'nameMatch') usedGlobals.add('string.match');
-        if (cond.type === 'nameStartsWith') usedGlobals.add('string.sub');
+        if (cond.type === 'nameMatch' || cond.type === 'nameNotMatch') usedGlobals.add('string.match');
+        if (cond.type === 'nameStartsWith' || cond.type === 'nameEndsWith') usedGlobals.add('string.sub');
     }
     
     for (const mut of tweak.mutations) {
@@ -72,19 +72,34 @@ export function compileTweak(tweak: TweakDefinition): string {
     
     if (usedGlobals.size > 0) builder.addStatement('');
 
-    // Helper to generate body
+    // 2. Logic Generator
     const generateBody = (unitNameVar: string, defVar: string) => {
         const conditionsLua: string[] = [];
+        
         for (const cond of tweak.conditions) {
-            if (cond.type === 'nameMatch') {
-                conditionsLua.push(`string_match(${unitNameVar}, "${cond.regex}")`);
-            } else if (cond.type === 'nameStartsWith') {
-                conditionsLua.push(`string_sub(${unitNameVar}, 1, ${cond.prefix.length}) == "${cond.prefix}"`);
-            } else if (cond.type === 'customParam') {
-                 const val = typeof cond.value === 'string' ? `"${cond.value}"` : cond.value;
-                 conditionsLua.push(`(${defVar}.customParams and ${defVar}.customParams["${cond.key}"] == ${val})`);
-            } else if (cond.type === 'category') {
-                 conditionsLua.push(`${defVar}.category == "${cond.value}"`);
+            switch (cond.type) {
+                case 'nameMatch':
+                    conditionsLua.push(`string_match(${unitNameVar}, "${cond.regex}")`);
+                    break;
+                case 'nameNotMatch':
+                    conditionsLua.push(`not string_match(${unitNameVar}, "${cond.regex}")`);
+                    break;
+                case 'nameStartsWith':
+                    // string.sub(name, 1, len) == "prefix"
+                    conditionsLua.push(`string_sub(${unitNameVar}, 1, ${cond.prefix.length}) == "${cond.prefix}"`);
+                    break;
+                case 'nameEndsWith':
+                    // string.sub(name, -len) == "suffix"
+                    conditionsLua.push(`string_sub(${unitNameVar}, -${cond.suffix.length}) == "${cond.suffix}"`);
+                    break;
+                case 'customParam':
+                    const val = typeof cond.value === 'string' ? `"${cond.value}"` : cond.value;
+                    // Robust check: BAR uses customParams (CamelCase) in UnitDefs, but sometimes customparams (lower) in Post
+                    conditionsLua.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] == ${val}) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] == ${val}))`);
+                    break;
+                case 'category':
+                    conditionsLua.push(`${defVar}.category == "${cond.value}"`);
+                    break;
             }
         }
 
@@ -93,6 +108,9 @@ export function compileTweak(tweak: TweakDefinition): string {
         }
 
         for (const mut of tweak.mutations) {
+            // Helper to get safe field access or defaults if needed
+            const field = mut.field || (mut as any)['target']; // handle both types
+            
             if (mut.op === 'multiply') {
                 builder.startIf(`${defVar}.${mut.field}`);
                 builder.addStatement(`${defVar}.${mut.field} = ${defVar}.${mut.field} * ${mut.factor}`);
@@ -115,11 +133,15 @@ export function compileTweak(tweak: TweakDefinition): string {
     };
 
     if (tweak.scope === 'UnitDefsLoop') {
+        // TweakDefs context: Iterating the final engine table
         builder.startLoop('for name, def in pairs(UnitDefs)');
         generateBody('name', 'def');
         builder.endBlock();
     } else if (tweak.scope === 'UnitDef_Post') {
+        // Post context: Hooking into unit loading
+        // Sanitized function name to prevent collisions
         const funcName = `ApplyTweak_${tweak.name.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+
         builder.startBlock(`local function ${funcName}(name, def)`);
         generateBody('name', 'def');
         builder.endBlock();
