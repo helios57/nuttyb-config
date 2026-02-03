@@ -374,9 +374,19 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     };
 
     // 2. Logic Generator
-    const loopTweaks = tweaks.filter(t => t.scope === 'UnitDefsLoop');
-    const postTweaks = tweaks.filter(t => t.scope === 'UnitDef_Post');
-    const globalTweaks = tweaks.filter(t => t.scope === 'Global');
+    const loopTweaks: TweakDefinition[] = [];
+    const postTweaks: TweakDefinition[] = [];
+    const globalTweaks: TweakDefinition[] = [];
+
+    for (const tweak of tweaks) {
+        if (tweak.scope === 'UnitDefsLoop') {
+            loopTweaks.push(tweak);
+        } else if (tweak.scope === 'UnitDef_Post') {
+            postTweaks.push(tweak);
+        } else if (tweak.scope === 'Global') {
+            globalTweaks.push(tweak);
+        }
+    }
 
     if (globalTweaks.length > 0) {
         for (const tweak of globalTweaks) {
