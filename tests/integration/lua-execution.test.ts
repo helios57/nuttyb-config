@@ -1,27 +1,67 @@
 import { LuaFactory } from 'wasmoon';
-import * as fs from 'fs';
-import * as path from 'path';
+import { OptimizedLuaCompiler } from '../../src/mod-logic/optimized-compiler';
+import masterConfig from '../../master_config_normalized.json';
+import { TweakDefinition } from '../../src/mod-logic/tweak-dsl';
 
-const TWEAK_DATA_PATH = path.join(__dirname, '../../dist/tweakdata.lua');
+const config = masterConfig as TweakDefinition[];
+
+const VARIABLES = {
+    multiplier: 2.0,
+    healthMultiplier: 1.5,
+    workertimeMultiplier: 1.2,
+    metalCostFactor: 0.9,
+    factoryPrefix: "arm",
+    unitName: "armwar"
+};
 
 describe('Lua Execution Integration', () => {
     let lua: any;
     let factory: LuaFactory;
+    let compiledCode: string;
 
     beforeAll(async () => {
         factory = new LuaFactory();
-        lua = await factory.createEngine();
+        // Compile logic once
+        const compiler = new OptimizedLuaCompiler();
+        const inputs = config.map(tweak => ({
+            tweak,
+            variables: VARIABLES
+        }));
+        compiledCode = compiler.compile(inputs);
     });
 
-    afterAll(() => {
+    beforeEach(async () => {
+        lua = await factory.createEngine();
+        // Common Lua Setup
+        await lua.doString(`
+            UnitDefs = {}
+            Spring = {
+                GetModOptions = function()
+                    return {
+                        raptor_spawncountmult = 3
+                    }
+                end
+            }
+            table.merge = function(dest, src)
+                for k, v in pairs(src) do
+                    if type(v) == "table" and type(dest[k]) == "table" then
+                        table.merge(dest[k], v)
+                    else
+                        dest[k] = v
+                    end
+                end
+                return dest
+            end
+        `);
+    });
+
+    afterEach(() => {
         if (lua) lua.global.close();
     });
 
-    test('Should execute tweakdata.lua without errors', async () => {
-        // Setup Environment
+    test('Should execute compiled tweaks without errors', async () => {
+        // Setup Test Units
         await lua.doString(`
-            UnitDefs = {}
-
             UnitDefs["raptor_queen_test"] = {
                 name = "raptor_queen_test",
                 repairable = true,
@@ -76,33 +116,23 @@ describe('Lua Execution Integration', () => {
                 metalCost = 100,
                 energyCost = 1000
             }
-
-            Spring = {
-                GetModOptions = function()
-                    return {
-                        raptor_spawncountmult = 3
-                    }
-                end
-            }
-
-            table.merge = function(dest, src)
-                for k, v in pairs(src) do
-                    if type(v) == "table" and type(dest[k]) == "table" then
-                        table.merge(dest[k], v)
-                    else
-                        dest[k] = v
-                    end
-                end
-                return dest
-            end
         `);
 
         // Execute generated code
-        const code = fs.readFileSync(TWEAK_DATA_PATH, 'utf-8');
-        await lua.doString(code);
+        try {
+            await lua.doString(compiledCode);
+        } catch (e) {
+            console.error("Lua execution error:", e);
+            console.log("Compiled Code:", compiledCode);
+            throw e;
+        }
 
         // Assertions
         const qHealth = await lua.doString('return UnitDefs["raptor_queen_test"].health');
+        if (qHealth !== 2000) {
+            console.log("qHealth mismatch! Expected 2000, got:", qHealth);
+            console.log("Compiled Code:\n", compiledCode);
+        }
         expect(qHealth).toBe(2000); // 1000 * 2.0 (multiplier)
 
         const qRepairable = await lua.doString('return UnitDefs["raptor_queen_test"].repairable');
@@ -141,7 +171,6 @@ describe('Lua Execution Integration', () => {
     test('Performance Benchmark', async () => {
         // Setup 5000 units
         await lua.doString(`
-            UnitDefs = {}
             for i = 1, 5000 do
                 UnitDefs["unit_" .. i] = {
                     name = "Unit " .. i,
@@ -154,10 +183,8 @@ describe('Lua Execution Integration', () => {
             UnitDefs["raptor_queen_bench"] = { name = "raptor_queen_bench", health = 1000 }
         `);
 
-        const code = fs.readFileSync(TWEAK_DATA_PATH, 'utf-8');
-
         const start = performance.now();
-        await lua.doString(code);
+        await lua.doString(compiledCode);
         const end = performance.now();
 
         const duration = end - start;
