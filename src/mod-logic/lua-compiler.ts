@@ -325,8 +325,6 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
                 
                 builder.addStatement(`UnitDefs[${targetName}] = newDef`);
                 builder.endBlock();
-            } else if (mut.op === 'raw_lua') {
-                builder.addStatement(mut.code);
             }
         }
     };

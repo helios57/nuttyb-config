@@ -4,7 +4,7 @@
   "description": "NuttyB Configurator",
   "main": "dist/bundle.js",
   "scripts": {
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "webpack",
     "start": "npx serve",
     "package": "npm run build && node build-release.js"

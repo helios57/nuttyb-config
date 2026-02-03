@@ -38,8 +38,7 @@ export type MutationOperation =
   | { op: 'list_remove'; field: UnitDefField; value: ValueSource }
   | { op: 'table_merge'; field: UnitDefField; value: Record<string, any> }
   | { op: 'modify_weapon'; weaponName?: string; mutations: MutationOperation[] }
-  | { op: 'clone_unit'; source?: string; target?: string; targetSuffix?: string; mutations?: MutationOperation[] }
-  | { op: 'raw_lua'; code: string };
+  | { op: 'clone_unit'; source?: string; target?: string; targetSuffix?: string; mutations?: MutationOperation[] };
 
 export interface TweakDefinition {
   name: string;
