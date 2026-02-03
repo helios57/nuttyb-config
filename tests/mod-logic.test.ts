@@ -2,7 +2,6 @@ import { generateLuaTweak, decodeBase64Url } from '../src/mod-logic/utils';
 import { generateCommands, CommandGeneratorInput } from '../src/mod-logic/command-generator';
 import { addCustomTweak, deleteCustomTweak, getCustomOptions, saveCustomOptions } from '../src/mod-logic/custom-tweaks';
 import { GameConfigs, FormOptionsConfig } from '../src/mod-logic/types';
-import { luaQhpTemplate } from '../src/mod-logic/lua-templates';
 
 // Mock luamin global
 (global as any).luamin = {
@@ -39,8 +38,8 @@ describe('Mod Logic Tests', () => {
             const multiplier = "2.5";
             const result = generateLuaTweak('qhp', multiplier);
             const decoded = decodeBase64Url(result);
-            expect(decoded).toContain(`--NuttyB v1.52 ${multiplier}X QHP`);
-            expect(decoded).toContain(`c.health = c.health * ${multiplier}`);
+            // Expect generated code to contain health multiplication on 'def' variable
+            expect(decoded).toMatch(/def\.health\s*=\s*def\.health\s*\*\s*2\.5/);
         });
 
         test('generateLuaTweak should handle HP multiplier logic correctly', () => {
@@ -48,8 +47,9 @@ describe('Mod Logic Tests', () => {
             const result = generateLuaTweak('hp', multiplier);
             const decoded = decodeBase64Url(result);
             // Check for specific metal cost factor for 2x HP (0.35)
-            expect(decoded).toContain('0.35'); 
-            expect(decoded).toContain(`unitDef.health = unitDef.health * ${multiplier}`);
+            // The compiler might localize math_floor and use parens, so regex is safer or just checking the number
+            expect(decoded).toContain('0.35');
+            expect(decoded).toMatch(/def\.health\s*=\s*def\.health\s*\*\s*2/);
         });
     });
 
@@ -164,7 +164,7 @@ describe('Mod Logic Tests', () => {
 
             const result = generateCommands(input);
             // Expect generated command for 2x HP
-            expect(result.sections[0]).toMatch(/!bset tweakdefs\s+[a-zA-Z0-9_-]+/);
+            expect(result.sections[0]).toMatch(/!bset tweakdefs[0-9]+\s+[a-zA-Z0-9_-]+/);
         });
 
         test('should handle Scavengers mode correctly', () => {

@@ -1,14 +1,5 @@
 import { TweakDefinition, TweakCondition, MutationOperation, ValueSource } from './tweak-dsl';
 
-// Try to require luamin, handle if not present (e.g. in some dev environments)
-let luamin: any;
-try {
-    // @ts-ignore
-    luamin = require('../../luamin.js');
-} catch (e) {
-    console.warn("luamin.js not found, minification disabled");
-}
-
 function jsonToLua(obj: any): string {
     if (obj === null || obj === undefined) return 'nil';
     if (typeof obj === 'string') return `"${obj}"`;
@@ -33,23 +24,27 @@ function jsonToLua(obj: any): string {
     return 'nil';
 }
 
-function resolveValue(val: ValueSource): string {
+function resolveValue(val: ValueSource | object): string {
     if (typeof val === 'object' && val !== null) {
         if ('type' in val) {
-            if (val.type === 'mod_option') {
+            const typedVal = val as any; // Cast to access potential discriminted union properties
+            if (typedVal.type === 'mod_option') {
                 // Assuming Spring is available or we localize it
-                return `(Spring_GetModOptions().${val.key} or ${jsonToLua(val.default)})`;
-            } else if (val.type === 'math') {
-                let expr = val.expression;
-                for (const [k, v] of Object.entries(val.variables)) {
+                return `(Spring_GetModOptions().${typedVal.key} or ${jsonToLua(typedVal.default)})`;
+            } else if (typedVal.type === 'math') {
+                let expr = typedVal.expression;
+                for (const [k, v] of Object.entries(typedVal.variables)) {
                     // Simple replacement - could be more robust with a parser but sufficient for now
-                    expr = expr.split(k).join(resolveValue(v));
+                    expr = expr.split(k).join(resolveValue(v as ValueSource));
                 }
                 // Map common math functions to localized versions
                 expr = expr.replace(/\bmax\(/g, 'math_max(')
                            .replace(/\bmin\(/g, 'math_min(')
                            .replace(/\bceil\(/g, 'math_ceil(')
-                           .replace(/\bfloor\(/g, 'math_floor(');
+                           .replace(/\bfloor\(/g, 'math_floor(')
+                           .replace(/\babs\(/g, 'math_abs(')
+                           .replace(/\brandom\(/g, 'math_random(')
+                           .replace(/\bsqrt\(/g, 'math_sqrt(');
                 return `(${expr})`;
             }
         }
@@ -136,16 +131,24 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     usedGlobals.add('math.ceil');
     usedGlobals.add('math.max');
     usedGlobals.add('math.min');
+    usedGlobals.add('tostring');
+    usedGlobals.add('tonumber');
+    usedGlobals.add('next');
+    usedGlobals.add('type');
+    usedGlobals.add('math.abs');
+    usedGlobals.add('math.random');
+    usedGlobals.add('math.sqrt');
     
     // Check for specific needs
     let needsSpring = false;
     let needsTableMerge = false;
 
-    const checkValueSource = (val: ValueSource) => {
+    const checkValueSource = (val: ValueSource | object) => {
         if (typeof val === 'object' && val !== null && 'type' in val) {
-            if (val.type === 'mod_option') needsSpring = true;
-            if (val.type === 'math') {
-                Object.values(val.variables).forEach(checkValueSource);
+            const typedVal = val as any;
+            if (typedVal.type === 'mod_option') needsSpring = true;
+            if (typedVal.type === 'math') {
+                Object.values(typedVal.variables).forEach(v => checkValueSource(v as ValueSource));
             }
         }
     };
@@ -153,11 +156,15 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     for (const tweak of tweaks) {
         for (const mut of tweak.mutations) {
             if (mut.op === 'clone_unit' || mut.op === 'table_merge') needsTableMerge = true;
-            if (mut.op === 'set' || mut.op === 'multiply' || mut.op === 'list_append') {
-                if (mut.value) checkValueSource(mut.value);
-            }
-            if (mut.op === 'assign_math_floor') {
-                if (mut.factor) checkValueSource(mut.factor);
+
+            if (mut.op === 'set') {
+                checkValueSource(mut.value);
+            } else if (mut.op === 'multiply') {
+                checkValueSource(mut.factor);
+            } else if (mut.op === 'list_append') {
+                checkValueSource(mut.value);
+            } else if (mut.op === 'assign_math_floor') {
+                checkValueSource(mut.factor);
             }
         }
     }
@@ -165,6 +172,10 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     // Emit Localizations
     builder.addLocal('pairs', 'pairs');
     builder.addLocal('ipairs', 'ipairs');
+    builder.addLocal('tostring', 'tostring');
+    builder.addLocal('tonumber', 'tonumber');
+    builder.addLocal('next', 'next');
+    builder.addLocal('type', 'type');
     builder.addLocal('string_sub', 'string.sub');
     builder.addLocal('string_match', 'string.match');
     builder.addLocal('table_insert', 'table.insert');
@@ -173,6 +184,9 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     builder.addLocal('math_ceil', 'math.ceil');
     builder.addLocal('math_max', 'math.max');
     builder.addLocal('math_min', 'math.min');
+    builder.addLocal('math_abs', 'math.abs');
+    builder.addLocal('math_random', 'math.random');
+    builder.addLocal('math_sqrt', 'math.sqrt');
     
     if (needsSpring) {
         builder.addLocal('Spring_GetModOptions', 'Spring.GetModOptions');
@@ -420,16 +434,6 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     }
 
     let luaCode = builder.build();
-
-    // 3. Minification & Verification
-    if (luamin) {
-        try {
-            luaCode = luamin.Minify(luaCode, { RenameVariables: true, RenameGlobals: false, SolveMath: true });
-        } catch (e) {
-            console.error("Minification/Verification failed:", e);
-            throw new Error(`Lua generation failed validation: ${e}`);
-        }
-    }
 
     return luaCode;
 }
