@@ -139,6 +139,15 @@ export const formOptionsConfig: FormOptionsConfig[] = [
     { label: 'NuttyB Main Tweaks', type: 'checkbox', column: 'left', default: true, commandBlocks: [] },
     { label: 'NuttyB Evolving Commanders', type: 'checkbox', column: 'left', default: false, commandBlocks: ['!evocom 1'] },
     {
+        label: "Optimization & Scaling",
+        type: "header",
+        column: "left"
+    },
+    { label: 'Enable Singularity Fusion', type: 'checkbox', column: 'left', default: false, commandBlocks: ['!bset fusion_mode 1'] },
+    { label: 'Enable Adaptive Spawner', type: 'checkbox', column: 'left', default: false, commandBlocks: ['!bset adaptive_spawner 1'] },
+    { label: "Culling - Min SimSpeed", type: "numeric-tweak", column: "left", defaultValue: "0.9", min: 0.1, step: 0.1, modOption: "cull_simspeed" },
+    { label: "Culling - Max Units", type: "numeric-tweak", column: "left", defaultValue: "5000", min: 100, step: 100, modOption: "cull_maxunits" },
+    {
         label: "Mechanics & Balance",
         type: "checkbox",
         column: "left",

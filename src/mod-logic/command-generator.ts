@@ -4,6 +4,7 @@ import { validateLua } from './lua-validator';
 import { TweakDefinition } from './tweak-dsl';
 import tweakLibrary from './tweak-library.json';
 import { OptimizedLuaCompiler } from './optimized-compiler';
+import { generateFusionUnits, generateMegaRaptors } from './unit-generators';
 
 // Type assertion for the JSON library
 const library = tweakLibrary as Record<string, TweakDefinition>;
@@ -159,6 +160,16 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             commands.forEach(cmd => { if (cmd) standardCommands.push(cmd.trim()); });
         }
     });
+
+    if (standardCommands.includes('!bset fusion_mode 1')) {
+        const fusionTweaks = generateFusionUnits();
+        fusionTweaks.forEach(t => compilerInputs.push({ tweak: t, variables: {} }));
+    }
+
+    if (standardCommands.includes('!bset adaptive_spawner 1')) {
+        const raptorTweaks = generateMegaRaptors();
+        raptorTweaks.forEach(t => compilerInputs.push({ tweak: t, variables: {} }));
+    }
 
     // Compile Generated Tweaks
     if (compilerInputs.length > 0) {
