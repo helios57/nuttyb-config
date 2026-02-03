@@ -1,9 +1,12 @@
 import { MAX_SECTION_LENGTH } from './constants';
 import { GameConfigs, FormOptionsConfig, CustomTweak, GeneratedCommands } from './types';
-import { compileTweak } from './lua-compiler';
 import { validateLua } from './lua-validator';
 import { TweakDefinition } from './tweak-dsl';
-import { getQhpTweak, getHpTweak, getBossHpTweak, getScavHpTweak } from './tweak-definitions';
+import tweakLibrary from './tweak-library.json';
+import { OptimizedLuaCompiler } from './optimized-compiler';
+
+// Type assertion for the JSON library
+const library = tweakLibrary as Record<string, TweakDefinition>;
 
 export interface CommandGeneratorInput {
     gameConfigs: GameConfigs;
@@ -29,12 +32,17 @@ export interface CommandGeneratorInput {
         id: string;
         dataset: any;
         commandBlocks?: string[];
-        tweakDefinition?: TweakDefinition;
+        tweakDefinition?: TweakDefinition; // Legacy support or direct injection
     }[];
     raptorOptions: {
         value: string;
         optionType: string;
     }[];
+}
+
+interface CompilerInput {
+    tweak: TweakDefinition;
+    variables: Record<string, any>;
 }
 
 export function generateCommands(input: CommandGeneratorInput): GeneratedCommands {
@@ -65,6 +73,7 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
 
     const standardCommands: string[] = [];
     const customTweaksToProcess: CustomTweak[] = [];
+    const compilerInputs: CompilerInput[] = [];
 
     // Process Form Elements
     formElements.forEach(el => {
@@ -72,15 +81,20 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             if (el.checked && el.customData) customTweaksToProcess.push(el.customData);
         }
         else if (el.tweakDefinition && el.checked) {
-            processTweakDefinition(el.tweakDefinition, customTweaksToProcess);
+            // Support direct definition injection if still used
+             compilerInputs.push({ tweak: el.tweakDefinition, variables: {} });
         }
         else if (el.isHpGenerator || el.isScavHpGenerator) {
             const multiplier = parseFloat(el.value || "0");
             if (multiplier > 0) {
                 const type = el.hpType!;
                 if (type === 'qhp') {
-                    const tweak = getQhpTweak(multiplier, el.value!);
-                    processTweakDefinition(tweak, customTweaksToProcess);
+                    if (library.qhp) {
+                        compilerInputs.push({
+                            tweak: library.qhp,
+                            variables: { multiplier, multiplierText: el.value! }
+                        });
+                    }
                 } else if (type === 'hp') {
                     let metalCostFactor = 1;
                     let workerTimeMultiplier = 0.5;
@@ -97,20 +111,15 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                         default:  metalCostFactor = 1;           workerTimeMultiplier = 0.5; break;
                     }
 
-                    const tweaks = getHpTweak({
-                        healthMultiplier: multiplier,
-                        workertimeMultiplier: workerTimeMultiplier,
-                        metalCostFactor: metalCostFactor,
-                        multiplierText: el.value!
-                    });
-                    tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
+                    if (library.raptor_swarmer_heal) compilerInputs.push({ tweak: library.raptor_swarmer_heal, variables: { workertimeMultiplier: workerTimeMultiplier, multiplierText: el.value! } });
+                    if (library.raptor_health) compilerInputs.push({ tweak: library.raptor_health, variables: { healthMultiplier: multiplier, multiplierText: el.value! } });
+                    if (library.raptor_metal_chase) compilerInputs.push({ tweak: library.raptor_metal_chase, variables: { metalCostFactor, multiplierText: el.value! } });
 
                 } else if (type === 'boss') {
-                    const tweak = getBossHpTweak(multiplier, el.value!);
-                    processTweakDefinition(tweak, customTweaksToProcess);
+                    if (library.boss_hp) compilerInputs.push({ tweak: library.boss_hp, variables: { multiplier, multiplierText: el.value! } });
                 } else if (type === 'scav') {
-                    const tweaks = getScavHpTweak(multiplier, el.value!);
-                    tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
+                    if (library.scav_hp_health) compilerInputs.push({ tweak: library.scav_hp_health, variables: { multiplier, multiplierText: el.value! } });
+                    if (library.scav_hp_metal) compilerInputs.push({ tweak: library.scav_hp_metal, variables: { multiplier, multiplierText: el.value! } });
                 }
             }
         }
@@ -122,9 +131,47 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             else if (el.checked && el.commandBlocks) {
                 commands = el.commandBlocks;
             }
+
+            // Check for Build Menu Tweaks logic which might be embedded in commandBlocks or dataset
+            if (el.dataset.tweakTemplateId) {
+                const templateId = el.dataset.tweakTemplateId;
+                if (library[templateId]) {
+                    // Variables from dataset?
+                    // The original 'addToBuildMenu' was exported function.
+                    // If the UI was calling it, we need to adapt.
+                    // Assuming existing UI just sends commands or I don't see dynamic build menu in app.ts provided.
+                    // But if it were there:
+                    const vars = el.dataset.tweakVars ? JSON.parse(el.dataset.tweakVars) : {};
+                    compilerInputs.push({ tweak: library[templateId], variables: vars });
+                }
+            }
+
             commands.forEach(cmd => { if (cmd) standardCommands.push(cmd.trim()); });
         }
     });
+
+    // Compile Generated Tweaks
+    if (compilerInputs.length > 0) {
+        const compiler = new OptimizedLuaCompiler();
+        const luaCode = compiler.compile(compilerInputs);
+
+        // Validation
+        const validation = validateLua(luaCode);
+        if (validation.valid) {
+            const utf8SafeString = unescape(encodeURIComponent(luaCode));
+            const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+            // Add as a 'tweakdefs' custom tweak (slot preference handled later)
+            customTweaksToProcess.unshift({
+                id: 0, // System generated
+                desc: 'Optimized Config',
+                type: 'tweakdefs',
+                tweak: base64Code
+            });
+        } else {
+             console.error(`Lua validation failed for generated config: ${validation.error}`);
+        }
+    }
 
     const usedTweakDefs = new Set<number>();
     const usedTweakUnits = new Set<number>();
@@ -252,25 +299,4 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     const finalSections = sectionsData.map(section => section.commands.join('\n'));
 
     return { lobbyName: (anyOptionSelected ? renameCommand : 'No Options Selected'), sections: finalSections };
-}
-
-function processTweakDefinition(tweak: TweakDefinition, customTweaksToProcess: CustomTweak[]) {
-    const luaCode = compileTweak(tweak);
-    const validation = validateLua(luaCode);
-
-    if (validation.valid) {
-        const utf8SafeString = unescape(encodeURIComponent(luaCode));
-        const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-        const type = tweak.scope === 'UnitDefsLoop' ? 'tweakdefs' : 'tweakunits';
-
-        customTweaksToProcess.push({
-            id: Date.now() + Math.floor(Math.random() * 1000),
-            desc: tweak.name,
-            type: type,
-            tweak: base64Code
-        });
-    } else {
-        console.error(`Lua validation failed for tweak ${tweak.name}: ${validation.error} at line ${validation.line}`);
-    }
 }
