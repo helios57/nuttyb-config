@@ -1,50 +1,86 @@
-import { compileTweak } from './lua-compiler';
-import { TweakDefinition } from './tweak-dsl';
-import * as Definitions from './tweak-definitions';
+import { OptimizedLuaCompiler } from './optimized-compiler';
+import { TweakDefinition, MutationOperation } from './tweak-dsl';
 
 export function generateTweak(config: any): string {
     if (config.generator === 'lua-table') {
         return generateLuaTable(config.description, config.data);
     }
-    if (config.generator === 'tweak-function') {
-        const func = (Definitions as any)[config.functionId];
-        if (typeof func !== 'function') return `-- Error: Function ${config.functionId} not found`;
+
+    if (config.generator === 'tweak-definition' || config.generator === 'json-schema') {
         try {
+            const definitions: any[] = config.generator === 'json-schema' ? config.definitions : config.tweaks;
             const values = config.values || {};
-            // Assuming function might take values or not.
-            // Our standard signature for legacy tweaks is often () => TweakDefinition
-            // But some take params (hp tweaks).
-            // For now, call it with no args or args if provided?
-            // If it expects args, we should pass them.
-            // Simple approach: pass values object if function accepts arguments?
-            // But our HP functions take specific args, not an object.
-            // Let's assume for now legacy tweaks are parameterless or we adapt them.
-            const tweak = func();
-            return compileTweak(tweak);
-        } catch (e: any) {
-            return `-- Error generating tweak from function: ${e.message}`;
-        }
-    }
-    if (config.generator === 'tweak-definition') {
-        try {
-            // Hydrate using provided values or defaults
-            // config.values should contain the UI selections or defaults
-            const values = config.values || {}; 
-            const hydrated = hydrate(config.tweaks, values);
-            return compileTweak(hydrated);
+
+            // Adapt definitions to strict TweakDefinition
+            const adaptedDefs = definitions.map(def => adaptLegacyDefinition(def, values));
+
+            // Compile
+            const compiler = new OptimizedLuaCompiler();
+            const inputs = adaptedDefs.map(d => ({ tweak: d, variables: {} })); // Variables already hydrated
+            return compiler.compile(inputs);
         } catch (e: any) {
             return `-- Error compiling tweak: ${e.message}`;
         }
     }
-    if (config.generator === 'json-schema') {
-        try {
-            // config.definitions contains the TweakDefinition[]
-            return compileTweak(config.definitions);
-        } catch (e: any) {
-            return `-- Error compiling tweak: ${e.message}`;
-        }
+
+    if (config.generator === 'tweak-function') {
+        return `-- Error: Legacy tweak-function generator is no longer supported for ${config.label || 'unknown'}`;
     }
+
     return `-- Error: Unknown generator ${config.generator}`;
+}
+
+function adaptLegacyDefinition(def: any, values: Record<string, any>): TweakDefinition {
+    // Hydrate fields
+    const hydratedDef = hydrate(def, values);
+
+    // Map legacy fields
+    const mutations: MutationOperation[] = hydratedDef.mutations.map((m: any) => adaptLegacyMutation(m));
+
+    return {
+        name: hydratedDef.name,
+        description: hydratedDef.description,
+        scope: hydratedDef.scope,
+        conditions: hydratedDef.conditions,
+        mutations: mutations
+    };
+}
+
+function adaptLegacyMutation(m: any): MutationOperation {
+    if (m.weapon_target) {
+        // Legacy: { op: 'set', weapon_target: 'all', target: 'name', value: 'Spike' }
+        // New: { op: 'modify_weapon', weaponName: '*', mutations: [{ op: 'set', field: 'name', value: 'Spike' }] }
+        const subOp = { ...m };
+        delete subOp.weapon_target;
+        const adaptedSub = adaptLegacyMutation(subOp);
+
+        return {
+            op: 'modify_weapon',
+            weaponName: m.weapon_target === 'all' ? '*' : m.weapon_target,
+            mutations: [adaptedSub]
+        };
+    }
+
+    if (m.target) {
+        // Legacy 'target' -> 'field'
+        return {
+            ...m,
+            field: m.target,
+            target: undefined // Remove legacy
+        } as any;
+    }
+
+    // For assign_math_floor, it uses 'target' and 'source'.
+    if (m.op === 'assign_math_floor') {
+        // No change needed for properties except if 'target' was used as field name
+        // My DSL uses 'target' for destination.
+        // So it matches?
+        // DSL: target: UnitDefField
+        // Legacy: target: string
+        // Matches.
+    }
+
+    return m;
 }
 
 function hydrate(obj: any, values: Record<string, any>): any {
@@ -52,7 +88,6 @@ function hydrate(obj: any, values: Record<string, any>): any {
         const replaced = obj.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
             return values[key] !== undefined ? values[key] : `{{${key}}}`;
         });
-        // Try to convert to number if it was a placeholder replacement and looks like a number
         if (replaced !== obj && !isNaN(Number(replaced)) && replaced.trim() !== '') {
             return Number(replaced);
         }
@@ -85,14 +120,12 @@ function tableToLua(obj: any): string {
     if (obj === null) return 'nil';
     
     if (typeof obj === 'string') {
-        // Escape single quotes
         return `'${obj.replace(/'/g, "\\'")}'`; 
     }
     if (typeof obj === 'number') return obj.toString();
     if (typeof obj === 'boolean') return obj ? 'true' : 'false';
     
     if (Array.isArray(obj)) {
-        // Check if it's empty
         if (obj.length === 0) return '{}';
         const items = obj.map(v => tableToLua(v)).join(',');
         return `{${items}}`;
@@ -104,8 +137,6 @@ function tableToLua(obj: any): string {
         if (keys.length === 0) return '{}';
         
         for (const k of keys) {
-            // Check if key is a valid identifier (alphanumeric + underscore, not starting with digit)
-            // Lua identifiers: ^[a-zA-Z_][a-zA-Z0-9_]*$
             const isValidId = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k);
             const key = isValidId ? k : `['${k}']`;
             parts.push(`${key}=${tableToLua(obj[k])}`);

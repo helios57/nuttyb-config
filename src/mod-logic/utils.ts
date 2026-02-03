@@ -1,9 +1,11 @@
-import { compileTweak } from './lua-compiler';
-import { getQhpTweak, getBossHpTweak, getHpTweak, getScavHpTweak } from './tweak-definitions';
-import { RaptorTweakConfig } from './presets';
+import { OptimizedLuaCompiler } from './optimized-compiler';
+import tweakLibrary from './tweak-library.json';
+import { TweakDefinition } from './tweak-dsl';
 
 // Declare luamin as a global variable since it's loaded via script tag
 declare const luamin: any;
+
+const library = tweakLibrary as Record<string, TweakDefinition>;
 
 export function decodeBase64Url(base64Url: string): string {
     if (!base64Url) return '';
@@ -14,9 +16,9 @@ export function decodeBase64Url(base64Url: string): string {
         const decodedData = atob(base64);
         const uint8Array = Uint8Array.from(decodedData, c => c.charCodeAt(0));
         return new TextDecoder('utf-8').decode(uint8Array);
-    } catch (e) { 
-        console.error(`Base64URL decoding failed for: ${base64Url}`, e); 
-        return 'Error decoding data'; 
+    } catch (e) {
+        console.error(`Base64URL decoding failed for: ${base64Url}`, e);
+        return 'Error decoding data';
     }
 }
 
@@ -30,11 +32,12 @@ export function generateLuaTweak(type: string, value: string): string {
     if (isNaN(multiplier)) return "Error: Invalid multiplier";
 
     try {
-        let tweak;
+        const inputs: { tweak: TweakDefinition, variables: Record<string, any> }[] = [];
+
         if (type === 'qhp') {
-            tweak = getQhpTweak(multiplier, value);
+            if (library.qhp) inputs.push({ tweak: library.qhp, variables: { multiplier, multiplierText: value } });
         } else if (type === 'boss') {
-             tweak = getBossHpTweak(multiplier, value);
+             if (library.boss_hp) inputs.push({ tweak: library.boss_hp, variables: { multiplier, multiplierText: value } });
         } else if (type === 'hp') {
              let metalCostFactor = 1;
              let workertimeMultiplier = 0.5;
@@ -50,32 +53,31 @@ export function generateLuaTweak(type: string, value: string): string {
                 case 5:   metalCostFactor = 0.15;        workertimeMultiplier = 0.25; break;
                 default:  metalCostFactor = 1;           workertimeMultiplier = 0.5; break;
              }
-             
-             const config: RaptorTweakConfig = {
-                 healthMultiplier: multiplier,
-                 workertimeMultiplier,
-                 metalCostFactor,
-                 multiplierText: value
-             };
-             tweak = getHpTweak(config);
+
+             if (library.raptor_swarmer_heal) inputs.push({ tweak: library.raptor_swarmer_heal, variables: { workertimeMultiplier, multiplierText: value } });
+             if (library.raptor_health) inputs.push({ tweak: library.raptor_health, variables: { healthMultiplier: multiplier, multiplierText: value } });
+             if (library.raptor_metal_chase) inputs.push({ tweak: library.raptor_metal_chase, variables: { metalCostFactor, multiplierText: value } });
+
         } else if (type === 'scav') {
-            tweak = getScavHpTweak(multiplier, value);
+             if (library.scav_hp_health) inputs.push({ tweak: library.scav_hp_health, variables: { multiplier, multiplierText: value } });
+             if (library.scav_hp_metal) inputs.push({ tweak: library.scav_hp_metal, variables: { multiplier, multiplierText: value } });
         } else {
             return "Error: Unknown type";
         }
 
-        if (tweak) {
-             const lua = compileTweak(tweak);
-             
+        if (inputs.length > 0) {
+             const compiler = new OptimizedLuaCompiler();
+             const lua = compiler.compile(inputs);
+
              let finalLua = lua;
              if (typeof luamin !== 'undefined') {
                  // Preserve the first line comment if it exists
                  const firstLineMatch = lua.match(/^(--.*)\n/);
                  const header = firstLineMatch ? firstLineMatch[1] : '';
-                 
+
                  // Minify the code
                  const minified = luamin.minify(lua);
-                 
+
                  // Reattach header if it was there
                  finalLua = header ? header + '\n' + minified : minified;
              }

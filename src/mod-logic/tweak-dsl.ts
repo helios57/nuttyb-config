@@ -1,16 +1,5 @@
 export type TweakScope = 'UnitDefsLoop' | 'UnitDef_Post' | 'Global';
 
-export type TweakCondition =
-  | { type: 'nameMatch'; regex: string }
-  | { type: 'nameNotMatch'; regex: string }
-  | { type: 'nameStartsWith'; prefix: string }
-  | { type: 'nameEndsWith'; suffix: string }
-  | { type: 'nameInList'; names: string[] }
-  | { type: 'customParam'; key: string; value: string | number | boolean }
-  | { type: 'customParamMatch'; key: string; regex: string }
-  | { type: 'fieldValue'; field: string; value: string | number | boolean }
-  | { type: 'category'; value: string };
-
 export type UnitDefKnownField = 
   | 'health' | 'maxDamage' | 'metalCost' | 'energyCost' | 'buildTime' 
   | 'category' | 'description' | 'name' | 'objectName' 
@@ -27,7 +16,19 @@ export type UnitDefField = UnitDefKnownField | (string & {});
 export type ValueSource = 
   | string | number | boolean
   | { type: 'mod_option'; key: string; default: number | string | boolean }
+  | { type: 'variable'; key: string }
   | { type: 'math'; expression: string; variables: Record<string, any> };
+
+export type TweakCondition =
+  | { type: 'nameMatch'; regex: string }
+  | { type: 'nameNotMatch'; regex: string }
+  | { type: 'nameStartsWith'; prefix: string | ValueSource }
+  | { type: 'nameEndsWith'; suffix: string | ValueSource }
+  | { type: 'nameInList'; names: string[] }
+  | { type: 'customParam'; key: string; value: ValueSource }
+  | { type: 'customParamMatch'; key: string; regex: string }
+  | { type: 'fieldValue'; field: string; value: ValueSource }
+  | { type: 'category'; value: string | ValueSource };
 
 export type MutationOperation =
   | { op: 'multiply'; field: UnitDefField; factor: ValueSource }
