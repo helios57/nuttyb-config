@@ -4,12 +4,12 @@
   "generator": "json-schema",
   "definitions": [
     {
-      "name": "Cross Faction Taxed Units",
-      "description": "Creates taxed versions of T2 factories and labs",
+      "name": "Cross Faction Taxed Units (Factories)",
+      "description": "Creates taxed versions of T2 factories",
       "scope": "UnitDefsLoop",
       "conditions": [
         { "type": "customParam", "key": "techlevel", "value": 2 },
-        { "type": "customParamMatch", "key": "subfolder", "regex": "(Fact|Lab)" }
+        { "type": "customParamMatch", "key": "subfolder", "regex": "Fact" }
       ],
       "mutations": [
         {
@@ -24,7 +24,7 @@
               "field": "name",
               "value": {
                 "type": "math",
-                "expression": "name + ' (Taxed)'",
+                "expression": "name .. ' (Taxed)'",
                 "variables": {}
               }
             },
@@ -34,8 +34,48 @@
               "value": {
                 "i18n_en_humanname": {
                   "type": "math",
-                  "expression": "humanname + ' (Taxed)'",
-                  "variables": { "humanname": "customparams.i18n_en_humanname" }
+                  "expression": "humanname .. ' (Taxed)'",
+                  "variables": { "humanname": "def.customparams.i18n_en_humanname" }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cross Faction Taxed Units (Labs)",
+      "description": "Creates taxed versions of T2 labs",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "customParam", "key": "techlevel", "value": 2 },
+        { "type": "customParamMatch", "key": "subfolder", "regex": "Lab" }
+      ],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "SELF",
+          "targetSuffix": "_taxed",
+          "mutations": [
+            { "op": "multiply", "field": "energyCost", "factor": 1.7 },
+            { "op": "multiply", "field": "metalCost", "factor": 1.7 },
+            {
+              "op": "set",
+              "field": "name",
+              "value": {
+                "type": "math",
+                "expression": "name .. ' (Taxed)'",
+                "variables": {}
+              }
+            },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": {
+                  "type": "math",
+                  "expression": "humanname .. ' (Taxed)'",
+                  "variables": { "humanname": "def.customparams.i18n_en_humanname" }
                 }
               }
             }

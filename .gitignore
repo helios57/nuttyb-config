@@ -1,3 +1,8 @@
 /.idea/
 node_modules/
 coverage/
+dist/
+master_config_normalized.json
+master_config.json
+.vscode/
+*.log
