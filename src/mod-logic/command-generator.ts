@@ -39,6 +39,7 @@ export interface CommandGeneratorInput {
         value: string;
         optionType: string;
     }[];
+    isMainTweaksEnabled?: boolean;
 }
 
 interface CompilerInput {
@@ -222,9 +223,11 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     const finalCommands: string[] = [];
 
     const isGameModeTriggered = presetCommands.length > 0 || standardCommands.length > 0 || customCommands.length > 0;
+    // Default to true if not provided (legacy/fallback)
+    const isMainTweaksEnabled = input.isMainTweaksEnabled !== false;
 
     if(isGameModeTriggered) {
-        if (gameConfigs.base.length > 0) {
+        if (isMainTweaksEnabled && gameConfigs.base.length > 0) {
             finalCommands.push(...gameConfigs.base);
         }
         if (primaryModeSelectValue === 'Scavengers' && gameConfigs.scavengers.length > 0) {

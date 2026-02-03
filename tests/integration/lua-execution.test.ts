@@ -139,6 +139,12 @@ describe('Lua Execution Integration', () => {
         expect(qRepairable).toBe(false);
 
         const swarmerReclaim = await lua.doString('return UnitDefs["raptor_land_swarmer_heal"].reclaimSpeed');
+        if (swarmerReclaim !== 100) {
+            console.log("swarmerReclaim mismatch! Expected 100, got:", swarmerReclaim);
+            const swarmerBuildSpeed = await lua.doString('return UnitDefs["raptor_land_swarmer_heal"].buildSpeed');
+            console.log("swarmerBuildSpeed:", swarmerBuildSpeed); // Expected 120 (100 * 1.2)
+            console.log("Compiled Code:\n", compiledCode);
+        }
         expect(swarmerReclaim).toBe(100);
 
         const hiveSpawnName = await lua.doString('return UnitDefs["raptor_hive_swarmer_basic"] and UnitDefs["raptor_hive_swarmer_basic"].name');

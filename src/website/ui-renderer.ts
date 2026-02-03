@@ -21,6 +21,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
             if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
+            inputElement.dataset.optionLabel = optionGroup.label;
             inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
             label.appendChild(inputElement);
@@ -127,6 +128,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
             if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
             if (optionGroup.tweakVar) inputElement.dataset.tweakVar = optionGroup.tweakVar;
             if (optionGroup.modOption) inputElement.dataset.modOption = optionGroup.modOption;
+            inputElement.dataset.optionLabel = optionGroup.label;
 
             label.textContent = optionGroup.label + ': ';
             label.appendChild(inputElement);
@@ -137,6 +139,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         } else if (optionGroup.type === 'select') {
             inputElement = document.createElement('select');
             inputElement.dataset.optionType = optionGroup.label;
+            inputElement.dataset.optionLabel = optionGroup.label;
 
             if (optionGroup.isHpGenerator) {
                 inputElement.dataset.isHpGenerator = 'true';

@@ -1,12 +1,12 @@
 import { loadConfigData, loadLinksContent, parseModesFile } from '../mod-logic/config-loader';
 import { loadCustomOptions, addCustomTweak, deleteCustomTweak, getCustomOptions } from '../mod-logic/custom-tweaks';
 import { generateCommands, CommandGeneratorInput } from '../mod-logic/command-generator';
-import { 
-    renderOptions, 
-    renderCustomTweaksTable, 
-    renderCustomTweaksAsCheckboxes, 
-    updateCustomOptionUI, 
-    populateDataTable, 
+import {
+    renderOptions,
+    renderCustomTweaksTable,
+    renderCustomTweaksAsCheckboxes,
+    updateCustomOptionUI,
+    populateDataTable,
     populateMapsModesTable,
     populateStartSelector
 } from './ui-renderer';
@@ -69,12 +69,12 @@ function updateOutput(event?: Event) {
                 });
             }
         }
-        
+
         const isScavengers = newMode === 'Scavengers';
         raptorOnlyContainer.style.display = isScavengers ? 'none' : 'block';
         scavOnlyContainer.style.display = isScavengers ? 'block' : 'none';
     }
-    
+
     updateCustomOptionUI();
 
     // Gather input for command generator
@@ -102,7 +102,11 @@ function updateOutput(event?: Event) {
         optionType: (el as HTMLElement).dataset.optionType || ''
     }));
 
+    const mainTweaksCheckbox = document.querySelector('input[data-option-label="NuttyB Main Tweaks"]') as HTMLInputElement;
+    const isMainTweaksEnabled = mainTweaksCheckbox ? mainTweaksCheckbox.checked : true;
+
     const generatorInput: CommandGeneratorInput = {
+        isMainTweaksEnabled,
         gameConfigs,
         formOptionsConfig,
         mapsSelectValue: mapsSelect ? mapsSelect.value : "",
@@ -118,7 +122,7 @@ function updateOutput(event?: Event) {
 
     const generatedData = generateCommands(generatorInput);
     lobbyNameDisplay.textContent = generatedData.lobbyName;
-    
+
     for (let i = 1; i <= 7; i++) {
         const sectionDiv = document.getElementById(`part-${i}-section`)!;
         const textArea = document.getElementById(`command-output-${i}`) as HTMLTextAreaElement;
@@ -139,7 +143,7 @@ function switchTab(event: Event) {
     tabContents.forEach(content => content.classList.remove('active'));
     target.classList.add('active');
     document.getElementById(targetTabId)!.classList.add('active');
-    
+
     if (target.dataset.tab === 'data') {
         populateDataTable(rawOptionsData);
         populateMapsModesTable(gameConfigs);
@@ -159,7 +163,7 @@ function handleAddCustomTweak(event: Event) {
     const desc = (document.getElementById('custom-option-desc') as HTMLInputElement).value.trim();
     const type = (document.getElementById('custom-option-type') as HTMLSelectElement).value;
     const tweak = (document.getElementById('custom-tweak-code') as HTMLTextAreaElement).value.trim();
-    
+
     addCustomTweak(desc, type, tweak);
     renderAllCustomComponents();
     updateOutput();
@@ -178,7 +182,7 @@ document.addEventListener('click', event => {
     if (target.matches('.copy-button')) {
         const targetId = target.dataset.target;
         if (!targetId) return;
-        
+
         const targetTextArea = document.getElementById(targetId) as HTMLTextAreaElement;
         if (!targetTextArea) return;
 
@@ -217,9 +221,9 @@ resetNoneBtn.addEventListener('click', () => {
             (element as HTMLInputElement).checked = false;
         } else if (element.tagName === 'SELECT') {
             if (element.id === 'maps-select' || element.id === 'modes-select') {
-                (element as HTMLSelectElement).selectedIndex = -1; 
+                (element as HTMLSelectElement).selectedIndex = -1;
             } else if (element.id !== 'primary-mode-select') {
-                element.value = ""; 
+                element.value = "";
             }
         } else if (element.type === 'number') {
              // Reset number inputs
@@ -239,7 +243,7 @@ resetNoneBtn.addEventListener('click', () => {
 resetDefaultBtn.addEventListener('click', () => {
     const primaryModeSelect = document.getElementById('primary-mode-select') as HTMLSelectElement;
     if (primaryModeSelect) primaryModeSelect.value = 'Raptors';
-    
+
     // Create a map for faster lookup of checkbox labels
     const checkboxLabelsMap = new Map<string, HTMLLabelElement>();
     document.querySelectorAll('#options-form-columns label').forEach(l => {
@@ -264,7 +268,7 @@ resetDefaultBtn.addEventListener('click', () => {
              }
         }
     });
-    
+
     const bossHpSelect = document.getElementById('boss-hp-select') as HTMLSelectElement;
     const scavHpSelect = document.getElementById('scav-hp-select') as HTMLSelectElement;
     if (bossHpSelect) bossHpSelect.value = "";
@@ -277,7 +281,7 @@ resetDefaultBtn.addEventListener('click', () => {
     if(modesSelect && modesSelect.options.length > 0) {
         modesSelect.selectedIndex = 0;
     }
-    
+
     updateOutput();
 });
 
@@ -287,22 +291,22 @@ tabButtons.forEach(button => button.addEventListener('click', switchTab));
 async function initializeApp() {
     try {
         loadCustomOptions();
-        
+
         const [parsedConfigs, configData, linksContent] = await Promise.all([
             parseModesFile('modes.txt'),
-            loadConfigData(), 
+            loadConfigData(),
             loadLinksContent()
         ]);
 
         gameConfigs = parsedConfigs;
         rawOptionsData = configData.rawOptionsData;
         formOptionsConfig = configData.formOptionsConfig;
-        
+
         if (linksContent) {
             const linksTab = document.getElementById('links-tab');
             if (linksTab) linksTab.innerHTML = linksContent;
         }
-        
+
         console.log("Modes file loaded and parsed:", gameConfigs);
 
         renderOptions(formOptionsConfig, gameConfigs, updateOutput);
