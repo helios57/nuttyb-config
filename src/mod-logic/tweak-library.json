@@ -100,5 +100,67 @@
     "mutations": [
       { "op": "list_append", "field": "buildoptions", "value": { "type": "variable", "key": "unitName" } }
     ]
+  },
+  "tweak_limit_t3builders": {
+    "name": "Limit T3 Builders",
+    "description": "Limits T3 Builders",
+    "scope": "UnitDefsLoop",
+    "conditions": [
+        { "type": "nameInList", "names": ["armconst3", "corconst3", "legconst3"] }
+    ],
+    "mutations": [
+        { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } }
+    ]
+  },
+  "tweak_limit_unit_launchers": {
+    "name": "Limit Unit Launchers",
+    "description": "Limits Unit Launchers",
+    "scope": "UnitDefsLoop",
+    "conditions": [
+        { "type": "nameInList", "names": ["armmeatball", "corclogger"] }
+    ],
+    "mutations": [
+        { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } }
+    ]
+  },
+  "tweak_limit_epic_ragnarok": {
+      "name": "Limit Ragnarok",
+      "description": "Limits Epic Ragnarok",
+      "scope": "UnitDefsLoop",
+      "conditions": [ { "type": "nameMatch", "regex": "ragnarok" } ],
+      "mutations": [ { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } } ]
+  },
+   "tweak_limit_epic_calamity": {
+      "name": "Limit Calamity",
+      "description": "Limits Epic Calamity",
+      "scope": "UnitDefsLoop",
+      "conditions": [ { "type": "nameMatch", "regex": "calamity" } ],
+      "mutations": [ { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } } ]
+  },
+   "tweak_limit_epic_tyrannus": {
+      "name": "Limit Tyrannus",
+      "description": "Limits Epic Tyrannus",
+      "scope": "UnitDefsLoop",
+      "conditions": [ { "type": "nameMatch", "regex": "tyrannus" } ],
+      "mutations": [ { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } } ]
+  },
+   "tweak_limit_epic_starfall": {
+      "name": "Limit Starfall",
+      "description": "Limits Epic Starfall",
+      "scope": "UnitDefsLoop",
+      "conditions": [ { "type": "nameMatch", "regex": "starfall" } ],
+      "mutations": [ { "op": "set", "field": "maxThisUnit", "value": { "type": "variable", "key": "limit" } } ]
+  },
+  "tweak_enable_unit_launchers": {
+    "name": "Enable Unit Launchers",
+    "description": "Adds Unit Launchers to T2 Vehicle Plants",
+    "scope": "UnitDefsLoop",
+    "conditions": [
+        { "type": "nameInList", "names": ["armavp", "coravp", "legavp"] }
+    ],
+    "mutations": [
+        { "op": "list_append", "field": "buildoptions", "value": "armmeatball" },
+        { "op": "list_append", "field": "buildoptions", "value": "corclogger" }
+    ]
   }
 }

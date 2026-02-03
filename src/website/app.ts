@@ -48,14 +48,23 @@ function updateOutput(event?: Event) {
             if (newMode === 'Scavengers') {
                 scavHpSelect.value = "1.3";
                 bossHpSelect.value = "1.3";
-                raptorOnlyContainer.querySelectorAll('select').forEach(sel => (sel as HTMLSelectElement).value = "");
+                raptorOnlyContainer.querySelectorAll('select, input').forEach(el => (el as HTMLInputElement).value = "");
             } else { // Switching back to Raptors
                 scavHpSelect.value = "";
                 bossHpSelect.value = "";
-                raptorOnlyContainer.querySelectorAll('select[data-option-type]').forEach(sel => {
-                    const optionGroup = formOptionsConfig.find(og => og.label === (sel as HTMLElement).dataset.optionType);
+                raptorOnlyContainer.querySelectorAll('select, input').forEach(el => {
+                    const htmlEl = el as HTMLElement;
+                    let optionGroup = formOptionsConfig.find(og => og.label === htmlEl.dataset.optionType);
+
+                    if (!optionGroup && htmlEl.dataset.modOption) {
+                         optionGroup = formOptionsConfig.find(og => og.modOption === htmlEl.dataset.modOption);
+                    }
+                    if (!optionGroup && htmlEl.dataset.tweakTemplateId) {
+                         optionGroup = formOptionsConfig.find(og => og.tweakTemplateId === htmlEl.dataset.tweakTemplateId);
+                    }
+
                     if (optionGroup) {
-                        (sel as HTMLSelectElement).value = optionGroup.defaultValue || "";
+                        (el as HTMLInputElement).value = optionGroup.defaultValue || "";
                     }
                 });
             }
@@ -69,7 +78,7 @@ function updateOutput(event?: Event) {
     updateCustomOptionUI();
 
     // Gather input for command generator
-    const formElements = Array.from(document.querySelectorAll('#options-form-columns input[type="checkbox"], #options-form-columns select, #custom-options-form-columns input[type="checkbox"]')).map(el => {
+    const formElements = Array.from(document.querySelectorAll('#options-form-columns input[type="checkbox"], #options-form-columns input[type="number"], #options-form-columns select, #custom-options-form-columns input[type="checkbox"]')).map(el => {
         const element = el as HTMLInputElement | HTMLSelectElement;
         return {
             isCustom: element.dataset.isCustom === 'true',
@@ -201,7 +210,7 @@ document.addEventListener('click', event => {
 });
 
 resetNoneBtn.addEventListener('click', () => {
-    const formElements = document.querySelectorAll('#options-form-columns input[type="checkbox"], #options-form-columns select');
+    const formElements = document.querySelectorAll('#options-form-columns input[type="checkbox"], #options-form-columns input[type="number"], #options-form-columns select');
     formElements.forEach(el => {
         const element = el as HTMLInputElement | HTMLSelectElement;
         if (element.type === 'checkbox') {
@@ -212,6 +221,16 @@ resetNoneBtn.addEventListener('click', () => {
             } else if (element.id !== 'primary-mode-select') {
                 element.value = ""; 
             }
+        } else if (element.type === 'number') {
+             // Reset number inputs
+             const templateId = element.dataset.tweakTemplateId;
+             if (templateId) {
+                 const config = formOptionsConfig.find(c => c.tweakTemplateId === templateId);
+                 if (config) element.value = config.defaultValue || "";
+                 else element.value = "";
+             } else {
+                 element.value = "";
+             }
         }
     });
     updateOutput();
@@ -238,6 +257,11 @@ resetDefaultBtn.addEventListener('click', () => {
         } else if (optionGroup.type === 'select') {
             const select = optionsFormColumns.querySelector(`select[data-option-type="${optionGroup.label}"]`) as HTMLSelectElement;
             if (select) select.value = optionGroup.defaultValue || "";
+        } else if (optionGroup.type === 'numeric-tweak') {
+             if (optionGroup.tweakTemplateId) {
+                 const numInput = optionsFormColumns.querySelector(`input[data-tweak-template-id="${optionGroup.tweakTemplateId}"]`) as HTMLInputElement;
+                 if (numInput) numInput.value = optionGroup.defaultValue || "";
+             }
         }
     });
     

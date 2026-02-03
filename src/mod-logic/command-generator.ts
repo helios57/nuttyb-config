@@ -137,13 +137,23 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                 const templateId = el.dataset.tweakTemplateId;
                 if (library[templateId]) {
                     // Variables from dataset?
-                    // The original 'addToBuildMenu' was exported function.
-                    // If the UI was calling it, we need to adapt.
-                    // Assuming existing UI just sends commands or I don't see dynamic build menu in app.ts provided.
-                    // But if it were there:
-                    const vars = el.dataset.tweakVars ? JSON.parse(el.dataset.tweakVars) : {};
+                    // Supports both JSON object in tweakVars or single variable mapping via tweakVar + value
+                    let vars = {};
+                    if (el.dataset.tweakVars) {
+                        try {
+                            vars = JSON.parse(el.dataset.tweakVars);
+                        } catch (e) {
+                            console.error("Error parsing tweakVars JSON:", e);
+                        }
+                    } else if (el.dataset.tweakVar && el.value) {
+                         vars = { [el.dataset.tweakVar]: parseFloat(el.value) || el.value };
+                    }
                     compilerInputs.push({ tweak: library[templateId], variables: vars });
                 }
+            }
+
+            if (el.dataset.modOption && el.value) {
+                commands.push(`!bset ${el.dataset.modOption} ${el.value}`);
             }
 
             commands.forEach(cmd => { if (cmd) standardCommands.push(cmd.trim()); });

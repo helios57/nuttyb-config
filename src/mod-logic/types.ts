@@ -25,6 +25,13 @@ export interface FormOptionsConfig {
     hpType?: string;
     slot?: string | number;
     slotType?: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    unitLabel?: string;
+    tweakTemplateId?: string;
+    tweakVar?: string;
+    modOption?: string;
 }
 
 export interface CustomTweak {
