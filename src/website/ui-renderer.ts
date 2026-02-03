@@ -6,21 +6,23 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
     const rightColumn = document.getElementById('right-column')!;
     const optionsFormColumns = document.getElementById('options-form-columns')!;
 
-    leftColumn.innerHTML = ''; 
+    leftColumn.innerHTML = '';
     rightColumn.innerHTML = '';
 
+    const formOptionsMap = new Map(formOptionsConfig.map(og => [og.label, og]));
     const specialLeftOptions = ['NuttyB Main Tweaks', 'NuttyB Evolving Commanders'];
+    const specialLeftOptionsSet = new Set(specialLeftOptions);
 
     specialLeftOptions.forEach(optLabel => {
-        const optionGroup = formOptionsConfig.find(og => og.label === optLabel);
+        const optionGroup = formOptionsMap.get(optLabel);
         if (optionGroup) {
             const label = document.createElement('label');
-            const inputElement = document.createElement('input'); 
+            const inputElement = document.createElement('input');
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
-            inputElement.checked = !!optionGroup.default; 
+            inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
-            label.appendChild(inputElement); 
+            label.appendChild(inputElement);
             label.appendChild(document.createTextNode(' ' + optionGroup.label));
             if (!inputElement.disabled) inputElement.addEventListener('change', updateOutputCallback);
             leftColumn.appendChild(label);
@@ -38,7 +40,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
 
     const scavOnlyContainer = document.createElement('div');
     scavOnlyContainer.id = 'scav-only-options';
-    
+
     const scavHpLabel = document.createElement('label');
     scavHpLabel.textContent = 'Scavengers HP: ';
     const scavHpSelect = document.createElement('select');
@@ -52,7 +54,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         {v: "2", t: "2x HP"}, {v: "2.5", t: "2.5x HP"}, {v: "3", t: "3x HP"}, {v: "4", t: "4x HP"}, {v: "5", t: "5x HP"}
     ];
     scavHpOptions.forEach(opt => scavHpSelect.add(new Option(opt.t, opt.v)));
-    scavHpSelect.value = ""; 
+    scavHpSelect.value = "";
     scavHpSelect.addEventListener('change', updateOutputCallback);
     scavHpLabel.appendChild(scavHpSelect);
     scavOnlyContainer.appendChild(scavHpLabel);
@@ -70,7 +72,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         {v: "2", t: "2x BHP"}, {v: "2.5", t: "2.5x BHP"}, {v: "3", t: "3x BHP"}, {v: "4", t: "4x BHP"}, {v: "5", t: "5x BHP"},
     ];
     bossHpOptions.forEach(opt => bossHpSelect.add(new Option(opt.t, opt.v)));
-    bossHpSelect.value = ""; 
+    bossHpSelect.value = "";
     bossHpSelect.addEventListener('change', updateOutputCallback);
     bossHpLabel.appendChild(bossHpSelect);
     scavOnlyContainer.appendChild(bossHpLabel);
@@ -80,23 +82,23 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
     const raptorOnlyContainer = document.createElement('div');
     raptorOnlyContainer.id = 'raptor-only-options';
     leftColumn.appendChild(raptorOnlyContainer);
-    
+
     formOptionsConfig.forEach(optionGroup => {
-        if (specialLeftOptions.includes(optionGroup.label)) return;
+        if (specialLeftOptionsSet.has(optionGroup.label)) return;
 
         const label = document.createElement('label');
         let inputElement: HTMLInputElement | HTMLSelectElement;
         if (optionGroup.type === 'checkbox') {
-            inputElement = document.createElement('input'); 
+            inputElement = document.createElement('input');
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
-            inputElement.checked = !!optionGroup.default; 
+            inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
-            label.appendChild(inputElement); 
+            label.appendChild(inputElement);
             label.appendChild(document.createTextNode(' ' + optionGroup.label));
             if (!inputElement.disabled) inputElement.addEventListener('change', updateOutputCallback);
         } else if (optionGroup.type === 'select') {
-            inputElement = document.createElement('select'); 
+            inputElement = document.createElement('select');
             inputElement.dataset.optionType = optionGroup.label;
 
             if (optionGroup.isHpGenerator) {
@@ -109,7 +111,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
 
             optionGroup.choices?.forEach(choice => {
                 const optionElement = document.createElement('option');
-                optionElement.value = choice.value; 
+                optionElement.value = choice.value;
                 optionElement.textContent = choice.label;
                 if (optionGroup.defaultValue && choice.value === optionGroup.defaultValue) {
                     optionElement.selected = true;
@@ -194,19 +196,19 @@ export function renderCustomTweaksAsCheckboxes(customOptions: CustomTweak[], upd
             checkbox.dataset.isCustom = 'true';
             checkbox.dataset.customData = JSON.stringify({ type: tweak.type, tweak: tweak.tweak });
             checkbox.addEventListener('change', updateOutputCallback);
-            
+
             const textSpan = document.createElement('span');
             textSpan.className = 'custom-option-label-text';
             textSpan.textContent = ` ${tweak.desc}`;
-            
+
             const typeSpan = document.createElement('span');
             typeSpan.className = 'custom-option-type-display';
             typeSpan.textContent = `(${tweak.type})`;
-            
+
             label.appendChild(checkbox);
             label.appendChild(textSpan);
             label.appendChild(typeSpan);
-            
+
             if (index % 2 === 0) customLeftColumn.appendChild(label);
             else customRightColumn.appendChild(label);
         });
@@ -219,21 +221,21 @@ export function updateCustomOptionUI(): void {
     const slotWarningContainer = document.getElementById('slot-warning-messages')!;
     const usedTweakDefs = new Set<number>();
     const usedTweakUnits = new Set<number>();
-    const slotRegex = /!bset\s+(tweakdefs|tweakunits)([1-9])\b/; 
+    const slotRegex = /!bset\s+(tweakdefs|tweakunits)([1-9])\b/;
 
     const allFormElements = document.querySelectorAll('#options-form-columns input[type="checkbox"], #options-form-columns select');
 
     allFormElements.forEach(el => {
         const element = el as HTMLInputElement | HTMLSelectElement;
-        if (element.dataset.isCustom) return; 
+        if (element.dataset.isCustom) return;
 
         if ((element.dataset.isHpGenerator || element.dataset.isScavHpGenerator) && element.value && element.dataset.slot) {
             const slotNum = parseInt(element.dataset.slot, 10);
-            if (!isNaN(slotNum)) { 
+            if (!isNaN(slotNum)) {
                 if (element.dataset.slotType === 'tweakdefs') usedTweakDefs.add(slotNum);
                 else if (element.dataset.slotType === 'tweakunits') usedTweakUnits.add(slotNum);
             }
-            return; 
+            return;
         }
 
         let commands: string[] = [];
@@ -311,18 +313,18 @@ export function updateCustomOptionUI(): void {
 
 export function populateDataTable(rawOptionsData: any[]): void {
     const dataTableBody = document.querySelector('#data-table tbody')!;
-    dataTableBody.innerHTML = ''; 
-    
+    dataTableBody.innerHTML = '';
+
     rawOptionsData.filter(item => item.status !== 'Hidden').forEach(item => {
         const row = (dataTableBody as HTMLTableSectionElement).insertRow();
-        row.insertCell().textContent = item.label; 
-        row.insertCell().textContent = item.status; 
+        row.insertCell().textContent = item.label;
+        row.insertCell().textContent = item.status;
         row.insertCell().textContent = item.summary;
-        const commandsCell = row.insertCell(); 
+        const commandsCell = row.insertCell();
         const wrapper = document.createElement('div'); wrapper.className = 'command-cell-wrapper';
-        const textSpan = document.createElement('span'); textSpan.className = 'command-text'; 
+        const textSpan = document.createElement('span'); textSpan.className = 'command-text';
         textSpan.textContent = item.commandBlock; textSpan.title = item.commandBlock;
-        const copyBtn = document.createElement('button'); copyBtn.textContent = 'Copy'; 
+        const copyBtn = document.createElement('button'); copyBtn.textContent = 'Copy';
         copyBtn.className = 'copy-row-button'; copyBtn.dataset.command = item.commandBlock;
         wrapper.appendChild(textSpan); wrapper.appendChild(copyBtn); commandsCell.appendChild(wrapper);
     });
@@ -348,7 +350,7 @@ export function populateDataTable(rawOptionsData: any[]): void {
         row.insertCell().textContent = selectedOptionText;
         row.insertCell().textContent = 'Optional/Generated';
         row.insertCell().textContent = summary;
-        
+
         const commandsCell = row.insertCell();
         const wrapper = document.createElement('div'); wrapper.className = 'command-cell-wrapper';
         const textSpan = document.createElement('span'); textSpan.className = 'command-text';
@@ -361,13 +363,13 @@ export function populateDataTable(rawOptionsData: any[]): void {
 
 export function populateMapsModesTable(gameConfigs: GameConfigs): void {
     const tableBody = document.querySelector('#maps-modes-table tbody')!;
-    tableBody.innerHTML = ''; 
+    tableBody.innerHTML = '';
 
     if (gameConfigs.maps.length === 0 && gameConfigs.modes.length === 0 && gameConfigs.scavengers.length === 0 && gameConfigs.base.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No maps or modes found.</td></tr>';
         return;
     }
-    
+
     const createCommandCellWithSingleCopy = (cell: HTMLTableCellElement, commands: string[]) => {
         if (!commands || commands.length === 0) {
             cell.textContent = 'N/A';
@@ -408,7 +410,7 @@ export function populateMapsModesTable(gameConfigs: GameConfigs): void {
             createCommandCellWithSingleCopy(row.insertCell(), commands);
         }
     };
-    
+
     populateSimpleCategory(gameConfigs.base, 'base', 'Raptors (Default)');
     populateSimpleCategory(gameConfigs.scavengers, 'scavengers', 'Default');
     populateCategory(gameConfigs.maps, 'maps');
@@ -420,7 +422,7 @@ export function populateStartSelector(gameConfigs: GameConfigs, updateOutputCall
     if (!startSelect) return;
 
     const originalValue = startSelect.value;
-    startSelect.innerHTML = ''; 
+    startSelect.innerHTML = '';
 
     if (gameConfigs && gameConfigs.modes) {
         gameConfigs.modes.forEach((mode, index) => {
@@ -429,13 +431,13 @@ export function populateStartSelector(gameConfigs: GameConfigs, updateOutputCall
             option.textContent = mode.name;
             startSelect.appendChild(option);
         });
-        
+
         if (Array.from(startSelect.options).some(opt => opt.value === originalValue)) {
             startSelect.value = originalValue;
         } else if (startSelect.options.length > 0) {
             startSelect.selectedIndex = 0;
         }
     }
-    
+
     updateOutputCallback();
 }
