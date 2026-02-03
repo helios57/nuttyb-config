@@ -85,6 +85,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
 
     formOptionsConfig.forEach(optionGroup => {
         if (specialLeftOptionsSet.has(optionGroup.label)) return;
+        if (optionGroup.label === 'Scavengers HP' || optionGroup.label === 'Boss HP') return;
 
         const label = document.createElement('label');
         let inputElement: HTMLInputElement | HTMLSelectElement;
