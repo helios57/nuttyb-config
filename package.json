@@ -1,0 +1,24 @@
+{
+  "name": "nuttyb-config",
+  "version": "1.0.0",
+  "description": "NuttyB Configurator",
+  "main": "dist/bundle.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jsdom": "^24.0.0",
+    "typescript": "^5.3.3",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.90.1",
+    "webpack-cli": "^5.1.4",
+    "ts-jest": "^29.1.2",
+    "@types/jest": "^29.5.12",
+    "@types/jsdom": "^21.1.6"
+  }
+}
