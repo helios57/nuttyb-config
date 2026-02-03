@@ -38,11 +38,11 @@ export interface CommandGeneratorInput {
 }
 
 export function generateCommands(input: CommandGeneratorInput): GeneratedCommands {
-    const { 
-        gameConfigs, 
-        formOptionsConfig, 
-        mapsSelectValue, 
-        modesSelectValue, 
+    const {
+        gameConfigs,
+        formOptionsConfig,
+        mapsSelectValue,
+        modesSelectValue,
         primaryModeSelectValue,
         scavHpSelectValue,
         scavHpSelectText,
@@ -65,12 +65,12 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
 
     const standardCommands: string[] = [];
     const customTweaksToProcess: CustomTweak[] = [];
-    
+
     // Process Form Elements
     formElements.forEach(el => {
         if (el.isCustom) {
             if (el.checked && el.customData) customTweaksToProcess.push(el.customData);
-        } 
+        }
         else if (el.tweakDefinition && el.checked) {
             processTweakDefinition(el.tweakDefinition, customTweaksToProcess);
         }
@@ -94,9 +94,9 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                         case 3:   metalCostFactor = 0.25;        workerTimeMultiplier = 0.55; break;
                         case 4:   metalCostFactor = 0.1875;      workerTimeMultiplier = 0.45; break;
                         case 5:   metalCostFactor = 0.15;        workerTimeMultiplier = 0.25; break;
-                        default:  metalCostFactor = 1;           workerTimeMultiplier = 0.5; break; 
+                        default:  metalCostFactor = 1;           workerTimeMultiplier = 0.5; break;
                     }
-                    
+
                     const tweaks = getHpTweak({
                         healthMultiplier: multiplier,
                         workertimeMultiplier: workerTimeMultiplier,
@@ -104,7 +104,7 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                         multiplierText: el.value!
                     });
                     tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
-                    
+
                 } else if (type === 'boss') {
                     const tweak = getBossHpTweak(multiplier, el.value!);
                     processTweakDefinition(tweak, customTweaksToProcess);
@@ -118,8 +118,8 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             let commands: string[] = [];
             if (el.tagName === 'SELECT' && !el.id.includes('maps-select') && !el.id.includes('modes-select') && !el.id.includes('primary-mode-select')) {
                 if (el.value) commands.push(el.value);
-            } 
-            else if (el.checked && el.commandBlocks) { 
+            }
+            else if (el.checked && el.commandBlocks) {
                 commands = el.commandBlocks;
             }
             commands.forEach(cmd => { if (cmd) standardCommands.push(cmd.trim()); });
@@ -152,8 +152,8 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
 
     const anyOptionSelected = presetCommands.length > 0 || standardCommands.length > 0 || customCommands.length > 0;
     const finalCommands: string[] = [];
-    
-    const isGameModeTriggered = presetCommands.length > 0 || standardCommands.length > 0;
+
+    const isGameModeTriggered = presetCommands.length > 0 || standardCommands.length > 0 || customCommands.length > 0;
 
     if(isGameModeTriggered) {
         if (gameConfigs.base.length > 0) {
@@ -163,7 +163,7 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             finalCommands.push(...gameConfigs.scavengers);
         }
     }
-    
+
     finalCommands.push(...presetCommands, ...standardCommands, ...customCommands);
 
     const isScavengers = primaryModeSelectValue === 'Scavengers';
@@ -178,7 +178,7 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             renameParts.push(`[${formattedHpPart}]`);
         }
 
-    } else { 
+    } else {
         let extraRaptorsPart = "", raptorHealthPart = "", queenHealthPart = "";
         raptorOptions.forEach(opt => {
             if (opt.value) {
@@ -193,28 +193,28 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                 }
             }
         });
-        
+
         if (extraRaptorsPart) renameParts.push(extraRaptorsPart);
-        
+
         const combinedRaptorHp = [queenHealthPart, raptorHealthPart].filter(Boolean).join(' ');
         if (combinedRaptorHp) renameParts.push(`[${combinedRaptorHp}]`);
     }
-    
+
     const noMexCommand = '!unit_restrictions_noextractors 1';
     const allowMexCommand = '!unit_restrictions_noextractors 0';
     const lastNoMexIndex = finalCommands.lastIndexOf(noMexCommand);
     const lastAllowMexIndex = finalCommands.lastIndexOf(allowMexCommand);
     const noMexEnabled = lastNoMexIndex > -1 && lastNoMexIndex > lastAllowMexIndex;
-    
+
     if (renameParts.length > 0) {
         renameCommand += renameParts.join('');
     }
     if (noMexEnabled) {
         renameCommand += `[No Mex]`;
     }
-    
+
     const sectionsData: { commands: string[], length: number }[] = [];
-    const allCommandsToSection = finalCommands; 
+    const allCommandsToSection = finalCommands;
 
     for (const cmd of allCommandsToSection) {
         if (!cmd) continue;
@@ -239,7 +239,7 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
         } else {
             const lastSection = sectionsData[sectionsData.length - 1];
             const neededLength = lastSection.length === 0 ? renameCommand.length : renameCommand.length + 1;
-            
+
             if (lastSection.length + neededLength <= MAX_SECTION_LENGTH) {
                 lastSection.commands.push(renameCommand);
                 lastSection.length += neededLength;
@@ -248,22 +248,22 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
             }
         }
     }
-    
+
     const finalSections = sectionsData.map(section => section.commands.join('\n'));
-    
+
     return { lobbyName: (anyOptionSelected ? renameCommand : 'No Options Selected'), sections: finalSections };
 }
 
 function processTweakDefinition(tweak: TweakDefinition, customTweaksToProcess: CustomTweak[]) {
     const luaCode = compileTweak(tweak);
     const validation = validateLua(luaCode);
-    
+
     if (validation.valid) {
         const utf8SafeString = unescape(encodeURIComponent(luaCode));
         const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        
+
         const type = tweak.scope === 'UnitDefsLoop' ? 'tweakdefs' : 'tweakunits';
-        
+
         customTweaksToProcess.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
             desc: tweak.name,

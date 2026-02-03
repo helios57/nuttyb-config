@@ -1,17 +1,18 @@
 import { decodeBase64Url, encodeBase64Url } from './utils';
-import { 
-    mainTweaksPrefixes, 
-    evolvingCommandersPrefixes, 
-    extraRaptorsPrefixes, 
-    hiddenLabels, 
-    defaultSelectedLabels, 
-    rightColumnOrder 
+import {
+    mainTweaksPrefixes,
+    evolvingCommandersPrefixes,
+    extraRaptorsPrefixes,
+    hiddenLabels,
+    defaultSelectedLabels,
+    rightColumnOrder
 } from './constants';
 import { GameConfigs, RawOptionsData, FormOptionsConfig, GroupedOptions } from './types';
 import { generateTweak } from './tweak-generator';
 
 // Declare require.context for Webpack
 declare const require: any;
+declare const marked: any;
 
 interface TweakDataEntry {
     label: string;
@@ -23,13 +24,13 @@ interface TweakDataEntry {
 
 export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] }> {
     const tweakData: TweakDataEntry[] = [];
-    
+
     // Load all JSON files from src/tweaks
     // Note: This relies on Webpack's require.context
     if (typeof require.context === 'function') {
         const context = require.context('../tweaks', false, /\.json$/);
         const keys = context.keys();
-        
+
         // Sort keys numerically based on prefix (e.g. "1-", "2-")
         keys.sort((a: string, b: string) => {
             const numA = parseInt(a.match(/\/(\d+)-/)?.[1] || '0');
@@ -39,7 +40,7 @@ export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData
 
         keys.forEach((key: string) => {
             const config = context(key);
-            
+
             if (config.variants && Array.isArray(config.variants)) {
                 // Hydration: Generate a choice for each variant
                 const choices = config.variants.map((v: any) => {
@@ -48,7 +49,7 @@ export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData
                     const lua = generateTweak(variantConfig);
                     return { label: v.label, lua };
                 });
-                
+
                 tweakData.push({
                     label: config.label,
                     variable: config.variable,
@@ -74,9 +75,13 @@ export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData
 
 export async function loadLinksContent(): Promise<string> {
     try {
-        const response = await fetch(`links.html?t=${Date.now()}`);
+        const response = await fetch(`links.md?t=${Date.now()}`);
         if (!response.ok) return "";
-        return await response.text();
+        const text = await response.text();
+        if (typeof marked !== 'undefined' && marked.parse) {
+             return marked.parse(text);
+        }
+        return text;
     } catch (e) {
         console.error("Failed to load links content", e);
         return "";
@@ -90,9 +95,9 @@ export async function parseModesFile(filePath: string): Promise<GameConfigs> {
             throw new Error(`Could not load ${filePath}: ${response.statusText}`);
         }
         const text = await response.text();
-        
+
         const configs: GameConfigs = { maps: [], modes: [], base: [], scavengers: [] };
-        
+
         const categoryBlocks = text.split('## CATEGORY:').slice(1);
 
         for (const block of categoryBlocks) {
@@ -112,7 +117,7 @@ export async function parseModesFile(filePath: string): Promise<GameConfigs> {
 
                     const name = itemLines.shift()!.trim();
                     const commands = itemLines;
-                    
+
                     if (categoryName === 'maps' && configs.maps) {
                         configs.maps.push({ name, commands });
                     } else if (categoryName === 'modes' && configs.modes) {
@@ -124,12 +129,12 @@ export async function parseModesFile(filePath: string): Promise<GameConfigs> {
         return configs;
     } catch (error) {
         console.error("Failed to parse game configs:", error);
-        return { maps: [], modes: [], base: [], scavengers: [] }; 
+        return { maps: [], modes: [], base: [], scavengers: [] };
     }
 }
 
 function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] } {
-    const groupedOptions: GroupedOptions = { 
+    const groupedOptions: GroupedOptions = {
         mainTweaks: { label: "NuttyB Main Tweaks", type: "checkbox", commandBlocks: [], default: true, disabled: false, column: 'left' },
         evolvingCommanders: { label: "NuttyB Evolving Commanders", type: "checkbox", commandBlocks: [], default: true, disabled: false, column: 'left' },
         extraRaptors: { label: "Extras", type: "select", choices: [{ label: "None", value: "", shortLabel: "" }], column: 'left' },
@@ -188,7 +193,7 @@ function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptions
                  const encoded = encodeBase64Url(c.lua);
                  return { label: c.label, value: `!bset ${item.variable} ${encoded}` };
             });
-            
+
             groupedOptions.otherCheckboxes.options.push({
                 label: item.label,
                 type: 'select',
@@ -202,19 +207,19 @@ function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptions
         const label = item.label;
         const lua = item.lua!;
         const variable = item.variable;
-        
+
         // Generate base64 command block on the fly
         const encoded = encodeBase64Url(lua);
         const commandBlock = `!bset ${variable} ${encoded}`;
-        
+
         let summary = lua.split('\n')[0].trim();
         let status = "Optional", addedToFormGroup = false;
 
-        // Note: Logic related to !bset tweakdefs1 or tweakdefs (space) filtering is implicitly handled 
+        // Note: Logic related to !bset tweakdefs1 or tweakdefs (space) filtering is implicitly handled
         // because we only imported lines that were valid.
         // However, if we need to filter specific variables, we can do it here.
         // The original code filtered `!bset tweakdefs1` or `!bset tweakdefs `.
-        // Our converter included them if they were present. 
+        // Our converter included them if they were present.
         // Let's check if our JSON has them.
         // Tweak data JSON has `tweakdefs2`, `tweakdefs3`, etc.
         // If there's any `tweakdefs1` in JSON we might want to skip it if it was skipped before.
@@ -233,13 +238,13 @@ function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptions
         rawOptionsData.push({ label, commandBlock, status, summary });
         if (!addedToFormGroup && !hiddenLabels.includes(label)) { groupedOptions.otherCheckboxes.options.push({ label, type: "checkbox", commandBlocks: [commandBlock], default: defaultSelectedLabels.includes(label), column: 'right' }); }
     });
-    
+
     groupedOptions.otherCheckboxes.options.sort((a,b) => { const ia=rightColumnOrder.indexOf(a.label),ib=rightColumnOrder.indexOf(b.label); return ((ia===-1)?Infinity:ia)-((ib===-1)?Infinity:ib); });
-    
+
     let formOptionsConfig: FormOptionsConfig[] = [];
     if (groupedOptions.mainTweaks.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.mainTweaks);
     if (groupedOptions.evolvingCommanders.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.evolvingCommanders);
-    
+
     formOptionsConfig.push(dynamicHPGroup, dynamicQHPGroup, dynamicBossGroup, dynamicScavGroup);
 
     if (groupedOptions.extraRaptors.choices!.length > 1) formOptionsConfig.push(groupedOptions.extraRaptors);

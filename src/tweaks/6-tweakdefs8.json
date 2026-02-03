@@ -98,14 +98,36 @@
       ]
     },
     {
-      "name": "Add Epic Aides to Build Options",
+      "name": "Add Epic Aides to Build Options (Armada)",
       "description": "Adds T3 Epic Aides to Experimental Gantries",
       "scope": "UnitDefsLoop",
       "conditions": [
-        { "type": "nameInList", "names": ["armshltx", "corgant", "leggant"] }
+        { "type": "nameInList", "names": ["armshltx"] }
       ],
       "mutations": [
-        { "op": "raw_lua", "code": "if string.sub(Unit.name, 1, 3) == 'arm' then table.insert(Unit.buildoptions, 'armt3aide') elseif string.sub(Unit.name, 1, 3) == 'cor' then table.insert(Unit.buildoptions, 'cort3aide') else table.insert(Unit.buildoptions, 'legt3aide') end" }
+        { "op": "list_append", "field": "buildoptions", "value": "armt3aide" }
+      ]
+    },
+    {
+      "name": "Add Epic Aides to Build Options (Cortex)",
+      "description": "Adds T3 Epic Aides to Experimental Gantries",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "nameInList", "names": ["corgant"] }
+      ],
+      "mutations": [
+        { "op": "list_append", "field": "buildoptions", "value": "cort3aide" }
+      ]
+    },
+    {
+      "name": "Add Epic Aides to Build Options (Legion)",
+      "description": "Adds T3 Epic Aides to Experimental Gantries",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "nameInList", "names": ["leggant"] }
+      ],
+      "mutations": [
+        { "op": "list_append", "field": "buildoptions", "value": "legt3aide" }
       ]
     }
   ]

@@ -12,7 +12,6 @@ fs.mkdirSync(destDir);
 const filesToCopy = [
     'index.html',
     'modes.txt',
-    'luamin.js',
     'links.md'
 ];
 

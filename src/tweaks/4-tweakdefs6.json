@@ -42,20 +42,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "Update Build Options for Taxed Units",
-      "description": "Adds taxed units to build options of other factions",
-      "scope": "UnitDefsLoop",
-      "conditions": [
-        { "type": "fieldValue", "field": "buildoptions", "value": true }
-        // Note: 'value: true' for a list field implies 'has any value' or 'exists'.
-        // The schema might need refinement for 'fieldExists', but 'fieldValue' with boolean might work if the engine supports it.
-        // Alternatively, we rely on the fact that we are iterating all units and checking buildoptions.
-      ],
-      "mutations": [
-        { "op": "raw_lua", "code": "-- Logic to add taxed units to buildoptions is complex (cross-faction check) and best left as raw_lua or a specific 'cross_faction_build_option' op for now." }
-      ]
     }
   ]
 }
