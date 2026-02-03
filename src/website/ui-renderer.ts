@@ -20,6 +20,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
             const inputElement = document.createElement('input');
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
+            if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
             inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
             label.appendChild(inputElement);
@@ -87,17 +88,52 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         if (specialLeftOptionsSet.has(optionGroup.label)) return;
         if (optionGroup.label === 'Scavengers HP' || optionGroup.label === 'Boss HP') return;
 
+        const raptorLabels = new Set(['Raptor Health', 'Queen Health', 'Extras', 'Raptor Settings', 'Queen Quantity', 'Wave Multiplier', 'First Waves Boost', 'Grace Period Multiplier']);
+
+        if (optionGroup.type === 'header') {
+             const h3 = document.createElement('h3');
+             h3.textContent = optionGroup.label;
+
+             if (raptorLabels.has(optionGroup.label) || optionGroup.label === 'Raptor Settings') {
+                 raptorOnlyContainer.appendChild(h3);
+             } else if (optionGroup.column === 'right') {
+                 rightColumn.appendChild(h3);
+             } else {
+                 leftColumn.appendChild(h3);
+             }
+             return;
+        }
+
         const label = document.createElement('label');
         let inputElement: HTMLInputElement | HTMLSelectElement;
         if (optionGroup.type === 'checkbox') {
             inputElement = document.createElement('input');
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
+            if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
             inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
             label.appendChild(inputElement);
             label.appendChild(document.createTextNode(' ' + optionGroup.label));
             if (!inputElement.disabled) inputElement.addEventListener('change', updateOutputCallback);
+        } else if (optionGroup.type === 'numeric-tweak') {
+            inputElement = document.createElement('input');
+            inputElement.type = 'number';
+            if (optionGroup.min !== undefined) inputElement.min = String(optionGroup.min);
+            if (optionGroup.max !== undefined) inputElement.max = String(optionGroup.max);
+            if (optionGroup.step !== undefined) inputElement.step = String(optionGroup.step);
+            inputElement.value = optionGroup.defaultValue || "";
+
+            if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
+            if (optionGroup.tweakVar) inputElement.dataset.tweakVar = optionGroup.tweakVar;
+            if (optionGroup.modOption) inputElement.dataset.modOption = optionGroup.modOption;
+
+            label.textContent = optionGroup.label + ': ';
+            label.appendChild(inputElement);
+            if (optionGroup.unitLabel) {
+                label.appendChild(document.createTextNode(' ' + optionGroup.unitLabel));
+            }
+            inputElement.addEventListener('input', updateOutputCallback);
         } else if (optionGroup.type === 'select') {
             inputElement = document.createElement('select');
             inputElement.dataset.optionType = optionGroup.label;
@@ -126,7 +162,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
 
         if (optionGroup.column === 'right') {
             rightColumn.appendChild(label);
-        } else if (optionGroup.label === 'Raptor Health' || optionGroup.label === 'Queen Health' || optionGroup.label === 'Extras') {
+        } else if (raptorLabels.has(optionGroup.label)) {
             raptorOnlyContainer.appendChild(label);
         } else {
             leftColumn.appendChild(label);
