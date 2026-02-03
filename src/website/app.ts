@@ -221,10 +221,16 @@ resetDefaultBtn.addEventListener('click', () => {
     const primaryModeSelect = document.getElementById('primary-mode-select') as HTMLSelectElement;
     if (primaryModeSelect) primaryModeSelect.value = 'Raptors';
     
+    // Create a map for faster lookup of checkbox labels
+    const checkboxLabelsMap = new Map<string, HTMLLabelElement>();
+    document.querySelectorAll('#options-form-columns label').forEach(l => {
+        const text = l.textContent?.trim();
+        if (text) checkboxLabelsMap.set(text, l as HTMLLabelElement);
+    });
+
     formOptionsConfig.forEach(optionGroup => {
         if (optionGroup.type === 'checkbox') {
-            const allLabels = document.querySelectorAll('#options-form-columns label');
-            const label = Array.from(allLabels).find(l => l.textContent?.trim().includes(optionGroup.label));
+            const label = checkboxLabelsMap.get(optionGroup.label);
             if (label) {
                 const checkbox = label.querySelector('input[type="checkbox"]') as HTMLInputElement;
                 if (checkbox) checkbox.checked = !!optionGroup.default;
