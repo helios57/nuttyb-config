@@ -21,9 +21,7 @@ describe('Lua Execution Integration', () => {
 
     beforeAll(async () => {
         factory = new LuaFactory();
-        lua = await factory.createEngine();
-
-        // Compile logic
+        // Compile logic once
         const compiler = new OptimizedLuaCompiler();
         const inputs = config.map(tweak => ({
             tweak,
@@ -32,15 +30,38 @@ describe('Lua Execution Integration', () => {
         compiledCode = compiler.compile(inputs);
     });
 
-    afterAll(() => {
+    beforeEach(async () => {
+        lua = await factory.createEngine();
+        // Common Lua Setup
+        await lua.doString(`
+            UnitDefs = {}
+            Spring = {
+                GetModOptions = function()
+                    return {
+                        raptor_spawncountmult = 3
+                    }
+                end
+            }
+            table.merge = function(dest, src)
+                for k, v in pairs(src) do
+                    if type(v) == "table" and type(dest[k]) == "table" then
+                        table.merge(dest[k], v)
+                    else
+                        dest[k] = v
+                    end
+                end
+                return dest
+            end
+        `);
+    });
+
+    afterEach(() => {
         if (lua) lua.global.close();
     });
 
     test('Should execute compiled tweaks without errors', async () => {
-        // Setup Environment
+        // Setup Test Units
         await lua.doString(`
-            UnitDefs = {}
-
             UnitDefs["raptor_queen_test"] = {
                 name = "raptor_queen_test",
                 repairable = true,
@@ -95,25 +116,6 @@ describe('Lua Execution Integration', () => {
                 metalCost = 100,
                 energyCost = 1000
             }
-
-            Spring = {
-                GetModOptions = function()
-                    return {
-                        raptor_spawncountmult = 3
-                    }
-                end
-            }
-
-            table.merge = function(dest, src)
-                for k, v in pairs(src) do
-                    if type(v) == "table" and type(dest[k]) == "table" then
-                        table.merge(dest[k], v)
-                    else
-                        dest[k] = v
-                    end
-                end
-                return dest
-            end
         `);
 
         // Execute generated code
@@ -127,6 +129,10 @@ describe('Lua Execution Integration', () => {
 
         // Assertions
         const qHealth = await lua.doString('return UnitDefs["raptor_queen_test"].health');
+        if (qHealth !== 2000) {
+            console.log("qHealth mismatch! Expected 2000, got:", qHealth);
+            console.log("Compiled Code:\n", compiledCode);
+        }
         expect(qHealth).toBe(2000); // 1000 * 2.0 (multiplier)
 
         const qRepairable = await lua.doString('return UnitDefs["raptor_queen_test"].repairable');
@@ -165,7 +171,6 @@ describe('Lua Execution Integration', () => {
     test('Performance Benchmark', async () => {
         // Setup 5000 units
         await lua.doString(`
-            UnitDefs = {}
             for i = 1, 5000 do
                 UnitDefs["unit_" .. i] = {
                     name = "Unit " .. i,
