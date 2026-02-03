@@ -70,20 +70,23 @@ export class LuaBlockBuilder {
     }
 }
 
-export function compileTweak(tweak: TweakDefinition): string {
+export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[]): string {
+    const tweaks = Array.isArray(tweakOrTweaks) ? tweakOrTweaks : [tweakOrTweaks];
     const builder = new LuaBlockBuilder();
 
     // 1. Global Optimization: Localize standard library functions
     const usedGlobals = new Set<string>();
     
-    for (const cond of tweak.conditions) {
-        if (cond.type === 'nameMatch' || cond.type === 'nameNotMatch') usedGlobals.add('string.match');
-        if (cond.type === 'nameStartsWith' || cond.type === 'nameEndsWith') usedGlobals.add('string.sub');
-    }
-    
-    for (const mut of tweak.mutations) {
-        if (mut.op === 'assign_math_floor') usedGlobals.add('math.floor');
-        if (mut.op === 'list_append' || mut.op === 'list_remove') usedGlobals.add('table.insert');
+    for (const tweak of tweaks) {
+        for (const cond of tweak.conditions) {
+            if (cond.type === 'nameMatch' || cond.type === 'nameNotMatch') usedGlobals.add('string.match');
+            if (cond.type === 'nameStartsWith' || cond.type === 'nameEndsWith') usedGlobals.add('string.sub');
+        }
+        
+        for (const mut of tweak.mutations) {
+            if (mut.op === 'assign_math_floor') usedGlobals.add('math.floor');
+            if (mut.op === 'list_append' || mut.op === 'list_remove') usedGlobals.add('table.insert');
+        }
     }
 
     if (usedGlobals.has('string.match')) builder.addLocal('string_match', 'string.match');
@@ -110,15 +113,29 @@ export function compileTweak(tweak: TweakDefinition): string {
         const parts = fieldPath.split('.');
         if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
             const paramKey = parts[1];
+            builder.startIf(`${defVar}.customparams`);
+            builder.addStatement(`${defVar}.customparams["${paramKey}"] = ${valueExpr}`);
+            builder.addElse();
             builder.addStatement(`if not ${defVar}.customParams then ${defVar}.customParams = {} end`);
             builder.addStatement(`${defVar}.customParams["${paramKey}"] = ${valueExpr}`);
+            builder.endBlock();
         } else {
             builder.addStatement(`${defVar}.${fieldPath} = ${valueExpr}`);
         }
     };
 
+    // Helper to sort mutations to prevent rounding drift
+    const sortMutations = (mutations: MutationOperation[]): MutationOperation[] => {
+        const order = { 'set': 1, 'multiply': 2, 'assign_math_floor': 3 };
+        return [...mutations].sort((a, b) => {
+            const oa = (order as any)[a.op] || 99;
+            const ob = (order as any)[b.op] || 99;
+            return oa - ob;
+        });
+    };
+
     // 2. Logic Generator
-    const generateBody = (unitNameVar: string, defVar: string) => {
+    const generateBody = (tweak: TweakDefinition, unitNameVar: string, defVar: string) => {
         const conditionsLua: string[] = [];
         
         for (const cond of tweak.conditions) {
@@ -149,7 +166,9 @@ export function compileTweak(tweak: TweakDefinition): string {
             builder.startIf(conditionsLua.join(' and '));
         }
 
-        for (const mut of tweak.mutations) {
+        const sortedMutations = sortMutations(tweak.mutations);
+
+        for (const mut of sortedMutations) {
             if (mut.op === 'multiply') {
                 const readExpr = getFieldRead(defVar, mut.field);
                 builder.startIf(readExpr);
@@ -171,9 +190,14 @@ export function compileTweak(tweak: TweakDefinition): string {
                 builder.startIf('not target_list');
                 const parts = mut.field.split('.');
                 if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                     builder.startIf(`${defVar}.customparams`);
+                     builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
+                     builder.addStatement(`target_list = ${defVar}.customparams["${parts[1]}"]`);
+                     builder.addElse();
                      builder.addStatement(`if not ${defVar}.customParams then ${defVar}.customParams = {} end`);
                      builder.addStatement(`${defVar}.customParams["${parts[1]}"] = {}`);
                      builder.addStatement(`target_list = ${defVar}.customParams["${parts[1]}"]`);
+                     builder.endBlock();
                 } else {
                      builder.addStatement(`${defVar}.${mut.field} = {}`);
                      builder.addStatement(`target_list = ${defVar}.${mut.field}`);
@@ -197,9 +221,14 @@ export function compileTweak(tweak: TweakDefinition): string {
                 builder.startIf('not target_table');
                 const parts = mut.field.split('.');
                 if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                     builder.startIf(`${defVar}.customparams`);
+                     builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
+                     builder.addStatement(`target_table = ${defVar}.customparams["${parts[1]}"]`);
+                     builder.addElse();
                      builder.addStatement(`if not ${defVar}.customParams then ${defVar}.customParams = {} end`);
                      builder.addStatement(`${defVar}.customParams["${parts[1]}"] = {}`);
                      builder.addStatement(`target_table = ${defVar}.customParams["${parts[1]}"]`);
+                     builder.endBlock();
                 } else {
                      builder.addStatement(`${defVar}.${mut.field} = {}`);
                      builder.addStatement(`target_table = ${defVar}.${mut.field}`);
@@ -208,6 +237,8 @@ export function compileTweak(tweak: TweakDefinition): string {
                 builder.startLoop(`for k, v in pairs(${luaTable})`);
                 builder.addStatement('target_table[k] = v');
                 builder.endBlock();
+            } else if (mut.op === 'raw_lua') {
+                builder.addStatement(mut.code);
             }
         }
 
@@ -216,15 +247,31 @@ export function compileTweak(tweak: TweakDefinition): string {
         }
     };
 
-    if (tweak.scope === 'UnitDefsLoop') {
+    const loopTweaks = tweaks.filter(t => t.scope === 'UnitDefsLoop');
+    const postTweaks = tweaks.filter(t => t.scope === 'UnitDef_Post');
+    const globalTweaks = tweaks.filter(t => t.scope === 'Global');
+
+    if (globalTweaks.length > 0) {
+        for (const tweak of globalTweaks) {
+            generateBody(tweak, 'nil', 'nil'); // Unit vars not available in Global scope
+        }
+    }
+
+    if (loopTweaks.length > 0) {
         builder.startLoop('for id, def in pairs(UnitDefs)');
         builder.addLocal('name', 'def.name');
-        generateBody('name', 'def');
+        for (const tweak of loopTweaks) {
+            generateBody(tweak, 'name', 'def');
+        }
         builder.endBlock();
-    } else if (tweak.scope === 'UnitDef_Post') {
-        const funcName = `ApplyTweak_${tweak.name.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+    }
+
+    if (postTweaks.length > 0) {
+        const funcName = `ApplyTweaks_Post`;
         builder.startBlock(`local function ${funcName}(name, def)`);
-        generateBody('name', 'def');
+        for (const tweak of postTweaks) {
+            generateBody(tweak, 'name', 'def');
+        }
         builder.endBlock();
         builder.addStatement('');
         builder.startIf('UnitDef_Post');

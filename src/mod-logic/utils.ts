@@ -1,5 +1,6 @@
 import { compileTweak } from './lua-compiler';
-import { getQhpTweak, getBossHpTweak } from './tweak-definitions';
+import { getQhpTweak, getBossHpTweak, getHpTweak, getScavHpTweak } from './tweak-definitions';
+import { RaptorTweakConfig } from './presets';
 
 // Declare luamin as a global variable since it's loaded via script tag
 declare const luamin: any;
@@ -34,16 +35,52 @@ export function generateLuaTweak(type: string, value: string): string {
             tweak = getQhpTweak(multiplier, value);
         } else if (type === 'boss') {
              tweak = getBossHpTweak(multiplier, value);
+        } else if (type === 'hp') {
+             let metalCostFactor = 1;
+             let workertimeMultiplier = 0.5;
+
+             switch (multiplier) {
+                case 1.3: metalCostFactor = 0.576923077; workertimeMultiplier = 0.5; break;
+                case 1.5: metalCostFactor = 0.466666667; workertimeMultiplier = 0.5; break;
+                case 1.7: metalCostFactor = 0.411764706; workertimeMultiplier = 0.5; break;
+                case 2:   metalCostFactor = 0.35;        workertimeMultiplier = 0.5; break;
+                case 2.5: metalCostFactor = 0.3;         workertimeMultiplier = 0.6; break;
+                case 3:   metalCostFactor = 0.25;        workertimeMultiplier = 0.55; break;
+                case 4:   metalCostFactor = 0.1875;      workertimeMultiplier = 0.45; break;
+                case 5:   metalCostFactor = 0.15;        workertimeMultiplier = 0.25; break;
+                default:  metalCostFactor = 1;           workertimeMultiplier = 0.5; break;
+             }
+             
+             const config: RaptorTweakConfig = {
+                 healthMultiplier: multiplier,
+                 workertimeMultiplier,
+                 metalCostFactor,
+                 multiplierText: value
+             };
+             tweak = getHpTweak(config);
+        } else if (type === 'scav') {
+            tweak = getScavHpTweak(multiplier, value);
         } else {
-            // 'hp' and 'scav' return arrays of tweaks, which cannot be represented as a single base64 string for a single slot easily here.
-            // We return a placeholder or error.
-            return "Error: Complex tweak (multiple slots)";
+            return "Error: Unknown type";
         }
 
         if (tweak) {
              const lua = compileTweak(tweak);
-             const utf8SafeString = unescape(encodeURIComponent(lua));
-             return btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+             
+             let finalLua = lua;
+             if (typeof luamin !== 'undefined') {
+                 // Preserve the first line comment if it exists
+                 const firstLineMatch = lua.match(/^(--.*)\n/);
+                 const header = firstLineMatch ? firstLineMatch[1] : '';
+                 
+                 // Minify the code
+                 const minified = luamin.minify(lua);
+                 
+                 // Reattach header if it was there
+                 finalLua = header ? header + '\n' + minified : minified;
+             }
+
+             return encodeBase64Url(finalLua);
         }
     } catch (e) {
         return "Error: " + e;

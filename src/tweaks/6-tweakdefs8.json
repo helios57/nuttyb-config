@@ -1,6 +1,6 @@
 {
   "label": "T3 Builders",
   "variable": "tweakdefs8",
-  "generator": "static-script",
-  "scriptId": "tweakdefs8"
+  "generator": "tweak-function",
+  "functionId": "getTweakDefs8"
 }

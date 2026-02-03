@@ -1,6 +1,6 @@
 {
   "label": "T3 Eco",
   "variable": "tweakdefs7",
-  "generator": "static-script",
-  "scriptId": "tweakdefs7"
+  "generator": "tweak-function",
+  "functionId": "getTweakDefs7"
 }

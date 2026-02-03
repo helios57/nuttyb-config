@@ -1,6 +1,6 @@
 {
   "label": "Cross Faction T2",
   "variable": "tweakdefs6",
-  "generator": "static-script",
-  "scriptId": "tweakdefs6"
+  "generator": "tweak-function",
+  "functionId": "getTweakDefs6"
 }

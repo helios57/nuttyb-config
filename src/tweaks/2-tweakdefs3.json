@@ -1,6 +1,6 @@
 {
   "label": "T4 Defences Test",
   "variable": "tweakdefs3",
-  "generator": "static-script",
-  "scriptId": "tweakdefs3"
+  "generator": "tweak-function",
+  "functionId": "getTweakDefs3"
 }

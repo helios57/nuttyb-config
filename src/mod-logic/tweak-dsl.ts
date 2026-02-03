@@ -1,4 +1,4 @@
-export type TweakScope = 'UnitDefsLoop' | 'UnitDef_Post';
+export type TweakScope = 'UnitDefsLoop' | 'UnitDef_Post' | 'Global';
 
 export type TweakCondition =
   | { type: 'nameMatch'; regex: string }
@@ -28,7 +28,8 @@ export type MutationOperation =
   | { op: 'assign_math_floor'; target: UnitDefField; source: UnitDefField; factor: number }
   | { op: 'list_append'; field: UnitDefField; value: string | number }
   | { op: 'list_remove'; field: UnitDefField; value: string | number }
-  | { op: 'table_merge'; field: UnitDefField; value: Record<string, any> };
+  | { op: 'table_merge'; field: UnitDefField; value: Record<string, any> }
+  | { op: 'raw_lua'; code: string };
 
 export interface TweakDefinition {
   name: string;

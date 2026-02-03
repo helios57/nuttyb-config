@@ -16,7 +16,9 @@ declare const require: any;
 interface TweakDataEntry {
     label: string;
     variable: string;
-    lua: string;
+    lua?: string;
+    type?: 'checkbox' | 'select';
+    choices?: { label: string; lua: string }[];
 }
 
 export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] }> {
@@ -37,12 +39,31 @@ export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData
 
         keys.forEach((key: string) => {
             const config = context(key);
-            const lua = generateTweak(config);
-            tweakData.push({
-                label: config.label,
-                variable: config.variable,
-                lua: lua
-            });
+            
+            if (config.variants && Array.isArray(config.variants)) {
+                // Hydration: Generate a choice for each variant
+                const choices = config.variants.map((v: any) => {
+                    // Create a config clone with the variant's specific values for hydration
+                    const variantConfig = { ...config, values: v.values || {} };
+                    const lua = generateTweak(variantConfig);
+                    return { label: v.label, lua };
+                });
+                
+                tweakData.push({
+                    label: config.label,
+                    variable: config.variable,
+                    type: 'select',
+                    choices: choices
+                });
+            } else {
+                const lua = generateTweak(config);
+                tweakData.push({
+                    label: config.label,
+                    variable: config.variable,
+                    lua: lua,
+                    type: 'checkbox'
+                });
+            }
         });
     } else {
         console.error("require.context is not available. Cannot load tweaks.");
@@ -138,10 +159,48 @@ function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptions
                 { label: "4x QHP", value: "4", shortLabel: "4x QHP" }, { label: "5x QHP", value: "5", shortLabel: "5x QHP" },
         ]
     };
+    const dynamicBossGroup: FormOptionsConfig = {
+        label: "Boss HP", type: "select", isHpGenerator: true, hpType: 'boss', column: 'left', slot: 2, slotType: 'tweakdefs',
+        defaultValue: "1.3",
+        choices: [
+                { label: "Default", value: "", shortLabel: "" }, { label: "1x HP", value: "1", shortLabel: "1x HP" },
+                { label: "1.3x HP", value: "1.3", shortLabel: "1_3x HP" }, { label: "1.5x HP", value: "1.5", shortLabel: "1_5x HP" },
+                { label: "1.7x HP", value: "1.7", shortLabel: "1_7x HP" }, { label: "2x HP", value: "2", shortLabel: "2x HP" },
+                { label: "2.5x HP", value: "2.5", shortLabel: "2_5x HP" }, { label: "3x HP", value: "3", shortLabel: "3x HP" },
+                { label: "4x HP", value: "4", shortLabel: "4x HP" }, { label: "5x HP", value: "5", shortLabel: "5x HP" },
+        ]
+    };
+    const dynamicScavGroup: FormOptionsConfig = {
+        label: "Scavengers HP", type: "select", isHpGenerator: true, hpType: 'scav', column: 'left', slot: 3, slotType: 'tweakdefs',
+        defaultValue: "1.3",
+        choices: [
+                { label: "Default", value: "", shortLabel: "" }, { label: "1x HP", value: "1", shortLabel: "1x HP" },
+                { label: "1.3x HP", value: "1.3", shortLabel: "1_3x HP" }, { label: "1.5x HP", value: "1.5", shortLabel: "1_5x HP" },
+                { label: "1.7x HP", value: "1.7", shortLabel: "1_7x HP" }, { label: "2x HP", value: "2", shortLabel: "2x HP" },
+                { label: "2.5x HP", value: "2.5", shortLabel: "2_5x HP" }, { label: "3x HP", value: "3", shortLabel: "3x HP" },
+                { label: "4x HP", value: "4", shortLabel: "4x HP" }, { label: "5x HP", value: "5", shortLabel: "5x HP" },
+        ]
+    };
 
     data.forEach(item => {
+        if (item.type === 'select' && item.choices) {
+            const choices = item.choices.map(c => {
+                 const encoded = encodeBase64Url(c.lua);
+                 return { label: c.label, value: `!bset ${item.variable} ${encoded}` };
+            });
+            
+            groupedOptions.otherCheckboxes.options.push({
+                label: item.label,
+                type: 'select',
+                column: 'right',
+                choices: choices,
+                defaultValue: choices[0]?.value
+            });
+            return;
+        }
+
         const label = item.label;
-        const lua = item.lua;
+        const lua = item.lua!;
         const variable = item.variable;
         
         // Generate base64 command block on the fly
@@ -181,7 +240,7 @@ function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptions
     if (groupedOptions.mainTweaks.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.mainTweaks);
     if (groupedOptions.evolvingCommanders.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.evolvingCommanders);
     
-    formOptionsConfig.push(dynamicHPGroup, dynamicQHPGroup);
+    formOptionsConfig.push(dynamicHPGroup, dynamicQHPGroup, dynamicBossGroup, dynamicScavGroup);
 
     if (groupedOptions.extraRaptors.choices!.length > 1) formOptionsConfig.push(groupedOptions.extraRaptors);
     formOptionsConfig = formOptionsConfig.concat(groupedOptions.otherCheckboxes.options);
