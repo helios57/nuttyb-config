@@ -1,6 +1,205 @@
 {
   "label": "Main tweakdefs",
   "variable": "tweakdefs2",
-  "generator": "tweak-function",
-  "functionId": "getTweakDefs2"
+  "generator": "json-schema",
+  "definitions": [
+    {
+      "name": "Raptor Air Fighter Basic Tweaks",
+      "description": "Adjusts weapon properties for Raptor Air Fighter Basic",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameStartsWith",
+          "prefix": "raptor_air_fighter_basic"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "modify_weapon",
+          "weaponName": "*",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Spike" },
+            { "op": "set", "field": "accuracy", "value": 200 },
+            { "op": "set", "field": "collidefriendly", "value": 0 },
+            { "op": "set", "field": "collidefeature", "value": 0 },
+            { "op": "set", "field": "avoidfeature", "value": 0 },
+            { "op": "set", "field": "avoidfriendly", "value": 0 },
+            { "op": "set", "field": "areaofeffect", "value": 64 },
+            { "op": "set", "field": "edgeeffectiveness", "value": 0.3 },
+            { "op": "set", "field": "explosiongenerator", "value": "custom:raptorspike-large-sparks-burn" },
+            { "op": "set", "field": "cameraShake", "value": {} },
+            { "op": "set", "field": "dance", "value": {} },
+            { "op": "set", "field": "interceptedbyshieldtype", "value": 0 },
+            { "op": "set", "field": "model", "value": "Raptors/spike.s3o" },
+            { "op": "set", "field": "reloadtime", "value": 1.1 },
+            { "op": "set", "field": "soundstart", "value": "talonattack" },
+            { "op": "set", "field": "startvelocity", "value": 200 },
+            { "op": "set", "field": "submissile", "value": 1 },
+            { "op": "set", "field": "smoketrail", "value": 0 },
+            { "op": "set", "field": "smokePeriod", "value": {} },
+            { "op": "set", "field": "smoketime", "value": {} },
+            { "op": "set", "field": "smokesize", "value": {} },
+            { "op": "set", "field": "smokecolor", "value": {} },
+            { "op": "set", "field": "soundhit", "value": {} },
+            { "op": "set", "field": "texture1", "value": {} },
+            { "op": "set", "field": "texture2", "value": {} },
+            { "op": "set", "field": "tolerance", "value": {} },
+            { "op": "set", "field": "tracks", "value": 0 },
+            { "op": "set", "field": "turnrate", "value": 60000 },
+            { "op": "set", "field": "weaponacceleration", "value": 100 },
+            { "op": "set", "field": "weapontimer", "value": 1 },
+            { "op": "set", "field": "weaponvelocity", "value": 1000 },
+            { "op": "set", "field": "weapontype", "value": {} },
+            { "op": "set", "field": "wobble", "value": {} }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Commander Tweaks",
+      "description": "Adjusts customparams and featuredefs for Commanders",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "nameMatch", "regex": "^[acl][ore][rgm]com" },
+        { "type": "nameNotMatch", "regex": "_scav$" }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "field": "customparams",
+          "value": {
+            "combatradius": 0,
+            "fall_damage_multiplier": 0,
+            "paratrooper": true,
+            "wtboostunittype": {}
+          }
+        },
+        {
+          "op": "table_merge",
+          "field": "featuredefs",
+          "value": {
+            "dead": {
+              "damage": 9999999,
+              "reclaimable": false,
+              "mass": 9999999
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Specific Unit Tweaks",
+      "description": "Tweaks for specific units",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameInList",
+          "names": [
+            "raptor_air_kamikaze_basic_t2_v1",
+            "raptor_land_swarmer_emp_t2_v1",
+            "raptor_land_assault_emp_t2_v1",
+            "raptor_allterrain_arty_emp_t2_v1",
+            "raptor_allterrain_arty_emp_t4_v1",
+            "raptor_air_bomber_emp_t2_v1",
+            "raptor_allterrain_swarmer_emp_t2_v1",
+            "raptor_allterrain_assault_emp_t2_v1",
+            "raptor_matriarch_electric"
+          ]
+        }
+      ],
+      "mutations": [
+        { "op": "raw_lua", "code": "-- Complex per-unit logic handled via raw_lua for now or split into separate definitions" }
+      ]
+    },
+    {
+      "name": "Raptor Turret Buffs",
+      "description": "Doubles health and adjusts reload/range for turrets",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameInList",
+          "names": [
+            "raptor_antinuke", "raptor_turret_acid_t2_v1", "raptor_turret_acid_t3_v1", "raptor_turret_acid_t4_v1",
+            "raptor_turret_antiair_t2_v1", "raptor_turret_antiair_t3_v1", "raptor_turret_antiair_t4_v1",
+            "raptor_turret_antinuke_t2_v1", "raptor_turret_antinuke_t3_v1", "raptor_turret_basic_t2_v1",
+            "raptor_turret_basic_t3_v1", "raptor_turret_basic_t4_v1", "raptor_turret_burrow_t2_v1",
+            "raptor_turret_emp_t2_v1", "raptor_turret_emp_t3_v1", "raptor_turret_emp_t4_v1", "raptor_worm_green"
+          ]
+        }
+      ],
+      "mutations": [
+        { "op": "set", "field": "maxThisUnit", "value": 10 },
+        { "op": "multiply", "field": "health", "factor": 2 },
+        {
+          "op": "modify_weapon",
+          "weaponName": "*",
+          "mutations": [
+            { "op": "multiply", "field": "reloadtime", "factor": 0.666666 },
+            { "op": "multiply", "field": "range", "factor": 0.5 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Flying Builder Cleanup",
+      "description": "Removes explosion from flying builders",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "fieldValue", "field": "builder", "value": true },
+        { "type": "fieldValue", "field": "canfly", "value": true }
+      ],
+      "mutations": [
+        { "op": "set", "field": "explodeAs", "value": "" },
+        { "op": "set", "field": "selfDestructAs", "value": "" }
+      ]
+    },
+    {
+      "name": "Clone Hive Spawn",
+      "description": "Creates Hive Spawn from Raptor Swarmer",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_land_swarmer_basic_t1_v1",
+          "target": "raptor_hive_swarmer_basic",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Hive Spawn" },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": "Hive Spawn",
+                "i18n_en_tooltip": "Raptor spawned to defend hives from attackers."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clone Armored Assault Raptor",
+      "description": "Creates Armored Assault Raptor",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_land_assault_basic_t2_v1",
+          "target": "raptor_hive_assault_basic",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Armored Assault Raptor" },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": "Armored Assault Raptor",
+                "i18n_en_tooltip": "Heavy, slow, and unyielding—these beasts are made to take the hits others cant."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

@@ -1,6 +1,112 @@
 {
   "label": "T3 Builders",
   "variable": "tweakdefs8",
-  "generator": "tweak-function",
-  "functionId": "getTweakDefs8"
+  "generator": "json-schema",
+  "definitions": [
+    {
+      "name": "Create T3 Construction Turrets",
+      "description": "Creates T3 construction turrets for each faction",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armnanotct2",
+          "target": "armnanotct3",
+          "mutations": [
+            { "op": "set", "field": "metalcost", "value": 3700 },
+            { "op": "set", "field": "energycost", "value": 62000 },
+            { "op": "set", "field": "builddistance", "value": 550 },
+            { "op": "set", "field": "buildtime", "value": 108000 },
+            { "op": "set", "field": "health", "value": 8800 },
+            { "op": "set", "field": "workertime", "value": 1900 },
+            { "op": "set", "field": "customparams", "value": { "i18n_en_humanname": "T3 Construction Turret" } }
+          ]
+        },
+        {
+          "op": "clone_unit",
+          "source": "cornanotct2",
+          "target": "cornanotct3",
+          "mutations": [
+            { "op": "set", "field": "metalcost", "value": 3700 },
+            { "op": "set", "field": "energycost", "value": 62000 },
+            { "op": "set", "field": "builddistance", "value": 550 },
+            { "op": "set", "field": "buildtime", "value": 108000 },
+            { "op": "set", "field": "health", "value": 8800 },
+            { "op": "set", "field": "workertime", "value": 1900 },
+            { "op": "set", "field": "customparams", "value": { "i18n_en_humanname": "T3 Construction Turret" } }
+          ]
+        },
+        {
+          "op": "clone_unit",
+          "source": "legnanotct2",
+          "target": "legnanotct3",
+          "mutations": [
+            { "op": "set", "field": "metalcost", "value": 3700 },
+            { "op": "set", "field": "energycost", "value": 62000 },
+            { "op": "set", "field": "builddistance", "value": 550 },
+            { "op": "set", "field": "buildtime", "value": 108000 },
+            { "op": "set", "field": "health", "value": 8800 },
+            { "op": "set", "field": "workertime", "value": 1900 },
+            { "op": "set", "field": "customparams", "value": { "i18n_en_humanname": "T3 Construction Turret" } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Epic Aide Units",
+      "description": "Creates T3 Epic Aide units for each faction",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armdecom",
+          "target": "armt3aide",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Armada Epic Aide" },
+            { "op": "set", "field": "workertime", "value": 6000 },
+            { "op": "set", "field": "buildoptions", "value": [
+              "armafust3", "armnanotct2", "armnanotct3", "armalab", "armavp", "armaap", "armgatet3", "armflak", "armmmkrt3", "armuwadvmst3", "armadvestoret3", "armgate", "armfort", "armshltx", "corgant_taxed", "leggant_taxed", "armamd", "armmercury", "armbrtha", "armminivulc", "armvulc", "armanni", "armannit3", "armlwall", "legendary_pulsar"
+            ]}
+          ]
+        },
+        {
+          "op": "clone_unit",
+          "source": "cordecom",
+          "target": "cort3aide",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Cortex Epic Aide" },
+            { "op": "set", "field": "workertime", "value": 6000 },
+            { "op": "set", "field": "buildoptions", "value": [
+              "corafust3", "cornanotct2", "cornanotct3", "coralab", "coravp", "coraap", "corgatet3", "corflak", "cormmkrt3", "coruwadvmst3", "coradvestoret3", "corgate", "corfort", "corgant", "armshltx_taxed", "leggant_taxed", "corfmd", "corscreamer", "cordoomt3", "corbuzz", "corminibuzz", "corint", "cordoom", "corhllllt", "cormwall", "legendary_bulwark"
+            ]}
+          ]
+        },
+        {
+          "op": "clone_unit",
+          "source": "legdecom",
+          "target": "legt3aide",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Legion Epic Aide" },
+            { "op": "set", "field": "workertime", "value": 6000 },
+            { "op": "set", "field": "buildoptions", "value": [
+              "legafust3", "legnanotct2", "legnanotct3", "legalab", "legavp", "legaap", "leggatet3", "legflak", "legadveconvt3", "legamstort3", "legadvestoret3", "legdeflector", "legforti", "leggant", "armshltx_taxed", "corgant_taxed", "legabm", "legstarfall", "legministarfall", "leglraa", "legbastion", "legrwall", "leglrpc", "legendary_bastion", "legapopupdef", "legdtf"
+            ]}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Add Epic Aides to Build Options",
+      "description": "Adds T3 Epic Aides to Experimental Gantries",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        { "type": "nameInList", "names": ["armshltx", "corgant", "leggant"] }
+      ],
+      "mutations": [
+        { "op": "raw_lua", "code": "if string.sub(Unit.name, 1, 3) == 'arm' then table.insert(Unit.buildoptions, 'armt3aide') elseif string.sub(Unit.name, 1, 3) == 'cor' then table.insert(Unit.buildoptions, 'cort3aide') else table.insert(Unit.buildoptions, 'legt3aide') end" }
+      ]
+    }
+  ]
 }

@@ -5,7 +5,10 @@ export type TweakCondition =
   | { type: 'nameNotMatch'; regex: string }
   | { type: 'nameStartsWith'; prefix: string }
   | { type: 'nameEndsWith'; suffix: string }
+  | { type: 'nameInList'; names: string[] }
   | { type: 'customParam'; key: string; value: string | number | boolean }
+  | { type: 'customParamMatch'; key: string; regex: string }
+  | { type: 'fieldValue'; field: string; value: string | number | boolean }
   | { type: 'category'; value: string };
 
 export type UnitDefKnownField = 
@@ -21,14 +24,21 @@ export type UnitDefKnownField =
 
 export type UnitDefField = UnitDefKnownField | (string & {});
 
+export type ValueSource = 
+  | string | number | boolean
+  | { type: 'mod_option'; key: string; default: number | string | boolean }
+  | { type: 'math'; expression: string; variables: Record<string, any> };
+
 export type MutationOperation =
-  | { op: 'multiply'; field: UnitDefField; factor: number }
-  | { op: 'set'; field: UnitDefField; value: string | number | boolean }
+  | { op: 'multiply'; field: UnitDefField; factor: ValueSource }
+  | { op: 'set'; field: UnitDefField; value: ValueSource | object }
   | { op: 'remove'; field: UnitDefField }
-  | { op: 'assign_math_floor'; target: UnitDefField; source: UnitDefField; factor: number }
-  | { op: 'list_append'; field: UnitDefField; value: string | number }
-  | { op: 'list_remove'; field: UnitDefField; value: string | number }
+  | { op: 'assign_math_floor'; target: UnitDefField; source: UnitDefField; factor: ValueSource }
+  | { op: 'list_append'; field: UnitDefField; value: ValueSource }
+  | { op: 'list_remove'; field: UnitDefField; value: ValueSource }
   | { op: 'table_merge'; field: UnitDefField; value: Record<string, any> }
+  | { op: 'modify_weapon'; weaponName?: string; mutations: MutationOperation[] }
+  | { op: 'clone_unit'; source?: string; target?: string; targetSuffix?: string; mutations?: MutationOperation[] }
   | { op: 'raw_lua'; code: string };
 
 export interface TweakDefinition {

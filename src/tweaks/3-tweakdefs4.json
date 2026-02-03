@@ -1,6 +1,118 @@
 {
   "label": "Mini Bosses",
   "variable": "tweakdefs4",
-  "generator": "tweak-function",
-  "functionId": "getTweakDefs4"
+  "generator": "json-schema",
+  "definitions": [
+    {
+      "name": "Queenling Prima",
+      "description": "Creates Queenling Prima from Raptor Matriarch Basic",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_matriarch_basic",
+          "target": "raptor_miniq_a",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Queenling Prima" },
+            { "op": "set", "field": "icontype", "value": "raptor_queen_veryeasy" },
+            { "op": "multiply", "field": "health", "factor": 5 },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": "Queenling Prima",
+                "i18n_en_tooltip": "Majestic and bold, ruler of the hunt."
+              }
+            },
+            {
+              "op": "set",
+              "field": "maxThisUnit",
+              "value": {
+                "type": "math",
+                "expression": "max(1, ceil(2 * (spawn_mult / 3)))",
+                "variables": {
+                  "spawn_mult": { "type": "mod_option", "key": "raptor_spawncountmult", "default": 3 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Queenling Secunda",
+      "description": "Creates Queenling Secunda from Raptor Matriarch Basic",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_matriarch_basic",
+          "target": "raptor_miniq_b",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Queenling Secunda" },
+            { "op": "set", "field": "icontype", "value": "raptor_queen_easy" },
+            { "op": "multiply", "field": "health", "factor": 6 },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": "Queenling Secunda",
+                "i18n_en_tooltip": "Swift and sharp, a noble among raptors."
+              }
+            },
+            {
+              "op": "set",
+              "field": "maxThisUnit",
+              "value": {
+                "type": "math",
+                "expression": "max(1, ceil(3 * (spawn_mult / 3)))",
+                "variables": {
+                  "spawn_mult": { "type": "mod_option", "key": "raptor_spawncountmult", "default": 3 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Queenling Tertia",
+      "description": "Creates Queenling Tertia from Raptor Matriarch Basic",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_matriarch_basic",
+          "target": "raptor_miniq_c",
+          "mutations": [
+            { "op": "set", "field": "name", "value": "Queenling Tertia" },
+            { "op": "set", "field": "icontype", "value": "raptor_queen_normal" },
+            { "op": "multiply", "field": "health", "factor": 7 },
+            {
+              "op": "table_merge",
+              "field": "customparams",
+              "value": {
+                "i18n_en_humanname": "Queenling Tertia",
+                "i18n_en_tooltip": "Refined tastes. Likes her prey rare."
+              }
+            },
+            {
+              "op": "set",
+              "field": "maxThisUnit",
+              "value": {
+                "type": "math",
+                "expression": "max(1, ceil(4 * (spawn_mult / 3)))",
+                "variables": {
+                  "spawn_mult": { "type": "mod_option", "key": "raptor_spawncountmult", "default": 3 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
