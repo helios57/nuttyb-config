@@ -36,6 +36,14 @@ export function generateTweak(config: any): string {
             return `-- Error compiling tweak: ${e.message}`;
         }
     }
+    if (config.generator === 'json-schema') {
+        try {
+            // config.definitions contains the TweakDefinition[]
+            return compileTweak(config.definitions);
+        } catch (e: any) {
+            return `-- Error compiling tweak: ${e.message}`;
+        }
+    }
     return `-- Error: Unknown generator ${config.generator}`;
 }
 
