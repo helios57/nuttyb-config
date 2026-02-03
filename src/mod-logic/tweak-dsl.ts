@@ -8,11 +8,27 @@ export type TweakCondition =
   | { type: 'customParam'; key: string; value: string | number | boolean }
   | { type: 'category'; value: string };
 
+export type UnitDefKnownField = 
+  | 'health' | 'maxDamage' | 'metalCost' | 'energyCost' | 'buildTime' 
+  | 'category' | 'description' | 'name' | 'objectName' 
+  | 'buildoptions' | 'customParams' | 'mass' | 'speed' 
+  | 'autoHeal' | 'canSelfRepair' | 'repairable' | 'canbehealed' 
+  | 'reclaimSpeed' | 'stealth' | 'builder' | 'buildSpeed' 
+  | 'canAssist' | 'maxThisUnit' | 'noChaseCategory' 
+  | 'sightDistance' | 'radarDistance'
+  | 'weaponDefs' | 'weapons' | 'sfxtypes'
+  | 'explodeAs' | 'selfDestructAs' | 'footprintX' | 'footprintZ';
+
+export type UnitDefField = UnitDefKnownField | (string & {});
+
 export type MutationOperation =
-  | { op: 'multiply'; field: string; factor: number }
-  | { op: 'set'; field: string; value: string | number | boolean }
-  | { op: 'remove'; field: string }
-  | { op: 'assign_math_floor'; target: string; source: string; factor: number };
+  | { op: 'multiply'; field: UnitDefField; factor: number }
+  | { op: 'set'; field: UnitDefField; value: string | number | boolean }
+  | { op: 'remove'; field: UnitDefField }
+  | { op: 'assign_math_floor'; target: UnitDefField; source: UnitDefField; factor: number }
+  | { op: 'list_append'; field: UnitDefField; value: string | number }
+  | { op: 'list_remove'; field: UnitDefField; value: string | number }
+  | { op: 'table_merge'; field: UnitDefField; value: Record<string, any> };
 
 export interface TweakDefinition {
   name: string;

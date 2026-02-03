@@ -5,7 +5,9 @@
   "main": "dist/bundle.js",
   "scripts": {
     "test": "jest",
-    "build": "webpack"
+    "build": "webpack",
+    "start": "npx serve",
+    "package": "npm run build && node build-release.js"
   },
   "keywords": [],
   "author": "",

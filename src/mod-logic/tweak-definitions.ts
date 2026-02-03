@@ -1,4 +1,15 @@
 import { TweakDefinition } from './tweak-dsl';
+import { RaptorTweakConfig } from './presets';
+
+export function addToBuildMenu(factoryPrefix: string, unitName: string): TweakDefinition {
+    return {
+        name: `Add ${unitName} to ${factoryPrefix} factories`,
+        description: `Adds ${unitName} to build options of factories starting with ${factoryPrefix}`,
+        scope: 'UnitDefsLoop',
+        conditions: [{ type: 'nameStartsWith', prefix: factoryPrefix }],
+        mutations: [{ op: 'list_append', field: 'buildoptions', value: unitName }]
+    };
+}
 
 export function getQhpTweak(multiplier: number, multiplierText: string): TweakDefinition {
     return {
@@ -19,7 +30,8 @@ export function getQhpTweak(multiplier: number, multiplierText: string): TweakDe
     };
 }
 
-export function getHpTweak(healthMultiplier: number, workertimeMultiplier: number, metalCostFactor: number, multiplierText: string): TweakDefinition[] {
+export function getHpTweak(config: RaptorTweakConfig): TweakDefinition[] {
+    const { healthMultiplier, workertimeMultiplier, metalCostFactor, multiplierText } = config;
     return [
         {
             name: `NuttyB v1.52 ${multiplierText}X HP - Swarmer Heal`,
@@ -100,8 +112,8 @@ export function getScavHpTweak(multiplier: number, multiplierText: string): Twea
                 { type: 'nameEndsWith', suffix: '_scav' }
             ],
             mutations: [
-                { op: 'assign_math_floor', target: 'metalcost', source: 'metalcost', factor: multiplier },
-                { op: 'set', field: 'nochasecategory', value: 'OBJECT' }
+                { op: 'assign_math_floor', target: 'metalCost', source: 'metalCost', factor: multiplier },
+                { op: 'set', field: 'noChaseCategory', value: 'OBJECT' }
             ]
         }
     ];

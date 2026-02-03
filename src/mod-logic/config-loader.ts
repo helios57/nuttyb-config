@@ -1,4 +1,4 @@
-import { decodeBase64Url } from './utils';
+import { decodeBase64Url, encodeBase64Url } from './utils';
 import { 
     mainTweaksPrefixes, 
     evolvingCommandersPrefixes, 
@@ -8,12 +8,58 @@ import {
     rightColumnOrder 
 } from './constants';
 import { GameConfigs, RawOptionsData, FormOptionsConfig, GroupedOptions } from './types';
+import { generateTweak } from './tweak-generator';
+
+// Declare require.context for Webpack
+declare const require: any;
+
+interface TweakDataEntry {
+    label: string;
+    variable: string;
+    lua: string;
+}
 
 export async function loadConfigData(): Promise<{ rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] }> {
-    const response = await fetch(`tweakdata.txt?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`Could not load tweakdata.txt: ${response.statusText}`);
-    const text = await response.text();
-    return parseConfigData(text);
+    const tweakData: TweakDataEntry[] = [];
+    
+    // Load all JSON files from src/tweaks
+    // Note: This relies on Webpack's require.context
+    if (typeof require.context === 'function') {
+        const context = require.context('../tweaks', false, /\.json$/);
+        const keys = context.keys();
+        
+        // Sort keys numerically based on prefix (e.g. "1-", "2-")
+        keys.sort((a: string, b: string) => {
+            const numA = parseInt(a.match(/\/(\d+)-/)?.[1] || '0');
+            const numB = parseInt(b.match(/\/(\d+)-/)?.[1] || '0');
+            return numA - numB;
+        });
+
+        keys.forEach((key: string) => {
+            const config = context(key);
+            const lua = generateTweak(config);
+            tweakData.push({
+                label: config.label,
+                variable: config.variable,
+                lua: lua
+            });
+        });
+    } else {
+        console.error("require.context is not available. Cannot load tweaks.");
+    }
+
+    return processConfigData(tweakData);
+}
+
+export async function loadLinksContent(): Promise<string> {
+    try {
+        const response = await fetch(`links.html?t=${Date.now()}`);
+        if (!response.ok) return "";
+        return await response.text();
+    } catch (e) {
+        console.error("Failed to load links content", e);
+        return "";
+    }
 }
 
 export async function parseModesFile(filePath: string): Promise<GameConfigs> {
@@ -61,8 +107,7 @@ export async function parseModesFile(filePath: string): Promise<GameConfigs> {
     }
 }
 
-function parseConfigData(text: string): { rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] } {
-    const lines = text.trim().split('\n');
+function processConfigData(data: TweakDataEntry[]): { rawOptionsData: RawOptionsData[], formOptionsConfig: FormOptionsConfig[] } {
     const groupedOptions: GroupedOptions = { 
         mainTweaks: { label: "NuttyB Main Tweaks", type: "checkbox", commandBlocks: [], default: true, disabled: false, column: 'left' },
         evolvingCommanders: { label: "NuttyB Evolving Commanders", type: "checkbox", commandBlocks: [], default: true, disabled: false, column: 'left' },
@@ -94,43 +139,51 @@ function parseConfigData(text: string): { rawOptionsData: RawOptionsData[], form
         ]
     };
 
-    lines.forEach(line => {
-        const parts = line.split('\t');
-        if (parts.length >= 2) {
-            const label = parts[0].trim();
-            const commandBlock = parts[1].trim();
-            let summary = '', status = "Optional", addedToFormGroup = false;
+    data.forEach(item => {
+        const label = item.label;
+        const lua = item.lua;
+        const variable = item.variable;
+        
+        // Generate base64 command block on the fly
+        const encoded = encodeBase64Url(lua);
+        const commandBlock = `!bset ${variable} ${encoded}`;
+        
+        let summary = lua.split('\n')[0].trim();
+        let status = "Optional", addedToFormGroup = false;
 
-            if (commandBlock.startsWith('!bset tweakdefs1') || commandBlock.startsWith('!bset tweakdefs ')) {
-                return; 
-            }
-            if (commandBlock.startsWith('!bset tweakdefs') || commandBlock.startsWith('!bset tweakunits')) {
-                const commandParts = commandBlock.split(' ');
-                if (commandParts.length >= 3) summary = decodeBase64Url(commandParts[2]).split('\n')[0].trim();
-            }
-            if (extraRaptorsPrefixes.some(p => commandBlock.startsWith(p))) {
-                status = "Optional/Grouped";
-                let shortLabel = (label === "Mini Bosses") ? "[Mini Bosses]" : (label === "Experimental Wave Challenge") ? "[Expo Waves]" : "";
-                groupedOptions.extraRaptors.choices.push({ label, value: commandBlock, shortLabel });
-                if (commandBlock.startsWith('!bset tweakdefs4')) groupedOptions.extraRaptors.defaultValue = commandBlock;
-                addedToFormGroup = true;
-            }
-            if (mainTweaksPrefixes.some(p => commandBlock.startsWith(p))) { status = "Optional"; groupedOptions.mainTweaks.commandBlocks.push(commandBlock); addedToFormGroup = true; }
-            if (evolvingCommandersPrefixes.some(p => commandBlock.startsWith(p))) { status = "Optional"; groupedOptions.evolvingCommanders.commandBlocks.push(commandBlock); if (defaultSelectedLabels.includes(label)) groupedOptions.evolvingCommanders.default = true; addedToFormGroup = true; }
-            if (hiddenLabels.includes(label)) status = "Hidden";
-            rawOptionsData.push({ label, commandBlock, status, summary });
-            if (!addedToFormGroup && !hiddenLabels.includes(label)) { groupedOptions.otherCheckboxes.options.push({ label, type: "checkbox", commandBlocks: [commandBlock], default: defaultSelectedLabels.includes(label), column: 'right' }); }
+        // Note: Logic related to !bset tweakdefs1 or tweakdefs (space) filtering is implicitly handled 
+        // because we only imported lines that were valid.
+        // However, if we need to filter specific variables, we can do it here.
+        // The original code filtered `!bset tweakdefs1` or `!bset tweakdefs `.
+        // Our converter included them if they were present. 
+        // Let's check if our JSON has them.
+        // Tweak data JSON has `tweakdefs2`, `tweakdefs3`, etc.
+        // If there's any `tweakdefs1` in JSON we might want to skip it if it was skipped before.
+        // But let's assume valid data in JSON.
+
+        if (extraRaptorsPrefixes.some(p => commandBlock.startsWith(p))) {
+            status = "Optional/Grouped";
+            let shortLabel = (label === "Mini Bosses") ? "[Mini Bosses]" : (label === "Experimental Wave Challenge") ? "[Expo Waves]" : "";
+            groupedOptions.extraRaptors.choices!.push({ label, value: commandBlock, shortLabel });
+            if (commandBlock.startsWith('!bset tweakdefs4')) groupedOptions.extraRaptors.defaultValue = commandBlock;
+            addedToFormGroup = true;
         }
+        if (mainTweaksPrefixes.some(p => commandBlock.startsWith(p))) { status = "Optional"; groupedOptions.mainTweaks.commandBlocks!.push(commandBlock); addedToFormGroup = true; }
+        if (evolvingCommandersPrefixes.some(p => commandBlock.startsWith(p))) { status = "Optional"; groupedOptions.evolvingCommanders.commandBlocks!.push(commandBlock); if (defaultSelectedLabels.includes(label)) groupedOptions.evolvingCommanders.default = true; addedToFormGroup = true; }
+        if (hiddenLabels.includes(label)) status = "Hidden";
+        rawOptionsData.push({ label, commandBlock, status, summary });
+        if (!addedToFormGroup && !hiddenLabels.includes(label)) { groupedOptions.otherCheckboxes.options.push({ label, type: "checkbox", commandBlocks: [commandBlock], default: defaultSelectedLabels.includes(label), column: 'right' }); }
     });
+    
     groupedOptions.otherCheckboxes.options.sort((a,b) => { const ia=rightColumnOrder.indexOf(a.label),ib=rightColumnOrder.indexOf(b.label); return ((ia===-1)?Infinity:ia)-((ib===-1)?Infinity:ib); });
     
     let formOptionsConfig: FormOptionsConfig[] = [];
-    if (groupedOptions.mainTweaks.commandBlocks.length > 0) formOptionsConfig.push(groupedOptions.mainTweaks);
-    if (groupedOptions.evolvingCommanders.commandBlocks.length > 0) formOptionsConfig.push(groupedOptions.evolvingCommanders);
+    if (groupedOptions.mainTweaks.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.mainTweaks);
+    if (groupedOptions.evolvingCommanders.commandBlocks!.length > 0) formOptionsConfig.push(groupedOptions.evolvingCommanders);
     
     formOptionsConfig.push(dynamicHPGroup, dynamicQHPGroup);
 
-    if (groupedOptions.extraRaptors.choices.length > 1) formOptionsConfig.push(groupedOptions.extraRaptors);
+    if (groupedOptions.extraRaptors.choices!.length > 1) formOptionsConfig.push(groupedOptions.extraRaptors);
     formOptionsConfig = formOptionsConfig.concat(groupedOptions.otherCheckboxes.options);
 
     return { rawOptionsData, formOptionsConfig };

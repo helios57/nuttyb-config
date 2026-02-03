@@ -97,13 +97,18 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                         default:  metalCostFactor = 1;           workerTimeMultiplier = 0.5; break; 
                     }
                     
-                    const tweaks = getHpTweak(multiplier, workerTimeMultiplier, metalCostFactor, el.value!);
+                    const tweaks = getHpTweak({
+                        healthMultiplier: multiplier,
+                        workertimeMultiplier: workerTimeMultiplier,
+                        metalCostFactor: metalCostFactor,
+                        multiplierText: el.value!
+                    });
                     tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
                     
-                } else if (type === 'bosshp') {
+                } else if (type === 'boss') {
                     const tweak = getBossHpTweak(multiplier, el.value!);
                     processTweakDefinition(tweak, customTweaksToProcess);
-                } else if (type === 'scavhp') {
+                } else if (type === 'scav') {
                     const tweaks = getScavHpTweak(multiplier, el.value!);
                     tweaks.forEach(t => processTweakDefinition(t, customTweaksToProcess));
                 }
@@ -254,23 +259,14 @@ function processTweakDefinition(tweak: TweakDefinition, customTweaksToProcess: C
     const validation = validateLua(luaCode);
     
     if (validation.valid) {
-        // Minify logic could be added here if needed, but for now we just base64 encode.
-        // The original code used luamin.minify. If we want to keep that, we need to import luamin.
-        // However, the generated code is already quite clean.
-        // If size is a concern, we can add minification later.
-        // For now, we just base64 encode.
-        
-        // Note: The original code did:
-        // const utf8SafeString = unescape(encodeURIComponent(finalCodeToEncode));
-        // const base64String = btoa(utf8SafeString);
-        // We should replicate this UTF-8 safe encoding.
-        
         const utf8SafeString = unescape(encodeURIComponent(luaCode));
         const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
         
         const type = tweak.scope === 'UnitDefsLoop' ? 'tweakdefs' : 'tweakunits';
         
         customTweaksToProcess.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            desc: tweak.name,
             type: type,
             tweak: base64Code
         });

@@ -163,16 +163,24 @@ function handleDeleteCustomTweak(id: number) {
     updateOutput();
 }
 
-copyButtons.forEach(button => button.addEventListener('click', event => {
+// This handles all copy buttons, including the new reset button
+document.addEventListener('click', event => {
     const target = event.target as HTMLElement;
-    const targetTextArea = document.getElementById(target.dataset.target!) as HTMLTextAreaElement;
-    const originalText = target.textContent;
-    navigator.clipboard.writeText(targetTextArea.value)
-        .then(() => {
-            target.textContent = 'Copied!';
-            setTimeout(() => { target.textContent = originalText; }, 2000);
-        }).catch(err => { console.error('Failed to copy: ', err); });
-}));
+    if (target.matches('.copy-button')) {
+        const targetId = target.dataset.target;
+        if (!targetId) return;
+        
+        const targetTextArea = document.getElementById(targetId) as HTMLTextAreaElement;
+        if (!targetTextArea) return;
+
+        const originalText = target.textContent;
+        navigator.clipboard.writeText(targetTextArea.value)
+            .then(() => {
+                target.textContent = 'Copied!';
+                setTimeout(() => { target.textContent = originalText; }, 2000);
+            }).catch(err => { console.error('Failed to copy: ', err); });
+    }
+});
 
 [dataTableBody, customTweaksTableBody, mapsModesTableBody].forEach(tbody => {
     if (!tbody) return;
@@ -250,7 +258,7 @@ async function initializeApp() {
     try {
         loadCustomOptions();
         
-        const [parsedConfigs, configData] = await Promise.all([
+        const [parsedConfigs, configData, linksContent] = await Promise.all([
             parseModesFile('modes.txt'),
             loadConfigData(), 
             loadLinksContent()
@@ -259,6 +267,11 @@ async function initializeApp() {
         gameConfigs = parsedConfigs;
         rawOptionsData = configData.rawOptionsData;
         formOptionsConfig = configData.formOptionsConfig;
+        
+        if (linksContent) {
+            const linksTab = document.getElementById('links-tab');
+            if (linksTab) linksTab.innerHTML = linksContent;
+        }
         
         console.log("Modes file loaded and parsed:", gameConfigs);
 
@@ -277,6 +290,12 @@ async function initializeApp() {
 
         renderAllCustomComponents();
         populateStartSelector(gameConfigs, updateOutput);
+
+        // Populate Reset All textarea
+        const resetOutput = document.getElementById('reset-output') as HTMLTextAreaElement;
+        if (resetOutput) {
+            resetOutput.value = Array.from({ length: 9 }, (_, i) => `!bset tweakdefs${i + 1} ""\n!bset tweakunits${i + 1} ""`).join('\n');
+        }
 
     } catch (error) {
         console.error("Failed to initialize the configurator:", error);

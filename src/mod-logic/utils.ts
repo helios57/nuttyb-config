@@ -1,3 +1,6 @@
+import { compileTweak } from './lua-compiler';
+import { getQhpTweak, getBossHpTweak } from './tweak-definitions';
+
 // Declare luamin as a global variable since it's loaded via script tag
 declare const luamin: any;
 
@@ -16,6 +19,34 @@ export function decodeBase64Url(base64Url: string): string {
     }
 }
 
-// Deprecated: generateLuaTweak is no longer used. Logic moved to command-generator.ts using DSL.
-// Keeping empty or removing if no other dependencies.
-// Since command-generator.ts was the only consumer (checked previously), we can remove it.
+export function encodeBase64Url(str: string): string {
+    const utf8SafeString = unescape(encodeURIComponent(str));
+    return btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+export function generateLuaTweak(type: string, value: string): string {
+    const multiplier = parseFloat(value);
+    if (isNaN(multiplier)) return "Error: Invalid multiplier";
+
+    try {
+        let tweak;
+        if (type === 'qhp') {
+            tweak = getQhpTweak(multiplier, value);
+        } else if (type === 'boss') {
+             tweak = getBossHpTweak(multiplier, value);
+        } else {
+            // 'hp' and 'scav' return arrays of tweaks, which cannot be represented as a single base64 string for a single slot easily here.
+            // We return a placeholder or error.
+            return "Error: Complex tweak (multiple slots)";
+        }
+
+        if (tweak) {
+             const lua = compileTweak(tweak);
+             const utf8SafeString = unescape(encodeURIComponent(lua));
+             return btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+    } catch (e) {
+        return "Error: " + e;
+    }
+    return "Error: Unknown type";
+}
