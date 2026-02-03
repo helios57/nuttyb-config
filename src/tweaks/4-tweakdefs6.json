@@ -10,7 +10,7 @@
       "conditions": [
         { "type": "customParam", "key": "techlevel", "value": 2 },
         { "type": "customParamMatch", "key": "subfolder", "regex": "Fact" },
-        { "type": "nameNotMatch", "regex": ".*_taxed" }
+        { "type": "nameNotMatch", "regex": ".* %(Taxed%)$" }
       ],
       "mutations": [
         {
@@ -51,7 +51,7 @@
       "conditions": [
         { "type": "customParam", "key": "techlevel", "value": 2 },
         { "type": "customParamMatch", "key": "subfolder", "regex": "Lab" },
-        { "type": "nameNotMatch", "regex": ".*_taxed" }
+        { "type": "nameNotMatch", "regex": ".* %(Taxed%)$" }
       ],
       "mutations": [
         {

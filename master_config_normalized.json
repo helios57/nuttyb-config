@@ -1230,7 +1230,7 @@
       },
       {
         "type": "nameNotMatch",
-        "regex": ".*_taxed"
+        "regex": ".* %(Taxed%)$"
       }
     ],
     "mutations": [
@@ -1292,7 +1292,7 @@
       },
       {
         "type": "nameNotMatch",
-        "regex": ".*_taxed"
+        "regex": ".* %(Taxed%)$"
       }
     ],
     "mutations": [
