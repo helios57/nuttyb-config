@@ -132,6 +132,10 @@ describe('Lua Execution Integration', () => {
 
         const taxedHumanName = await lua.doString('return UnitDefs["arm_taxed_test_taxed"].customparams.i18n_en_humanname');
         expect(taxedHumanName).toBe("Armada Lab (Taxed)");
+
+        // Verify it didn't tax the taxed unit again
+        const doubleTaxedName = await lua.doString('return UnitDefs["arm_taxed_test_taxed_taxed"]');
+        expect(doubleTaxedName).toBe(null);
     });
 
     test('Performance Benchmark', async () => {

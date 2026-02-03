@@ -582,7 +582,7 @@ target_list = def.buildoptions
 end
 table_insert(target_list, "legendary_bastion")
 end
-if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Fact")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Fact"))) then
+if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Fact")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Fact"))) and not string_match(name, ".*_taxed") then
 if def then
 local newDef = table_merge({}, def)
 newDef.energyCost = newDef.energyCost * (1.7)
@@ -593,7 +593,7 @@ table_merge(newDef.customparams, { i18n_en_humanname = (def.customparams.i18n_en
 UnitDefs[def.name .. "_taxed"] = newDef
 end
 end
-if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Lab")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Lab"))) then
+if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Lab")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Lab"))) and not string_match(name, ".*_taxed") then
 if def then
 local newDef = table_merge({}, def)
 newDef.energyCost = newDef.energyCost * (1.7)

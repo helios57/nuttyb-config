@@ -9,7 +9,8 @@
       "scope": "UnitDefsLoop",
       "conditions": [
         { "type": "customParam", "key": "techlevel", "value": 2 },
-        { "type": "customParamMatch", "key": "subfolder", "regex": "Fact" }
+        { "type": "customParamMatch", "key": "subfolder", "regex": "Fact" },
+        { "type": "nameNotMatch", "regex": ".*_taxed" }
       ],
       "mutations": [
         {
@@ -49,7 +50,8 @@
       "scope": "UnitDefsLoop",
       "conditions": [
         { "type": "customParam", "key": "techlevel", "value": 2 },
-        { "type": "customParamMatch", "key": "subfolder", "regex": "Lab" }
+        { "type": "customParamMatch", "key": "subfolder", "regex": "Lab" },
+        { "type": "nameNotMatch", "regex": ".*_taxed" }
       ],
       "mutations": [
         {

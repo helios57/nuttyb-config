@@ -1227,6 +1227,10 @@
         "type": "customParamMatch",
         "key": "subfolder",
         "regex": "Fact"
+      },
+      {
+        "type": "nameNotMatch",
+        "regex": ".*_taxed"
       }
     ],
     "mutations": [
@@ -1285,6 +1289,10 @@
         "type": "customParamMatch",
         "key": "subfolder",
         "regex": "Lab"
+      },
+      {
+        "type": "nameNotMatch",
+        "regex": ".*_taxed"
       }
     ],
     "mutations": [
