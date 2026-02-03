@@ -52,7 +52,8 @@ test('Feature: Limit Max Allowed (T3 Builders)', async ({ page }) => {
                 const text = await locator.inputValue();
                 if (text.includes('!bset tweakdefs')) {
                     const lines = text.split('\n');
-                    const cmd = lines.find(l => l.includes('!bset tweakdefs') && l.includes(input.getAttribute('data-tweak-template-id') || 'XXX'));
+                    const tweakId = await input.getAttribute('data-tweak-template-id');
+                    const cmd = lines.find(l => l.includes('!bset tweakdefs') && l.includes(tweakId || 'XXX'));
                     // Wait, the command itself is base64 encoded. We can't see template ID in it easily unless we decode all.
                     // But we can decode the LAST !bset command if multiple.
                     // Or just decode any !bset tweakdefs.
