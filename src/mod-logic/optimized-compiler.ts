@@ -30,7 +30,6 @@ export class OptimizedLuaCompiler {
 
         // 4. Generate Global Tweaks
         if (globalTweaks.length > 0) {
-            this.addStatement('-- Global Tweaks');
             for (const input of globalTweaks) {
                 for (const mut of input.tweak.mutations) {
                     this.generateMutation(mut, 'nil', input.variables);
@@ -40,7 +39,6 @@ export class OptimizedLuaCompiler {
 
         // 5. Generate UnitDefs Loop (Loop Fusion)
         if (loopTweaks.length > 0) {
-            this.addStatement('-- UnitDefs Loop');
             this.startLoop('for id, def in pairs(UnitDefs)');
             this.addLocal('name', 'def.name or id');
 
@@ -68,7 +66,6 @@ export class OptimizedLuaCompiler {
 
         // 6. Generate Post Tweaks
         if (postTweaks.length > 0) {
-            this.addStatement('-- UnitDef_Post Tweaks');
             const funcName = `ApplyTweaks_Post`;
             this.startBlock(`local function ${funcName}(name, def)`);
 
@@ -142,18 +139,32 @@ export class OptimizedLuaCompiler {
         // Use pendingMultiplies to group consecutive multiplies
         const pendingMultiplies = new Map<string, string[]>();
 
+        const emitPendingMultiply = (field: string, factors: string[]) => {
+            const factorExpr = factors.join(' * ');
+            const parts = field.split('.');
+            if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                 const paramKey = parts[1];
+                 this.startIf(`${defVar}.customparams and ${defVar}.customparams["${paramKey}"]`);
+                 this.addStatement(`${defVar}.customparams["${paramKey}"] = ${defVar}.customparams["${paramKey}"] * (${factorExpr})`);
+                 this.addElse();
+                 this.startIf(`${defVar}.customParams and ${defVar}.customParams["${paramKey}"]`);
+                 this.addStatement(`${defVar}.customParams["${paramKey}"] = ${defVar}.customParams["${paramKey}"] * (${factorExpr})`);
+                 this.endBlock();
+                 this.endBlock();
+            } else {
+                 this.addStatement(`${defVar}.${field} = ${defVar}.${field} * (${factorExpr})`);
+            }
+        };
+
         const flushPending = (field?: string) => {
             if (field) {
                 if (pendingMultiplies.has(field)) {
-                    const factors = pendingMultiplies.get(field)!;
-                    const factorExpr = factors.join(' * ');
-                    this.addStatement(`${defVar}.${field} = ${defVar}.${field} * (${factorExpr})`);
+                    emitPendingMultiply(field, pendingMultiplies.get(field)!);
                     pendingMultiplies.delete(field);
                 }
             } else {
                 for (const [f, factors] of pendingMultiplies) {
-                    const factorExpr = factors.join(' * ');
-                    this.addStatement(`${defVar}.${f} = ${defVar}.${f} * (${factorExpr})`);
+                    emitPendingMultiply(f, factors);
                 }
                 pendingMultiplies.clear();
             }
@@ -188,6 +199,9 @@ export class OptimizedLuaCompiler {
     private generateMutation(mut: MutationOperation, defVar: string, variables: Record<string, any>) {
          if (mut.op === 'set') {
              this.addFieldWrite(defVar, mut.field, this.resolveValueSource(mut.value, variables));
+         } else if (mut.op === 'multiply') {
+             const factor = this.resolveValueSource(mut.factor, variables);
+             this.addFieldWrite(defVar, mut.field, `${this.getFieldRead(defVar, mut.field)} * (${factor})`);
          } else if (mut.op === 'remove') {
              this.addFieldWrite(defVar, mut.field, 'nil');
          } else if (mut.op === 'assign_math_floor') {
@@ -226,6 +240,33 @@ export class OptimizedLuaCompiler {
              if (weaponName !== '*') {
                  this.endBlock();
              }
+             this.endBlock();
+             this.endBlock();
+         }
+         else if (mut.op === 'table_merge') {
+             const val = this.resolveValueSource(mut.value, variables);
+             const parts = (mut.field as string).split('.');
+
+             // Ensure target exists
+             if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                  const paramKey = parts[1];
+                  this.addStatement(`if not ${defVar}.customparams then ${defVar}.customparams = {} end`);
+                  this.addStatement(`if not ${defVar}.customparams["${paramKey}"] then ${defVar}.customparams["${paramKey}"] = {} end`);
+                  this.addStatement(`table_merge(${defVar}.customparams["${paramKey}"], ${val})`);
+             } else {
+                 this.addStatement(`if not ${defVar}.${mut.field} then ${defVar}.${mut.field} = {} end`);
+                 this.addStatement(`table_merge(${defVar}.${mut.field}, ${val})`);
+             }
+         }
+         else if (mut.op === 'list_remove') {
+             const val = this.resolveValueSource(mut.value, variables);
+             const listVar = 'target_list';
+             this.addLocal(listVar, this.getFieldRead(defVar, mut.field as string));
+             this.startIf(listVar);
+             this.startLoop(`for i = #(${listVar}), 1, -1`);
+             this.startIf(`${listVar}[i] == ${val}`);
+             this.addStatement(`table_remove(${listVar}, i)`);
+             this.endBlock();
              this.endBlock();
              this.endBlock();
          }
@@ -277,6 +318,18 @@ export class OptimizedLuaCompiler {
                     const val = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${cond.value}"` : cond.value);
                     conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] == ${val}) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] == ${val}))`);
                     break;
+                case 'customParamMatch':
+                    conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] and string_match(${defVar}.customParams["${cond.key}"], "${cond.regex}")) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] and string_match(${defVar}.customparams["${cond.key}"], "${cond.regex}")))`);
+                    break;
+                case 'fieldValue':
+                    const fVal = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${cond.value}"` : cond.value);
+                    conds.push(`${this.getFieldRead(defVar, cond.field)} == ${fVal}`);
+                    break;
+                case 'category':
+                    // category is often a string field or a method check. Assuming field 'category'
+                    const cVal = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : `"${cond.value}"`;
+                    conds.push(`string_match(${defVar}.category or "", ${cVal})`);
+                    break;
                 case 'nameInList':
                      const checks = cond.names.map(n => `${unitNameVar} == "${n}"`);
                      conds.push(`(${checks.join(' or ')})`);
@@ -293,15 +346,23 @@ export class OptimizedLuaCompiler {
                 if (typedVal.type === 'variable') {
                     const v = variables[typedVal.key];
                     if (v === undefined) throw new Error(`Variable ${typedVal.key} not found`);
-                    return this.jsonToLua(v);
+                    return this.jsonToLua(v, variables);
                 }
                 if (typedVal.type === 'mod_option') {
-                    return `(Spring_GetModOptions().${typedVal.key} or ${this.jsonToLua(typedVal.default)})`;
+                    return `(Spring_GetModOptions().${typedVal.key} or ${this.jsonToLua(typedVal.default, variables)})`;
                 }
                 if (typedVal.type === 'math') {
                     let expr = typedVal.expression;
                     for (const [k, v] of Object.entries(typedVal.variables)) {
-                         expr = expr.split(k).join(this.resolveValueSource(v as ValueSource, variables));
+                         let resolved = this.resolveValueSource(v as ValueSource, variables);
+                         // If resolved value is a quoted string that looks like an identifier/path, unquote it
+                         if (resolved.startsWith('"') && resolved.endsWith('"')) {
+                             const unquoted = resolved.slice(1, -1);
+                             if (/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(unquoted)) {
+                                 resolved = unquoted;
+                             }
+                         }
+                         expr = expr.split(k).join(resolved);
                     }
                     // Map common math functions to localized versions
                     // Note: This relies on emitGlobals picking up 'math.max' if referenced implicitly?
@@ -316,20 +377,35 @@ export class OptimizedLuaCompiler {
                     return `(${expr})`;
                 }
             }
-            return this.jsonToLua(val);
+            return this.jsonToLua(val, variables);
         }
-        return this.jsonToLua(val);
+        return this.jsonToLua(val, variables);
     }
 
-    private jsonToLua(obj: any): string {
+
+    private jsonToLua(obj: any, variables: Record<string, any>): string {
         if (obj === null || obj === undefined) return 'nil';
+        if (typeof obj === 'object' && obj !== null && 'type' in obj && (obj.type === 'variable' || obj.type === 'math' || obj.type === 'mod_option')) {
+             return this.resolveValueSource(obj, variables);
+        }
         if (typeof obj === 'string') {
             return `"${obj.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
         }
         if (typeof obj === 'number') return obj.toString();
         if (typeof obj === 'boolean') return obj ? 'true' : 'false';
         if (Array.isArray(obj)) {
-            return `{ ${obj.map(v => this.jsonToLua(v)).join(', ')} }`;
+            return `{ ${obj.map(v => this.jsonToLua(v, variables)).join(', ')} }`;
+        }
+        if (typeof obj === 'object') {
+             const parts: string[] = [];
+             for (const k in obj) {
+                 if (Object.prototype.hasOwnProperty.call(obj, k)) {
+                     const validId = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k);
+                     const keyStr = validId ? k : `["${k}"]`;
+                     parts.push(`${keyStr} = ${this.jsonToLua(obj[k], variables)}`);
+                 }
+             }
+             return `{ ${parts.join(', ')} }`;
         }
         return '{}';
     }
@@ -366,6 +442,9 @@ export class OptimizedLuaCompiler {
         if (obj.type === 'table_merge' || obj.type === 'clone_unit' || obj.op === 'table_merge' || obj.op === 'clone_unit') {
              this.usedGlobals.add('table.merge');
         }
+        if (obj.op === 'list_remove') {
+             this.usedGlobals.add('table.remove');
+        }
         for (const k in obj) {
             this.scanValueSource(obj[k], vars);
         }
@@ -386,6 +465,7 @@ export class OptimizedLuaCompiler {
             'string.match': 'string_match',
             'string.len': 'string_len',
             'table.insert': 'table_insert',
+            'table.remove': 'table_remove',
             'math.floor': 'math_floor',
             'math.ceil': 'math_ceil',
             'math.max': 'math_max',
