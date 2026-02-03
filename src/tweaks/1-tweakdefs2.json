@@ -14,45 +14,39 @@
         }
       ],
       "mutations": [
-        {
-          "op": "modify_weapon",
-          "weaponName": "*",
-          "mutations": [
-            { "op": "set", "field": "name", "value": "Spike" },
-            { "op": "set", "field": "accuracy", "value": 200 },
-            { "op": "set", "field": "collidefriendly", "value": 0 },
-            { "op": "set", "field": "collidefeature", "value": 0 },
-            { "op": "set", "field": "avoidfeature", "value": 0 },
-            { "op": "set", "field": "avoidfriendly", "value": 0 },
-            { "op": "set", "field": "areaofeffect", "value": 64 },
-            { "op": "set", "field": "edgeeffectiveness", "value": 0.3 },
-            { "op": "set", "field": "explosiongenerator", "value": "custom:raptorspike-large-sparks-burn" },
-            { "op": "set", "field": "cameraShake", "value": {} },
-            { "op": "set", "field": "dance", "value": {} },
-            { "op": "set", "field": "interceptedbyshieldtype", "value": 0 },
-            { "op": "set", "field": "model", "value": "Raptors/spike.s3o" },
-            { "op": "set", "field": "reloadtime", "value": 1.1 },
-            { "op": "set", "field": "soundstart", "value": "talonattack" },
-            { "op": "set", "field": "startvelocity", "value": 200 },
-            { "op": "set", "field": "submissile", "value": 1 },
-            { "op": "set", "field": "smoketrail", "value": 0 },
-            { "op": "set", "field": "smokePeriod", "value": {} },
-            { "op": "set", "field": "smoketime", "value": {} },
-            { "op": "set", "field": "smokesize", "value": {} },
-            { "op": "set", "field": "smokecolor", "value": {} },
-            { "op": "set", "field": "soundhit", "value": {} },
-            { "op": "set", "field": "texture1", "value": {} },
-            { "op": "set", "field": "texture2", "value": {} },
-            { "op": "set", "field": "tolerance", "value": {} },
-            { "op": "set", "field": "tracks", "value": 0 },
-            { "op": "set", "field": "turnrate", "value": 60000 },
-            { "op": "set", "field": "weaponacceleration", "value": 100 },
-            { "op": "set", "field": "weapontimer", "value": 1 },
-            { "op": "set", "field": "weaponvelocity", "value": 1000 },
-            { "op": "set", "field": "weapontype", "value": {} },
-            { "op": "set", "field": "wobble", "value": {} }
-          ]
-        }
+        { "op": "set", "weapon_target": "all", "target": "name", "value": "Spike" },
+        { "op": "set", "weapon_target": "all", "target": "accuracy", "value": 200 },
+        { "op": "set", "weapon_target": "all", "target": "collidefriendly", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "collidefeature", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "avoidfeature", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "avoidfriendly", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "areaofeffect", "value": 64 },
+        { "op": "set", "weapon_target": "all", "target": "edgeeffectiveness", "value": 0.3 },
+        { "op": "set", "weapon_target": "all", "target": "explosiongenerator", "value": "custom:raptorspike-large-sparks-burn" },
+        { "op": "set", "weapon_target": "all", "target": "cameraShake", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "dance", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "interceptedbyshieldtype", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "model", "value": "Raptors/spike.s3o" },
+        { "op": "set", "weapon_target": "all", "target": "reloadtime", "value": 1.1 },
+        { "op": "set", "weapon_target": "all", "target": "soundstart", "value": "talonattack" },
+        { "op": "set", "weapon_target": "all", "target": "startvelocity", "value": 200 },
+        { "op": "set", "weapon_target": "all", "target": "submissile", "value": 1 },
+        { "op": "set", "weapon_target": "all", "target": "smoketrail", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "smokePeriod", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "smoketime", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "smokesize", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "smokecolor", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "soundhit", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "texture1", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "texture2", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "tolerance", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "tracks", "value": 0 },
+        { "op": "set", "weapon_target": "all", "target": "turnrate", "value": 60000 },
+        { "op": "set", "weapon_target": "all", "target": "weaponacceleration", "value": 100 },
+        { "op": "set", "weapon_target": "all", "target": "weapontimer", "value": 1 },
+        { "op": "set", "weapon_target": "all", "target": "weaponvelocity", "value": 1000 },
+        { "op": "set", "weapon_target": "all", "target": "weapontype", "value": {} },
+        { "op": "set", "weapon_target": "all", "target": "wobble", "value": {} }
       ]
     },
     {
@@ -66,7 +60,7 @@
       "mutations": [
         {
           "op": "table_merge",
-          "field": "customparams",
+          "target": "customparams",
           "value": {
             "combatradius": 0,
             "fall_damage_multiplier": 0,
@@ -76,7 +70,7 @@
         },
         {
           "op": "table_merge",
-          "field": "featuredefs",
+          "target": "featuredefs",
           "value": {
             "dead": {
               "damage": 9999999,
@@ -104,16 +98,10 @@
         }
       ],
       "mutations": [
-        { "op": "set", "field": "maxThisUnit", "value": 10 },
-        { "op": "multiply", "field": "health", "factor": 2 },
-        {
-          "op": "modify_weapon",
-          "weaponName": "*",
-          "mutations": [
-            { "op": "multiply", "field": "reloadtime", "factor": 0.666666 },
-            { "op": "multiply", "field": "range", "factor": 0.5 }
-          ]
-        }
+        { "op": "set", "target": "maxThisUnit", "value": 10 },
+        { "op": "multiply", "target": "health", "value": 2 },
+        { "op": "multiply", "weapon_target": "all", "target": "reloadtime", "value": 0.666666 },
+        { "op": "multiply", "weapon_target": "all", "target": "range", "value": 0.5 }
       ]
     },
     {
@@ -125,8 +113,8 @@
         { "type": "fieldValue", "field": "canfly", "value": true }
       ],
       "mutations": [
-        { "op": "set", "field": "explodeAs", "value": "" },
-        { "op": "set", "field": "selfDestructAs", "value": "" }
+        { "op": "set", "target": "explodeAs", "value": "" },
+        { "op": "set", "target": "selfDestructAs", "value": "" }
       ]
     },
     {
@@ -140,10 +128,10 @@
           "source": "raptor_land_swarmer_basic_t1_v1",
           "target": "raptor_hive_swarmer_basic",
           "mutations": [
-            { "op": "set", "field": "name", "value": "Hive Spawn" },
+            { "op": "set", "target": "name", "value": "Hive Spawn" },
             {
               "op": "table_merge",
-              "field": "customparams",
+              "target": "customparams",
               "value": {
                 "i18n_en_humanname": "Hive Spawn",
                 "i18n_en_tooltip": "Raptor spawned to defend hives from attackers."
@@ -164,10 +152,10 @@
           "source": "raptor_land_assault_basic_t2_v1",
           "target": "raptor_hive_assault_basic",
           "mutations": [
-            { "op": "set", "field": "name", "value": "Armored Assault Raptor" },
+            { "op": "set", "target": "name", "value": "Armored Assault Raptor" },
             {
               "op": "table_merge",
-              "field": "customparams",
+              "target": "customparams",
               "value": {
                 "i18n_en_humanname": "Armored Assault Raptor",
                 "i18n_en_tooltip": "Heavy, slow, and unyielding—these beasts are made to take the hits others cant."

@@ -13,18 +13,12 @@
           "source": "armbotrail",
           "target": "armmeatball",
           "mutations": [
-            { "op": "table_merge", "field": "customparams", "value": { "i18n_en_humanname": "Meatball Launcher" } },
-            {
-              "op": "modify_weapon",
-              "weaponName": "arm_botrail",
-              "mutations": [
-                { "op": "set", "field": "range", "value": 7550 },
-                { "op": "set", "field": "metalpershot", "value": 5300 },
-                { "op": "set", "field": "energypershot", "value": 96000 },
-                { "op": "set", "field": "reloadtime", "value": 0.5 },
-                { "op": "table_merge", "field": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armmeatball" } }
-              ]
-            }
+            { "op": "table_merge", "target": "customparams", "value": { "i18n_en_humanname": "Meatball Launcher" } },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "range", "value": 7550 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "metalpershot", "value": 5300 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "energypershot", "value": 96000 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "reloadtime", "value": 0.5 },
+            { "op": "table_merge", "weapon_target": "arm_botrail", "target": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armmeatball" } }
           ]
         }
       ]
@@ -39,18 +33,12 @@
           "source": "armbotrail",
           "target": "armassimilator",
           "mutations": [
-            { "op": "table_merge", "field": "customparams", "value": { "i18n_en_humanname": "Assimilator Launcher" } },
-            {
-              "op": "modify_weapon",
-              "weaponName": "arm_botrail",
-              "mutations": [
-                { "op": "set", "field": "range", "value": 7550 },
-                { "op": "set", "field": "metalpershot", "value": 4500 },
-                { "op": "set", "field": "energypershot", "value": 80000 },
-                { "op": "set", "field": "reloadtime", "value": 0.5 },
-                { "op": "table_merge", "field": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armassimilator" } }
-              ]
-            }
+            { "op": "table_merge", "target": "customparams", "value": { "i18n_en_humanname": "Assimilator Launcher" } },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "range", "value": 7550 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "metalpershot", "value": 4500 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "energypershot", "value": 80000 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "reloadtime", "value": 0.5 },
+            { "op": "table_merge", "weapon_target": "arm_botrail", "target": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armassimilator" } }
           ]
         }
       ]
@@ -65,18 +53,12 @@
           "source": "armbotrail",
           "target": "armpwt4",
           "mutations": [
-            { "op": "table_merge", "field": "customparams", "value": { "i18n_en_humanname": "Epic Pawn Launcher" } },
-            {
-              "op": "modify_weapon",
-              "weaponName": "arm_botrail",
-              "mutations": [
-                { "op": "set", "field": "range", "value": 7550 },
-                { "op": "set", "field": "metalpershot", "value": 14200 },
-                { "op": "set", "field": "energypershot", "value": 480000 },
-                { "op": "set", "field": "reloadtime", "value": 0.5 },
-                { "op": "table_merge", "field": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armpwt4" } }
-              ]
-            }
+            { "op": "table_merge", "target": "customparams", "value": { "i18n_en_humanname": "Epic Pawn Launcher" } },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "range", "value": 7550 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "metalpershot", "value": 14200 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "energypershot", "value": 480000 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "reloadtime", "value": 0.5 },
+            { "op": "table_merge", "weapon_target": "arm_botrail", "target": "customparams", "value": { "stockpilelimit": 50, "spawns_name": "armpwt4" } }
           ]
         }
       ]
@@ -91,26 +73,21 @@
           "source": "armbotrail",
           "target": "armt1",
           "mutations": [
-            { "op": "table_merge", "field": "customparams", "value": { "i18n_en_humanname": "Armada T1 Launcher" } },
+            { "op": "table_merge", "target": "customparams", "value": { "i18n_en_humanname": "Armada T1 Launcher" } },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "stockpiletime", "value": 0.5 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "range", "value": 7550 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "metalpershot", "value": 250 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "energypershot", "value": 12500 },
+            { "op": "set", "weapon_target": "arm_botrail", "target": "reloadtime", "value": 0.5 },
             {
-              "op": "modify_weapon",
-              "weaponName": "arm_botrail",
-              "mutations": [
-                { "op": "set", "field": "stockpiletime", "value": 0.5 },
-                { "op": "set", "field": "range", "value": 7550 },
-                { "op": "set", "field": "metalpershot", "value": 250 },
-                { "op": "set", "field": "energypershot", "value": 12500 },
-                { "op": "set", "field": "reloadtime", "value": 0.5 },
-                {
-                  "op": "table_merge",
-                  "field": "customparams",
-                  "value": {
-                    "stockpilelimit": 50,
-                    "spawns_name": "armham armjeth armpw armrock armwar armah armanac armmh armsh armart armfav armflash armjanus armpincer armsam armstump armzapper",
-                    "spawns_mode": "random"
-                  }
-                }
-              ]
+              "op": "table_merge",
+              "weapon_target": "arm_botrail",
+              "target": "customparams",
+              "value": {
+                "stockpilelimit": 50,
+                "spawns_name": "armham armjeth armpw armrock armwar armah armanac armmh armsh armart armfav armflash armjanus armpincer armsam armstump armzapper",
+                "spawns_mode": "random"
+              }
             }
           ]
         }
@@ -123,10 +100,10 @@
         { "type": "nameMatch", "regex": "cormandot4" }
       ],
       "mutations": [
-        { "op": "list_append", "field": "buildoptions", "value": "armmeatball" },
-        { "op": "list_append", "field": "buildoptions", "value": "armassimilator" },
-        { "op": "list_append", "field": "buildoptions", "value": "armpwt4" },
-        { "op": "list_append", "field": "buildoptions", "value": "armt1" }
+        { "op": "list_append", "target": "buildoptions", "value": "armmeatball" },
+        { "op": "list_append", "target": "buildoptions", "value": "armassimilator" },
+        { "op": "list_append", "target": "buildoptions", "value": "armpwt4" },
+        { "op": "list_append", "target": "buildoptions", "value": "armt1" }
       ]
     }
   ]

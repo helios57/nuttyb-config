@@ -39,12 +39,12 @@ function resolveValue(val: ValueSource | object): string {
                 }
                 // Map common math functions to localized versions
                 expr = expr.replace(/\bmax\(/g, 'math_max(')
-                           .replace(/\bmin\(/g, 'math_min(')
-                           .replace(/\bceil\(/g, 'math_ceil(')
-                           .replace(/\bfloor\(/g, 'math_floor(')
-                           .replace(/\babs\(/g, 'math_abs(')
-                           .replace(/\brandom\(/g, 'math_random(')
-                           .replace(/\bsqrt\(/g, 'math_sqrt(');
+                    .replace(/\bmin\(/g, 'math_min(')
+                    .replace(/\bceil\(/g, 'math_ceil(')
+                    .replace(/\bfloor\(/g, 'math_floor(')
+                    .replace(/\babs\(/g, 'math_abs(')
+                    .replace(/\brandom\(/g, 'math_random(')
+                    .replace(/\bsqrt\(/g, 'math_sqrt(');
                 return `(${expr})`;
             }
         }
@@ -119,7 +119,7 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
 
     // 1. Global Optimization: Localize standard library functions
     const usedGlobals = new Set<string>();
-    
+
     // Always localize common ones for performance
     usedGlobals.add('pairs');
     usedGlobals.add('ipairs');
@@ -138,7 +138,7 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     usedGlobals.add('math.abs');
     usedGlobals.add('math.random');
     usedGlobals.add('math.sqrt');
-    
+
     // Check for specific needs
     let needsSpring = false;
     let needsTableMerge = false;
@@ -187,14 +187,14 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     builder.addLocal('math_abs', 'math.abs');
     builder.addLocal('math_random', 'math.random');
     builder.addLocal('math_sqrt', 'math.sqrt');
-    
+
     if (needsSpring) {
         builder.addLocal('Spring_GetModOptions', 'Spring.GetModOptions');
     }
     if (needsTableMerge) {
         // Assume table.merge exists in Spring Lua environment, or define it if not.
         // For safety in BAR environment, table.merge is usually global or in table.
-        builder.addLocal('table_merge', 'table.merge'); 
+        builder.addLocal('table_merge', 'table.merge');
     }
 
     builder.addStatement('');
@@ -259,13 +259,13 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
                 // Create list if missing
                 const parts = mut.field.split('.');
                 if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
-                     // Simplified creation for customparams
-                     builder.addStatement(`${defVar}.customparams = ${defVar}.customparams or {}`);
-                     builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
-                     builder.addStatement(`target_list = ${defVar}.customparams["${parts[1]}"]`);
+                    // Simplified creation for customparams
+                    builder.addStatement(`${defVar}.customparams = ${defVar}.customparams or {}`);
+                    builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
+                    builder.addStatement(`target_list = ${defVar}.customparams["${parts[1]}"]`);
                 } else {
-                     builder.addStatement(`${defVar}.${mut.field} = {}`);
-                     builder.addStatement(`target_list = ${defVar}.${mut.field}`);
+                    builder.addStatement(`${defVar}.${mut.field} = {}`);
+                    builder.addStatement(`target_list = ${defVar}.${mut.field}`);
                 }
                 builder.endBlock();
                 builder.addStatement(`table_insert(target_list, ${val})`);
@@ -287,12 +287,12 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
                 // Create table if missing
                 const parts = mut.field.split('.');
                 if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
-                     builder.addStatement(`${defVar}.customparams = ${defVar}.customparams or {}`);
-                     builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
-                     builder.addStatement(`target_table = ${defVar}.customparams["${parts[1]}"]`);
+                    builder.addStatement(`${defVar}.customparams = ${defVar}.customparams or {}`);
+                    builder.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
+                    builder.addStatement(`target_table = ${defVar}.customparams["${parts[1]}"]`);
                 } else {
-                     builder.addStatement(`${defVar}.${mut.field} = {}`);
-                     builder.addStatement(`target_table = ${defVar}.${mut.field}`);
+                    builder.addStatement(`${defVar}.${mut.field} = {}`);
+                    builder.addStatement(`target_table = ${defVar}.${mut.field}`);
                 }
                 builder.endBlock();
                 // Use table_merge if available or loop
@@ -313,16 +313,16 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
             } else if (mut.op === 'clone_unit') {
                 const source = mut.source === 'SELF' ? defVar : `UnitDefs["${mut.source}"]`;
                 const targetName = mut.target ? `"${mut.target}"` : (mut.targetSuffix ? `${defVar}.name .. "${mut.targetSuffix}"` : 'nil');
-                
+
                 builder.startIf(source);
                 builder.addLocal('newDef', `table_merge({}, ${source})`); // Shallow copy first via merge into empty
                 // Deep copy is better but table_merge usually handles it or we assume shallow is enough for base props
                 // Actually table.merge in Spring is usually deep.
-                
+
                 if (mut.mutations) {
                     generateMutations(mut.mutations, 'newDef');
                 }
-                
+
                 builder.addStatement(`UnitDefs[${targetName}] = newDef`);
                 builder.endBlock();
             }
@@ -396,11 +396,11 @@ export function compileTweak(tweakOrTweaks: TweakDefinition | TweakDefinition[])
     if (loopTweaks.length > 0) {
         builder.startLoop('for id, def in pairs(UnitDefs)');
         builder.addLocal('name', 'def.name or id'); // Fallback to id if name missing
-        
+
         // Loop Fusion with if-elseif optimization attempt
         // We can't easily merge arbitrary conditions into a single if-elseif tree without analyzing overlap.
         // But we can group them sequentially.
-        
+
         for (const tweak of loopTweaks) {
             const conds = generateConditions(tweak.conditions, 'name', 'def');
             if (conds.length > 0) {

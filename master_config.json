@@ -1,0 +1,3744 @@
+{
+  "label": "Master Config",
+  "variable": "master_config",
+  "generator": "migration-script-manual",
+  "definitions": [
+    {
+      "name": "Add armmeatball to cor factories",
+      "description": "Adds armmeatball to build options of factories starting with cor",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameStartsWith",
+          "prefix": "cor"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "list_append",
+          "target": "buildoptions",
+          "value": "armmeatball"
+        }
+      ]
+    },
+    {
+      "name": "NuttyB v1.52 1.0X HP - Swarmer Heal",
+      "description": "Swarmer Heal adjustments",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameStartsWith",
+          "prefix": "raptor_land_swarmer_heal"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "reclaimSpeed",
+          "value": 100
+        },
+        {
+          "op": "set",
+          "target": "stealth",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "builder",
+          "value": false
+        },
+        {
+          "op": "multiply",
+          "target": "buildSpeed",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "target": "canAssist",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "maxThisUnit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "NuttyB v1.52 1.0X HP - Raptors",
+      "description": "Raptor Health adjustments",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "customParam",
+          "key": "subfolder",
+          "value": "other/raptors"
+        },
+        {
+          "type": "nameNotMatch",
+          "regex": "^raptor_queen_.*"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "multiply",
+          "target": "health",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "NuttyB v1.52 1.0X HP - Metal & Chase",
+      "description": "Metal Cost and NoChase",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "customParam",
+          "key": "subfolder",
+          "value": "other/raptors"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "noChaseCategory",
+          "value": "OBJECT"
+        }
+      ]
+    },
+    {
+      "name": "Raptor Air Fighter Basic Tweaks",
+      "description": "Adjusts weapon properties for Raptor Air Fighter Basic",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameStartsWith",
+          "prefix": "raptor_air_fighter_basic"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "name",
+          "value": "Spike"
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "accuracy",
+          "value": 200
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "areaofeffect",
+          "value": 64
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "edgeeffectiveness",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "explosiongenerator",
+          "value": "custom:raptorspike-large-sparks-burn"
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "cameraShake",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "dance",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "interceptedbyshieldtype",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "model",
+          "value": "Raptors/spike.s3o"
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "reloadtime",
+          "value": 1.1
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "soundstart",
+          "value": "talonattack"
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "startvelocity",
+          "value": 200
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "submissile",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "smoketrail",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "smokePeriod",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "smoketime",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "smokesize",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "smokecolor",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "soundhit",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "texture1",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "texture2",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "tolerance",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "tracks",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "turnrate",
+          "value": 60000
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "weaponacceleration",
+          "value": 100
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "weapontimer",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "weaponvelocity",
+          "value": 1000
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "weapontype",
+          "value": {}
+        },
+        {
+          "op": "set",
+          "weapon_target": "all",
+          "target": "wobble",
+          "value": {}
+        }
+      ]
+    },
+    {
+      "name": "Commander Tweaks",
+      "description": "Adjusts customparams and featuredefs for Commanders",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^[acl][ore][rgm]com"
+        },
+        {
+          "type": "nameNotMatch",
+          "regex": "_scav$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "customparams",
+          "value": {
+            "combatradius": 0,
+            "fall_damage_multiplier": 0,
+            "paratrooper": true,
+            "wtboostunittype": {}
+          }
+        },
+        {
+          "op": "table_merge",
+          "target": "featuredefs",
+          "value": {
+            "dead": {
+              "damage": 9999999,
+              "reclaimable": false,
+              "mass": 9999999
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Raptor Turret Buffs",
+      "description": "Doubles health and adjusts reload/range for turrets",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameInList",
+          "names": [
+            "raptor_antinuke",
+            "raptor_turret_acid_t2_v1",
+            "raptor_turret_acid_t3_v1",
+            "raptor_turret_acid_t4_v1",
+            "raptor_turret_antiair_t2_v1",
+            "raptor_turret_antiair_t3_v1",
+            "raptor_turret_antiair_t4_v1",
+            "raptor_turret_antinuke_t2_v1",
+            "raptor_turret_antinuke_t3_v1",
+            "raptor_turret_basic_t2_v1",
+            "raptor_turret_basic_t3_v1",
+            "raptor_turret_basic_t4_v1",
+            "raptor_turret_burrow_t2_v1",
+            "raptor_turret_emp_t2_v1",
+            "raptor_turret_emp_t3_v1",
+            "raptor_turret_emp_t4_v1",
+            "raptor_worm_green"
+          ]
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "maxThisUnit",
+          "value": 10
+        },
+        {
+          "op": "multiply",
+          "target": "health",
+          "value": 2
+        },
+        {
+          "op": "multiply",
+          "weapon_target": "all",
+          "target": "reloadtime",
+          "value": 0.666666
+        },
+        {
+          "op": "multiply",
+          "weapon_target": "all",
+          "target": "range",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "name": "Flying Builder Cleanup",
+      "description": "Removes explosion from flying builders",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "fieldValue",
+          "field": "builder",
+          "value": true
+        },
+        {
+          "type": "fieldValue",
+          "field": "canfly",
+          "value": true
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeAs",
+          "value": ""
+        },
+        {
+          "op": "set",
+          "target": "selfDestructAs",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "name": "Clone Hive Spawn",
+      "description": "Creates Hive Spawn from Raptor Swarmer",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_land_swarmer_basic_t1_v1",
+          "target": "raptor_hive_swarmer_basic",
+          "mutations": [
+            {
+              "op": "set",
+              "target": "name",
+              "value": "Hive Spawn"
+            },
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Hive Spawn",
+                "i18n_en_tooltip": "Raptor spawned to defend hives from attackers."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clone Armored Assault Raptor",
+      "description": "Creates Armored Assault Raptor",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "raptor_land_assault_basic_t2_v1",
+          "target": "raptor_hive_assault_basic",
+          "mutations": [
+            {
+              "op": "set",
+              "target": "name",
+              "value": "Armored Assault Raptor"
+            },
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Armored Assault Raptor",
+                "i18n_en_tooltip": "Heavy, slow, and unyielding—these beasts are made to take the hits others cant."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Meatball Launcher",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armbotrail",
+          "target": "armmeatball",
+          "mutations": [
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Meatball Launcher"
+              }
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "range",
+              "value": 7550
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "metalpershot",
+              "value": 5300
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "energypershot",
+              "value": 96000
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "reloadtime",
+              "value": 0.5
+            },
+            {
+              "op": "table_merge",
+              "weapon_target": "arm_botrail",
+              "target": "customparams",
+              "value": {
+                "stockpilelimit": 50,
+                "spawns_name": "armmeatball"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Assimilator Launcher",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armbotrail",
+          "target": "armassimilator",
+          "mutations": [
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Assimilator Launcher"
+              }
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "range",
+              "value": 7550
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "metalpershot",
+              "value": 4500
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "energypershot",
+              "value": 80000
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "reloadtime",
+              "value": 0.5
+            },
+            {
+              "op": "table_merge",
+              "weapon_target": "arm_botrail",
+              "target": "customparams",
+              "value": {
+                "stockpilelimit": 50,
+                "spawns_name": "armassimilator"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Epic Pawn Launcher",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armbotrail",
+          "target": "armpwt4",
+          "mutations": [
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Epic Pawn Launcher"
+              }
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "range",
+              "value": 7550
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "metalpershot",
+              "value": 14200
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "energypershot",
+              "value": 480000
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "reloadtime",
+              "value": 0.5
+            },
+            {
+              "op": "table_merge",
+              "weapon_target": "arm_botrail",
+              "target": "customparams",
+              "value": {
+                "stockpilelimit": 50,
+                "spawns_name": "armpwt4"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Create Armada T1 Launcher",
+      "scope": "Global",
+      "conditions": [],
+      "mutations": [
+        {
+          "op": "clone_unit",
+          "source": "armbotrail",
+          "target": "armt1",
+          "mutations": [
+            {
+              "op": "table_merge",
+              "target": "customparams",
+              "value": {
+                "i18n_en_humanname": "Armada T1 Launcher"
+              }
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "stockpiletime",
+              "value": 0.5
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "range",
+              "value": 7550
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "metalpershot",
+              "value": 250
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "energypershot",
+              "value": 12500
+            },
+            {
+              "op": "set",
+              "weapon_target": "arm_botrail",
+              "target": "reloadtime",
+              "value": 0.5
+            },
+            {
+              "op": "table_merge",
+              "weapon_target": "arm_botrail",
+              "target": "customparams",
+              "value": {
+                "stockpilelimit": 50,
+                "spawns_name": "armham armjeth armpw armrock armwar armah armanac armmh armsh armart armfav armflash armjanus armpincer armsam armstump armzapper",
+                "spawns_mode": "random"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Add Launchers to Cormandot4",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "cormandot4"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "list_append",
+          "target": "buildoptions",
+          "value": "armmeatball"
+        },
+        {
+          "op": "list_append",
+          "target": "buildoptions",
+          "value": "armassimilator"
+        },
+        {
+          "op": "list_append",
+          "target": "buildoptions",
+          "value": "armpwt4"
+        },
+        {
+          "op": "list_append",
+          "target": "buildoptions",
+          "value": "armt1"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: cortron",
+      "description": "Converted from 8-tweakunits.json for cortron",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^cortron$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 42000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 3600
+        },
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 110000
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 12000
+        },
+        {
+          "op": "set",
+          "weapon_target": "cortron_weapon",
+          "target": "energypershot",
+          "value": 51000
+        },
+        {
+          "op": "set",
+          "weapon_target": "cortron_weapon",
+          "target": "metalpershot",
+          "value": 600
+        },
+        {
+          "op": "set",
+          "weapon_target": "cortron_weapon",
+          "target": "range",
+          "value": 4050
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "cortron_weapon",
+          "target": "damage",
+          "value": {
+            "default": 9000
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corfort",
+      "description": "Converted from 8-tweakunits.json for corfort",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corfort$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "repairable",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armfort",
+      "description": "Converted from 8-tweakunits.json for armfort",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armfort$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "repairable",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legforti",
+      "description": "Converted from 8-tweakunits.json for legforti",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legforti$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "repairable",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armgate",
+      "description": "Converted from 8-tweakunits.json for armgate",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armgate$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "empblast"
+        },
+        {
+          "op": "set",
+          "target": "selfdestructas",
+          "value": "empblast"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corgate",
+      "description": "Converted from 8-tweakunits.json for corgate",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corgate$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "empblast"
+        },
+        {
+          "op": "set",
+          "target": "selfdestructas",
+          "value": "empblast"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legdeflector",
+      "description": "Converted from 8-tweakunits.json for legdeflector",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legdeflector$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "empblast"
+        },
+        {
+          "op": "set",
+          "target": "selfdestructas",
+          "value": "empblast"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corsat",
+      "description": "Converted from 8-tweakunits.json for corsat",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corsat$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "sightdistance",
+          "value": 3100
+        },
+        {
+          "op": "set",
+          "target": "radardistance",
+          "value": 4080
+        },
+        {
+          "op": "set",
+          "target": "cruisealtitude",
+          "value": 3300
+        },
+        {
+          "op": "set",
+          "target": "energyupkeep",
+          "value": 1250
+        },
+        {
+          "op": "set",
+          "target": "category",
+          "value": "OBJECT"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armsat",
+      "description": "Converted from 8-tweakunits.json for armsat",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armsat$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "sightdistance",
+          "value": 3100
+        },
+        {
+          "op": "set",
+          "target": "radardistance",
+          "value": 4080
+        },
+        {
+          "op": "set",
+          "target": "cruisealtitude",
+          "value": 3300
+        },
+        {
+          "op": "set",
+          "target": "energyupkeep",
+          "value": 1250
+        },
+        {
+          "op": "set",
+          "target": "category",
+          "value": "OBJECT"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legstarfall",
+      "description": "Converted from 8-tweakunits.json for legstarfall",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legstarfall$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "weapon_target": "starfire",
+          "target": "energypershot",
+          "value": 270000
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armflak",
+      "description": "Converted from 8-tweakunits.json for armflak",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armflak$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "airsightdistance",
+          "value": 1350
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 30000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1500
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 4000
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "areaofeffect",
+          "value": 150
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "range",
+          "value": 1150
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "reloadtime",
+          "value": 0.475
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "weaponvelocity",
+          "value": 2400
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "intensity",
+          "value": 0.18
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corflak",
+      "description": "Converted from 8-tweakunits.json for corflak",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corflak$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "airsightdistance",
+          "value": 1350
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 30000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1500
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 4000
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "areaofeffect",
+          "value": 200
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "range",
+          "value": 1350
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "reloadtime",
+          "value": 0.56
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "weaponvelocity",
+          "value": 2100
+        },
+        {
+          "op": "set",
+          "weapon_target": "armflak_gun",
+          "target": "intensity",
+          "value": 0.18
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legflak",
+      "description": "Converted from 8-tweakunits.json for legflak",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legflak$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "footprintx",
+          "value": 4
+        },
+        {
+          "op": "set",
+          "target": "footprintz",
+          "value": 4
+        },
+        {
+          "op": "set",
+          "target": "airsightdistance",
+          "value": 1350
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 35000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 2100
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 6000
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "areaofeffect",
+          "value": 100
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "burst",
+          "value": 3
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "range",
+          "value": 1050
+        },
+        {
+          "op": "set",
+          "weapon_target": "legflak_gun",
+          "target": "intensity",
+          "value": 0.18
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armmercury",
+      "description": "Converted from 8-tweakunits.json for armmercury",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armmercury$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "airsightdistance",
+          "value": 2200
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "areaofeffect",
+          "value": 500
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "energypershot",
+          "value": 2000
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "explosiongenerator",
+          "value": "custom:flak"
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "flighttime",
+          "value": 1.5
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "metalpershot",
+          "value": 6
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "name",
+          "value": "Mid-range, rapid-fire g2a guided missile launcher"
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "range",
+          "value": 2500
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "reloadtime",
+          "value": 1.2
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "smoketrail",
+          "value": false
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "startvelocity",
+          "value": 1500
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "weaponacceleration",
+          "value": 1000
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_advsam",
+          "target": "weaponvelocity",
+          "value": 4000
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corscreamer",
+      "description": "Converted from 8-tweakunits.json for corscreamer",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corscreamer$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "airsightdistance",
+          "value": 2800
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "areaofeffect",
+          "value": 800
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "energypershot",
+          "value": 2000
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "explosiongenerator",
+          "value": "custom:flak"
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "flighttime",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "metalpershot",
+          "value": 10
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "name",
+          "value": "Long-range g2a guided heavy flak missile launcher"
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "range",
+          "value": 2800
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "reloadtime",
+          "value": 1.8
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "smoketrail",
+          "value": false
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "startvelocity",
+          "value": 4000
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "weaponacceleration",
+          "value": 1000
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_advsam",
+          "target": "weaponvelocity",
+          "value": 8000
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armassistdrone",
+      "description": "Converted from 8-tweakunits.json for armassistdrone",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armassistdrone$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "31": "armclaw"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corassistdrone",
+      "description": "Converted from 8-tweakunits.json for corassistdrone",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corassistdrone$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "32": "cormaw"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legassistdrone",
+      "description": "Converted from 8-tweakunits.json for legassistdrone",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legassistdrone$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "31": "legdtf",
+            "32": "legdtl",
+            "33": "legdtr"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legfortt4",
+      "description": "Converted from 8-tweakunits.json for legfortt4",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legfortt4$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "fusionExplosionSelfd"
+        },
+        {
+          "op": "set",
+          "target": "selfdestructas",
+          "value": "fusionExplosionSelfd"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legfort",
+      "description": "Converted from 8-tweakunits.json for legfort",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legfort$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "empblast"
+        },
+        {
+          "op": "set",
+          "target": "selfdestructas",
+          "value": "empblast"
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: raptor_hive",
+      "description": "Converted from 8-tweakunits.json for raptor_hive",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^raptor_hive$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "burst",
+          "value": 5
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "burstrate",
+          "value": 0.01
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "cegtag",
+          "value": "arty-heavy-purple"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "explosiongenerator",
+          "value": "custom:dirt"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "model",
+          "value": "Raptors/s_raptor_white.s3o"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "range",
+          "value": 1600
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "reloadtime",
+          "value": 5
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "rgbcolor",
+          "value": "0.5 0 1"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "soundhit",
+          "value": "smallraptorattack"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "soundstart",
+          "value": "bugarty"
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "sprayangle",
+          "value": 256
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "turret",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "stockpiletime",
+          "value": 12
+        },
+        {
+          "op": "set",
+          "weapon_target": "antiground",
+          "target": "proximitypriority",
+          "value": null
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "antiground",
+          "target": "damage",
+          "value": {
+            "default": 1,
+            "shields": 100
+          }
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "antiground",
+          "target": "customparams",
+          "value": {
+            "spawns_count": 15,
+            "spawns_expire": 11,
+            "spawns_mode": "random",
+            "spawns_name": "raptor_acidspawnling raptor_hive_swarmer_basic raptor_land_swarmer_basic_t1_v1 ",
+            "spawns_surface": "LAND SEA",
+            "stockpilelimit": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armapt3",
+      "description": "Converted from 8-tweakunits.json for armapt3",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armapt3$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "58": "armsat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corapt3",
+      "description": "Converted from 8-tweakunits.json for corapt3",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corapt3$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "58": "corsat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legapt3",
+      "description": "Converted from 8-tweakunits.json for legapt3",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legapt3$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "table_merge",
+          "target": "buildoptions",
+          "value": {
+            "58": "corsat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armlwall",
+      "description": "Converted from 8-tweakunits.json for armlwall",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armlwall$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 25000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1300
+        },
+        {
+          "op": "set",
+          "weapon_target": "lightning",
+          "target": "energypershot",
+          "value": 200
+        },
+        {
+          "op": "set",
+          "weapon_target": "lightning",
+          "target": "range",
+          "value": 430
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armclaw",
+      "description": "Converted from 8-tweakunits.json for armclaw",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armclaw$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -2 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "30 51 30"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumetype",
+          "value": "Ell"
+        },
+        {
+          "op": "set",
+          "target": "usepiececollisionvolumes",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "dclaw",
+          "target": "energypershot",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legdtl",
+      "description": "Converted from 8-tweakunits.json for legdtl",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legdtl$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "weapon_target": "dclaw",
+          "target": "energypershot",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armamd",
+      "description": "Converted from 8-tweakunits.json for armamd",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armamd$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1800
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 41000
+        },
+        {
+          "op": "set",
+          "weapon_target": "amd_rocket",
+          "target": "coverage",
+          "value": 2125
+        },
+        {
+          "op": "set",
+          "weapon_target": "amd_rocket",
+          "target": "stockpiletime",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corfmd",
+      "description": "Converted from 8-tweakunits.json for corfmd",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corfmd$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1800
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 41000
+        },
+        {
+          "op": "set",
+          "weapon_target": "fmd_rocket",
+          "target": "coverage",
+          "value": 2125
+        },
+        {
+          "op": "set",
+          "weapon_target": "fmd_rocket",
+          "target": "stockpiletime",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legabm",
+      "description": "Converted from 8-tweakunits.json for legabm",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legabm$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1800
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 41000
+        },
+        {
+          "op": "set",
+          "weapon_target": "fmd_rocket",
+          "target": "coverage",
+          "value": 2125
+        },
+        {
+          "op": "set",
+          "weapon_target": "fmd_rocket",
+          "target": "stockpiletime",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corwint2",
+      "description": "Converted from 8-tweakunits.json for corwint2",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corwint2$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 400
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legwint2",
+      "description": "Converted from 8-tweakunits.json for legwint2",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legwint2$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 400
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legdtr",
+      "description": "Converted from 8-tweakunits.json for legdtr",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legdtr$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 5250
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 5500
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 400
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -10 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "39 88 39"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumetype",
+          "value": "Ell"
+        },
+        {
+          "op": "set",
+          "target": "usepiececollisionvolumes",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "areaofeffect",
+          "value": 30
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "avoidfriendly",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "collidefriendly",
+          "value": false
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "cegtag",
+          "value": "railgun"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "range",
+          "value": 650
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "energypershot",
+          "value": 75
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "explosiongenerator",
+          "value": "custom:plasmahit-sparkonly"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "rgbcolor",
+          "value": "0.34 0.64 0.94"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "soundhit",
+          "value": "mavgun3"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "soundhitwet",
+          "value": "splshbig"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "soundstart",
+          "value": "lancefire"
+        },
+        {
+          "op": "set",
+          "weapon_target": "corlevlr_weapon",
+          "target": "weaponvelocity",
+          "value": 1300
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "corlevlr_weapon",
+          "target": "damage",
+          "value": {
+            "default": 550
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armrespawn",
+      "description": "Converted from 8-tweakunits.json for armrespawn",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armrespawn$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "blocking",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "canresurrect",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legnanotcbase",
+      "description": "Converted from 8-tweakunits.json for legnanotcbase",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legnanotcbase$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "blocking",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "canresurrect",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: correspawn",
+      "description": "Converted from 8-tweakunits.json for correspawn",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^correspawn$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "blocking",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "canresurrect",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legrwall",
+      "description": "Converted from 8-tweakunits.json for legrwall",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legrwall$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -3 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "32 50 32"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumetype",
+          "value": "CylY"
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 21000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1400
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "range",
+          "value": 725
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "reloadtime",
+          "value": 3
+        },
+        {
+          "op": "set",
+          "weapon_target": "railgunt2",
+          "target": "energypershot",
+          "value": 200
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "railgunt2",
+          "target": "damage",
+          "value": {
+            "default": 1500
+          }
+        },
+        {
+          "op": "table_merge",
+          "target": "weapons",
+          "value": {
+            "1": {
+              "def": "railgunt2",
+              "onlytargetcategory": "SURFACE"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: cormwall",
+      "description": "Converted from 8-tweakunits.json for cormwall",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^cormwall$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 18000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 1350
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "areaofeffect",
+          "value": 70
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "cameraShake",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "energypershot",
+          "value": 125
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "burst",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "burstrate",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "colormap",
+          "value": "0.75 0.73 0.67 0.024   0.37 0.4 0.30 0.021   0.22 0.21 0.14 0.018  0.024 0.014 0.009 0.03   0.0 0.0 0.0 0.008"
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "craterareaofeffect",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "explosiongenerator",
+          "value": "custom:burnblack"
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "flamegfxtime",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "flighttime",
+          "value": 1.05
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "name",
+          "value": "Raptor Boomer"
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "reloadtime",
+          "value": 1.5
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "rgbcolor",
+          "value": "1 0.25 0.1"
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "range",
+          "value": 700
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "size",
+          "value": 2
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "proximitypriority",
+          "value": null
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "impactonly",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "trajectoryheight",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "targetmoveerror",
+          "value": 0.2
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "tracks",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "weaponacceleration",
+          "value": 660
+        },
+        {
+          "op": "set",
+          "weapon_target": "exp_heavyrocket",
+          "target": "weaponvelocity",
+          "value": 950
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "exp_heavyrocket",
+          "target": "damage",
+          "value": {
+            "default": 1050
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: cormaw",
+      "description": "Converted from 8-tweakunits.json for cormaw",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^cormaw$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -2 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "30 51 30"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumetype",
+          "value": "Ell"
+        },
+        {
+          "op": "set",
+          "target": "usepiececollisionvolumes",
+          "value": false
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 350
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 2500
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "areaofeffect",
+          "value": 80
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "edgeeffectiveness",
+          "value": 0.45
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "energypershot",
+          "value": 50
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "burst",
+          "value": 24
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "rgbcolor",
+          "value": "0.051 0.129 0.871"
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "rgbcolor2",
+          "value": "0.57 0.624 1"
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "sizegrowth",
+          "value": 0.8
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "range",
+          "value": 450
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "intensity",
+          "value": 0.68
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "dmaw",
+          "target": "damage",
+          "value": {
+            "default": 28
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: legdtf",
+      "description": "Converted from 8-tweakunits.json for legdtf",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^legdtf$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -24 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "30 51 30"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumetype",
+          "value": "Ell"
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 350
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 2750
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "areaofeffect",
+          "value": 80
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "edgeeffectiveness",
+          "value": 0.45
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "energypershot",
+          "value": 50
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "burst",
+          "value": 24
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "sizegrowth",
+          "value": 2
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "range",
+          "value": 450
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "intensity",
+          "value": 0.38
+        },
+        {
+          "op": "set",
+          "weapon_target": "dmaw",
+          "target": "sprayangle",
+          "value": 500
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "dmaw",
+          "target": "damage",
+          "value": {
+            "default": 30
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corhllllt",
+      "description": "Converted from 8-tweakunits.json for corhllllt",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corhllllt$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "collisionvolumeoffsets",
+          "value": "0 -24 0"
+        },
+        {
+          "op": "set",
+          "target": "collisionvolumescales",
+          "value": "30 51 30"
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 415
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 9500
+        },
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 10000
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 2115
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corhlt",
+      "description": "Converted from 8-tweakunits.json for corhlt",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corhlt$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 5500
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 520
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_laserh1",
+          "target": "range",
+          "value": 750
+        },
+        {
+          "op": "set",
+          "weapon_target": "cor_laserh1",
+          "target": "reloadtime",
+          "value": 0.95
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "cor_laserh1",
+          "target": "damage",
+          "value": {
+            "default": 395,
+            "vtol": 35
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armhlt",
+      "description": "Converted from 8-tweakunits.json for armhlt",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armhlt$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 5700
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 510
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_laserh1",
+          "target": "range",
+          "value": 750
+        },
+        {
+          "op": "set",
+          "weapon_target": "arm_laserh1",
+          "target": "reloadtime",
+          "value": 1
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "arm_laserh1",
+          "target": "damage",
+          "value": {
+            "default": 405,
+            "vtol": 35
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: armbrtha",
+      "description": "Converted from 8-tweakunits.json for armbrtha",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^armbrtha$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "fusionExplosion"
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 500000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 18500
+        },
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 175000
+        },
+        {
+          "op": "set",
+          "target": "turnrate",
+          "value": 16000
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 10450
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "areaofeffect",
+          "value": 50
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "beamtime",
+          "value": 2.5
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "corethickness",
+          "value": 0.1
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "craterareaofeffect",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "craterboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "cratermult",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "cameraShake",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "edgeeffectiveness",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "energypershot",
+          "value": 14000
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "explosiongenerator",
+          "value": "custom:laserhit-large-blue"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "firestarter",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "impulseboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "impulsefactor",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "largebeamlaser",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "laserflaresize",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "impactonly",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "name",
+          "value": "Experimental Duction Beam"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "noselfdamage",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "range",
+          "value": 2400
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "reloadtime",
+          "value": 13
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "rgbcolor",
+          "value": "0.4 0.2 0.6"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "scrollspeed",
+          "value": 13
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "soundhitdry",
+          "value": ""
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "soundhitwet",
+          "value": "sizzle"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "soundstart",
+          "value": "hackshotxl3"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "soundtrigger",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "targetmoveerror",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "texture3",
+          "value": "largebeam"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "thickness",
+          "value": 14
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "tilelength",
+          "value": 150
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "tolerance",
+          "value": 10000
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "turret",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "turnrate",
+          "value": 16000
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "weapontype",
+          "value": "LaserCannon"
+        },
+        {
+          "op": "set",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "weaponvelocity",
+          "value": 3100
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "ARMBRTHA_MAIN",
+          "target": "damage",
+          "value": {
+            "commanders": 480,
+            "default": 34000
+          }
+        },
+        {
+          "op": "table_merge",
+          "target": "weapons",
+          "value": {
+            "1": {
+              "badtargetcategory": "VTOL GROUNDSCOUT",
+              "def": "ARMBRTHA_MAIN",
+              "onlytargetcategory": "SURFACE"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: corint",
+      "description": "Converted from 8-tweakunits.json for corint",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^corint$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "fusionExplosion"
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 505000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 19500
+        },
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 170000
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 12450
+        },
+        {
+          "op": "set",
+          "target": "footprintx",
+          "value": 6
+        },
+        {
+          "op": "set",
+          "target": "footprintz",
+          "value": 6
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "areaofeffect",
+          "value": 70
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "beamtime",
+          "value": 2.5
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "corethickness",
+          "value": 0.1
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "craterareaofeffect",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "craterboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "cratermult",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "cameraShake",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "edgeeffectiveness",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "energypershot",
+          "value": 17000
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "explosiongenerator",
+          "value": "custom:laserhit-large-blue"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "firestarter",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "impulseboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "impulsefactor",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "largebeamlaser",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "laserflaresize",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "impactonly",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "name",
+          "value": "Mini DeathStar"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "noselfdamage",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "range",
+          "value": 2800
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "reloadtime",
+          "value": 15
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "rgbcolor",
+          "value": "0 1 0"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "scrollspeed",
+          "value": 13
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "soundhitdry",
+          "value": ""
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "soundhitwet",
+          "value": "sizzle"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "soundstart",
+          "value": "annigun1"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "soundtrigger",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "targetmoveerror",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "texture3",
+          "value": "largebeam"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "thickness",
+          "value": 14
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "tilelength",
+          "value": 150
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "tolerance",
+          "value": 10000
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "turret",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "turnrate",
+          "value": 1600
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "weapontype",
+          "value": "LaserCannon"
+        },
+        {
+          "op": "set",
+          "weapon_target": "CORINT_MAIN",
+          "target": "weaponvelocity",
+          "value": 3100
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "CORINT_MAIN",
+          "target": "damage",
+          "value": {
+            "commanders": 480,
+            "default": 50000
+          }
+        },
+        {
+          "op": "table_merge",
+          "target": "weapons",
+          "value": {
+            "1": {
+              "badtargetcategory": "VTOL GROUNDSCOUT",
+              "def": "CORINT_MAIN",
+              "onlytargetcategory": "SURFACE"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Legacy Tweak: leglrpc",
+      "description": "Converted from 8-tweakunits.json for leglrpc",
+      "scope": "UnitDefsLoop",
+      "conditions": [
+        {
+          "type": "nameMatch",
+          "regex": "^leglrpc$"
+        }
+      ],
+      "mutations": [
+        {
+          "op": "set",
+          "target": "explodeas",
+          "value": "fusionExplosion"
+        },
+        {
+          "op": "set",
+          "target": "energycost",
+          "value": 555000
+        },
+        {
+          "op": "set",
+          "target": "metalcost",
+          "value": 21000
+        },
+        {
+          "op": "set",
+          "target": "buildtime",
+          "value": 150000
+        },
+        {
+          "op": "set",
+          "target": "health",
+          "value": 11000
+        },
+        {
+          "op": "set",
+          "target": "footprintx",
+          "value": 6
+        },
+        {
+          "op": "set",
+          "target": "footprintz",
+          "value": 6
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "areaofeffect",
+          "value": 70
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "collidefriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "collidefeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "avoidfeature",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "avoidfriendly",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "beamtime",
+          "value": 0.5
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "burst",
+          "value": 3
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "burstrate",
+          "value": 0.4
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "corethickness",
+          "value": 0.1
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "craterareaofeffect",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "craterboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "cratermult",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "cameraShake",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "edgeeffectiveness",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "energypershot",
+          "value": 10000
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "explosiongenerator",
+          "value": "custom:laserhit-large-red"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "firestarter",
+          "value": 90
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "impactonly",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "impulseboost",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "impulsefactor",
+          "value": 0
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "largebeamlaser",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "laserflaresize",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "name",
+          "value": "The Eagle Standard"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "noselfdamage",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "range",
+          "value": 2150
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "reloadtime",
+          "value": 3
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "rgbcolor",
+          "value": "0/1/0.4"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "scrollspeed",
+          "value": 13
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "soundhitdry",
+          "value": ""
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "soundhitwet",
+          "value": "sizzle"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "soundstart",
+          "value": "lasrcrw1"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "soundtrigger",
+          "value": 1
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "targetmoveerror",
+          "value": 0.3
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "texture3",
+          "value": "largebeam"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "thickness",
+          "value": 12
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "tilelength",
+          "value": 150
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "tolerance",
+          "value": 10000
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "turret",
+          "value": true
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "turnrate",
+          "value": 16000
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "weapontype",
+          "value": "LaserCannon"
+        },
+        {
+          "op": "set",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "weaponvelocity",
+          "value": 3100
+        },
+        {
+          "op": "table_merge",
+          "weapon_target": "LEGLRPC_MAIN",
+          "target": "damage",
+          "value": {
+            "commanders": 480,
+            "default": 6000
+          }
+        },
+        {
+          "op": "table_merge",
+          "target": "weapons",
+          "value": {
+            "1": {
+              "badtargetcategory": "VTOL GROUNDSCOUT",
+              "def": "LEGLRPC_MAIN",
+              "onlytargetcategory": "SURFACE"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
