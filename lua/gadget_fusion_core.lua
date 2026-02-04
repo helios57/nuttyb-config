@@ -29,6 +29,8 @@ local spSetUnitNeutral = Spring.SetUnitNeutral
 local spGetUnitHealth = Spring.GetUnitHealth
 local spSetUnitHealth = Spring.SetUnitHealth
 local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
+local spGetUnitExperience = Spring.GetUnitExperience
+local spSetUnitExperience = Spring.SetUnitExperience
 
 -- Map of Mergeable UnitDefID -> Next Tier UnitDefID
 local mergeMap = {}
@@ -121,11 +123,15 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
             local cz = (pz1 + pz4) / 2
 
             -- Get XP from fused units
-            local xp1 = Spring.GetUnitExperience(uTL) or 0
-            local xp2 = Spring.GetUnitExperience(uTR) or 0
-            local xp3 = Spring.GetUnitExperience(uBL) or 0
-            local xp4 = Spring.GetUnitExperience(uBR) or 0
+            local xp1 = spGetUnitExperience(uTL) or 0
+            local xp2 = spGetUnitExperience(uTR) or 0
+            local xp3 = spGetUnitExperience(uBL) or 0
+            local xp4 = spGetUnitExperience(uBR) or 0
             local totalXP = xp1 + xp2 + xp3 + xp4
+
+            -- Apply Efficiency Bonus
+            local efficiency = tonumber(modOptions.fusion_efficiency) or 1.10
+            totalXP = totalXP * efficiency
 
             -- Destroy source units
             spDestroyUnit(uTL, false, true)
@@ -136,15 +142,15 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
             -- Create new unit
             local newUnit = spCreateUnit(nextTierID, cx, 0, cz, 0, teamID)
             if newUnit then
-                -- Sum HP from fused units
-                local totalHealth = h1 + h2 + h3 + h4
+                -- Sum HP from fused units and apply bonus
+                local totalHealth = (h1 + h2 + h3 + h4) * efficiency
                 -- Check max health of new unit to avoid overflow if needed,
                 -- though usually SetUnitHealth clamps it or allows overflow.
                 -- We set it to the sum.
                 spSetUnitHealth(newUnit, totalHealth)
 
                 -- Sum XP
-                Spring.SetUnitExperience(newUnit, totalXP)
+                spSetUnitExperience(newUnit, totalXP)
             end
             return true
         end

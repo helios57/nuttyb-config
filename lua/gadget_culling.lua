@@ -27,14 +27,18 @@ local spValidUnitID = Spring.ValidUnitID
 local spGetUnitPosition = Spring.GetUnitPosition
 local spSpawnCEG = Spring.SpawnCEG
 local spSendMessage = Spring.SendMessage
+local spGetUnitCount = Spring.GetUnitCount
+local spGetTeamStartPosition = Spring.GetTeamStartPosition
 local math_floor = math.floor
 
 local modOptions = Spring.GetModOptions()
 local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
 local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
+local CULL_ENABLED = (modOptions.cull_enabled == "1")
+local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
 
 function gadget:Initialize()
-    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS))
+    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
 end
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
@@ -88,10 +92,12 @@ end
 
 
 function gadget:GameFrame(n)
+    if not CULL_ENABLED then return end
+
     -- State Machine Update (Every 30 frames)
     if n % 30 == 0 then
         local _, simSpeed = spGetGameSpeed()
-        local currentUnits = Spring.GetUnitCount()
+        local currentUnits = spGetUnitCount()
         local conditionsMet = (simSpeed < MIN_SIM_SPEED) or (currentUnits > MAX_UNITS)
 
         if cullState == "IDLE" then
@@ -176,11 +182,42 @@ function gadget:GameFrame(n)
                      end
 
                      if safe then
-                        -- Refund
-                        local ud = UnitDefs[candidate.defId]
-                        if ud then
-                            local metalCost = ud.metalCost or 0
-                            spAddTeamResource(candidate.team, "metal", metalCost)
+                        -- Check Safe Radius from Start (approximate using 0,0 for now or assume commander/start pos)
+                        -- The plan asked for "Safe Zone Radius" from start point/commander.
+                        -- We will assume any unit within SAFE_RADIUS of ANY friendly commander is safe.
+                        -- Actually, the current "Combat Grid" logic seems to be about "Active Combat".
+                        -- The "Safe Zone" in the plan might be distinct.
+                        -- For now, let's keep the Combat Grid logic as the primary safety check (as implemented).
+                        -- If SAFE_RADIUS is intended to be a static zone around start, we need start positions.
+
+                        -- Let's stick to the implementation I see here which uses "Combat Grid" for safety.
+                        -- However, I should check distance to commanders if I want to respect SAFE_RADIUS strictly.
+                        -- Let's check nearest commander.
+                        local commanders = spGetTeamUnits(candidate.team) -- Optimize: Filter for commanders
+                        local inSafeZone = false
+                        -- This is expensive. Let's assume the previous logic handles safety via activity.
+                        -- But the prompt asked for "Safe Zone Radius".
+                        -- Let's check distance to (0,0) or start pos if available.
+                        -- spGetTeamStartPosition(teamID)
+                        local sx, sy, sz = spGetTeamStartPosition(candidate.team)
+                        if sx then
+                             local distSq = (x - sx)^2 + (z - sz)^2
+                             if distSq < SAFE_RADIUS^2 then
+                                 safe = false -- It IS safe from culling (so safe=false means don't cull?)
+                                 -- Variable 'safe' here means "Safe to CULL". This is confusing naming in my code.
+                                 -- In the code above: 'safe = true' -> check grid -> if active combat -> safe = false.
+                                 -- So 'safe' means "Eligible for Culling".
+                                 -- If inside SAFE_RADIUS of start, it should be NOT eligible.
+                                 safe = false
+                             end
+                        end
+
+                        if safe then
+                             -- Refund
+                            local ud = UnitDefs[candidate.defId]
+                            if ud then
+                                local metalCost = ud.metalCost or 0
+                                spAddTeamResource(candidate.team, "metal", metalCost)
 
                             -- Visuals
                             spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)

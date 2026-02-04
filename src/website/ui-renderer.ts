@@ -113,6 +113,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
             if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
             if (optionGroup.modOption) inputElement.dataset.modOption = optionGroup.modOption;
+            inputElement.dataset.optionLabel = optionGroup.label;
             inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
             label.appendChild(inputElement);

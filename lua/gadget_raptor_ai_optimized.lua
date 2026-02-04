@@ -27,6 +27,8 @@ local math_sqrt = math.sqrt
 local math_abs = math.abs
 local math_floor = math.floor
 local math_random = math.random
+local spSetUnitLabel = Spring.SetUnitLabel
+local spGetModOptions = Spring.GetModOptions
 
 -- Constants
 local RAPTOR_TEAM_ID = Spring.GetGaiaTeamID()
@@ -80,9 +82,9 @@ local function ProcessLeader(unitID)
     if not x then return end
 
     -- Visual Debugging
-    local modOptions = Spring.GetModOptions()
+    local modOptions = spGetModOptions()
     if modOptions and (modOptions.debug_mode == "1" or modOptions.debug_mode == 1) then
-        Spring.SetUnitLabel(unitID, "Squad Leader")
+        spSetUnitLabel(unitID, "Squad Leader")
     end
 
     -- Query Spatial Grid for nearest target

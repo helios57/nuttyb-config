@@ -19,6 +19,10 @@ if not modOptions or (modOptions.adaptive_spawner ~= "1" and modOptions.adaptive
     return
 end
 
+local MAX_COMPRESSION = tonumber(modOptions.adaptive_compression_max) or 10
+local VAMPIRE_ENABLED = (modOptions.adaptive_vampire == "1")
+local BOSS_TINT_ENABLED = (modOptions.adaptive_boss_tint == "1")
+
 local spGetUnitCount = Spring.GetUnitCount
 local spDestroyUnit = Spring.DestroyUnit
 local spCreateUnit = Spring.CreateUnit
@@ -79,6 +83,11 @@ function gadget:GameFrame(n)
             factor = 2
         end
 
+        -- Clamp to User Configured Max
+        if factor > MAX_COMPRESSION then
+            factor = MAX_COMPRESSION
+        end
+
         currentCompressionFactor = factor
     end
 end
@@ -126,7 +135,13 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
     if spawnCounters[unitDefID] >= factor then
         -- Spawn compressed unit
         local x, y, z = spGetUnitPosition(unitID)
-        spCreateUnit(compressedID, x, y, z, 0, teamID)
+        local newUnitID = spCreateUnit(compressedID, x, y, z, 0, teamID)
+
+        -- Apply Boss Tint if enabled
+        if BOSS_TINT_ENABLED and newUnitID and spSetUnitColor then
+            spSetUnitColor(newUnitID, 1, 0, 0, 1) -- Red tint
+        end
+
         -- Reset counter
         spawnCounters[unitDefID] = 0
     end
@@ -136,6 +151,8 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
 end
 
 function gadget:UnitCollision(unitID, unitDefID, teamID, colliderID, colliderDefID, colliderTeamID)
+    if not VAMPIRE_ENABLED then return end
+
     -- Only Gaia vs Gaia (Raptors)
     if teamID ~= GAIA_TEAM_ID or colliderTeamID ~= GAIA_TEAM_ID then return end
 

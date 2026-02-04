@@ -61,6 +61,8 @@ export async function getAllDecodedTweaks(page: Page): Promise<string[]> {
     return scripts;
 }
 
+import { expect } from '@playwright/test';
+
 export async function setupLuaEnvironment(lua: LuaEngine) {
     // Load Mock UnitDefs
     await lua.doString(getMockUnitDefsLua());
@@ -83,4 +85,24 @@ export async function setupLuaEnvironment(lua: LuaEngine) {
             table.insert = function(t, v) t[#t+1] = v end
         end
     `);
+}
+
+export async function verifyModOptionInjection(page: Page, optionName: string, expectedValue: string | number | null) {
+    let found = false;
+    for (let i = 1; i <= 7; i++) {
+        const locator = page.locator(`#command-output-${i}`);
+        if (await locator.isVisible()) {
+            const text = await locator.inputValue();
+            const pattern = `!bset\\s+${optionName}\\s+${expectedValue}\\b`;
+            const regex = new RegExp(pattern);
+            if (regex.test(text)) {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (expectedValue !== null) {
+        expect(found, `Expected !bset ${optionName} ${expectedValue} to be present in output`).toBeTruthy();
+    }
 }
