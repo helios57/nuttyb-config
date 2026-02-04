@@ -15,7 +15,7 @@ describe('Unit Generators', () => {
 
         // Check mutations inside clone
         const hpMult = cloneOp.mutations.find((m: any) => m.op === 'multiply' && m.field === 'health');
-        expect(hpMult.factor).toBe(4.4);
+        expect(hpMult.factor).toBe(16.0);
 
         // Check footprint scaling
         const fpX = cloneOp.mutations.find((m: any) => m.op === 'multiply' && m.field === 'footprintX');
@@ -37,5 +37,10 @@ describe('Unit Generators', () => {
         const cloneOp = x2Raptor!.mutations[0] as any;
         expect(cloneOp.op).toBe('clone_unit');
         expect(cloneOp.mutations.some((m: any) => m.op === 'multiply' && m.field === 'health' && m.factor === 2)).toBe(true);
+
+        const x10Raptor = tweaks.find(t => t.mutations.some(m => m.op === 'clone_unit' && m.target === 'raptor_land_swarmer_basic_t1_v1_compressed_x10'));
+        expect(x10Raptor).toBeDefined();
+        const cloneOp10 = x10Raptor!.mutations[0] as any;
+        expect(cloneOp10.mutations.some((m: any) => m.op === 'multiply' && m.field === 'health' && m.factor === 10)).toBe(true);
     });
 });

@@ -57,9 +57,9 @@ function gadget:GameFrame(n)
         local factor = 1
 
         -- SimSpeed/FPS Logic
-        if simSpeed < 0.85 or fps < 20 then
+        if simSpeed < 0.8 or fps < 20 then
             factor = 10
-        elseif simSpeed < 0.95 or fps < 35 then
+        elseif simSpeed < 0.9 or fps < 35 then
             factor = 5
         elseif simSpeed < 1.0 then
             factor = 2 -- Light compression if slightly lagging
