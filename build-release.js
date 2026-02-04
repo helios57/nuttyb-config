@@ -44,4 +44,15 @@ if (fs.existsSync(cssSrc)) {
     console.log('Copied css folder');
 }
 
+// Copy lua
+const luaSrc = path.join(srcDir, 'lua');
+const luaDest = path.join(destDir, 'lua');
+if (fs.existsSync(luaSrc)) {
+    if (!fs.existsSync(luaDest)) fs.mkdirSync(luaDest);
+    fs.readdirSync(luaSrc).forEach(file => {
+        fs.copyFileSync(path.join(luaSrc, file), path.join(luaDest, file));
+    });
+    console.log('Copied lua folder');
+}
+
 console.log('Release build created in ./release');
