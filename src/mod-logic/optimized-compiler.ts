@@ -364,17 +364,8 @@ export class OptimizedLuaCompiler {
                          }
                          expr = expr.split(k).join(resolved);
                     }
-                    // Map common math functions to localized versions
-                    // Note: This relies on emitGlobals picking up 'math.max' if referenced implicitly?
-                    // No, emitGlobals scans ValueSource.
-                    expr = expr.replace(/\bmax\(/g, 'math_max(')
-                        .replace(/\bmin\(/g, 'math_min(')
-                        .replace(/\bceil\(/g, 'math_ceil(')
-                        .replace(/\bfloor\(/g, 'math_floor(')
-                        .replace(/\babs\(/g, 'math_abs(')
-                        .replace(/\brandom\(/g, 'math_random(')
-                        .replace(/\bsqrt\(/g, 'math_sqrt(');
-                    return `(${expr})`;
+                    const result = this.transformMathExpression(expr);
+                    return `(${result.code})`;
                 }
             }
             return this.jsonToLua(val, variables);
@@ -382,6 +373,31 @@ export class OptimizedLuaCompiler {
         return this.jsonToLua(val, variables);
     }
 
+    private transformMathExpression(expr: string): { code: string, globals: Set<string> } {
+        const globals = new Set<string>();
+        // Split by string literals to isolate code blocks
+        // This regex matches double-quoted and single-quoted strings, handling escaped quotes.
+        const parts = expr.split(/("(?:\\[\s\S]|[^"])*"|'(?:\\[\s\S]|[^'])*')/g);
+
+        for (let i = 0; i < parts.length; i += 2) {
+            // Even indices are code, odd are strings
+            parts[i] = parts[i].replace(/\b(max|min|ceil|floor|abs|random|sqrt)(\s*\()/g, (match, func, suffix) => {
+                globals.add(`math.${func}`);
+                return `math_${func}${suffix}`;
+            });
+        }
+
+        return { code: parts.join(''), globals };
+    }
+
+
+    private escapeLuaString(str: string): string {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
+    }
 
     private jsonToLua(obj: any, variables: Record<string, any>): string {
         if (obj === null || obj === undefined) return 'nil';
@@ -389,7 +405,7 @@ export class OptimizedLuaCompiler {
              return this.resolveValueSource(obj, variables);
         }
         if (typeof obj === 'string') {
-            return `"${obj.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+            return `"${this.escapeLuaString(obj)}"`;
         }
         if (typeof obj === 'number') return obj.toString();
         if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -428,16 +444,8 @@ export class OptimizedLuaCompiler {
         if (!obj || typeof obj !== 'object') return;
         if (obj.type === 'mod_option') this.usedGlobals.add('Spring.GetModOptions');
         if (obj.type === 'math') {
-             // If math expression uses functions, we should add them to usedGlobals
-             // Heuristic scan of expression string?
-             const expr = obj.expression as string;
-             if (expr.includes('max(')) this.usedGlobals.add('math.max');
-             if (expr.includes('min(')) this.usedGlobals.add('math.min');
-             if (expr.includes('ceil(')) this.usedGlobals.add('math.ceil');
-             if (expr.includes('floor(')) this.usedGlobals.add('math.floor');
-             if (expr.includes('abs(')) this.usedGlobals.add('math.abs');
-             if (expr.includes('random(')) this.usedGlobals.add('math.random');
-             if (expr.includes('sqrt(')) this.usedGlobals.add('math.sqrt');
+             const result = this.transformMathExpression(obj.expression as string);
+             result.globals.forEach(g => this.usedGlobals.add(g));
         }
         if (obj.type === 'table_merge' || obj.type === 'clone_unit' || obj.op === 'table_merge' || obj.op === 'clone_unit') {
              this.usedGlobals.add('table.merge');

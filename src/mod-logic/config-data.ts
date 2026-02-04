@@ -83,8 +83,8 @@ export const gameConfigs: GameConfigs = {
         '!experimentallegionfaction 1',
         '!experimentalshields bounceeverything',
         '!maxunits 10000',
-        '!multiplier_builddistance 1.5',
-        '!multiplier_buildpower 1',
+        '!multiplier_builddistance 2',
+        '!multiplier_buildpower 2',
         '!multiplier_buildtimecost 1',
         '!multiplier_energyconversion 1',
         '!multiplier_energycost 1',
@@ -95,7 +95,7 @@ export const gameConfigs: GameConfigs = {
         '!multiplier_metalcost 1',
         '!multiplier_metalextraction 1',
         '!multiplier_radarrange 1',
-        '!multiplier_resourceincome 1',
+        '!multiplier_resourceincome 2',
         '!multiplier_shieldpower 2',
         '!multiplier_turnrate 1',
         '!multiplier_weapondamage 1',
@@ -252,10 +252,10 @@ export const formOptionsConfig: FormOptionsConfig[] = [
 
     // Game Multipliers
     { label: "Game Multipliers", type: "header", column: "left" },
-    { label: "Resource Income", type: "numeric-tweak", column: "left", defaultValue: "1", min: 0, step: 0.1, modOption: "multiplier_resourceincome" },
+    { label: "Resource Income", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_resourceincome" },
     { label: "Shield Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_shieldpower" },
-    { label: "Build Range", type: "numeric-tweak", column: "left", defaultValue: "1.5", min: 0, step: 0.1, modOption: "multiplier_builddistance" },
-    { label: "Build Power", type: "numeric-tweak", column: "left", defaultValue: "1", min: 0, step: 0.1, modOption: "multiplier_buildpower" },
+    { label: "Build Range", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_builddistance" },
+    { label: "Build Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_buildpower" },
 
     // Raptor Settings
     { label: "Raptor Settings", type: "header", column: "left" },
