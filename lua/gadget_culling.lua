@@ -20,7 +20,7 @@ local spDestroyUnit = Spring.DestroyUnit
 local spGetTeamUnits = Spring.GetTeamUnits
 local spGetGaiaTeamID = Spring.GetGaiaTeamID
 local spGetUnitDefID = Spring.GetUnitDefID
-local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy
+-- local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy -- Removed
 local spAddTeamResource = Spring.AddTeamResource
 local spGetTeamList = Spring.GetTeamList
 local spValidUnitID = Spring.ValidUnitID
@@ -48,6 +48,36 @@ local cullableUnits = {
 local candidates = {} -- List of {id, team, defId}
 local candidatesIndex = 1
 local processingActive = false
+
+-- Combat Grid (Safe Zone Caching)
+local combatGrid = {} -- Key: "gx:gz", Value: timestamp (frame)
+local GRID_SIZE = 1024 -- 1024 elmos (approx 2000 range check replacement)
+local ACTIVE_DURATION = 900 -- 30 seconds * 30 frames
+
+local function GetGridKey(x, z)
+    local gx = math_floor(x / GRID_SIZE)
+    local gz = math_floor(z / GRID_SIZE)
+    return gx, gz, gx .. ":" .. gz
+end
+
+local function MarkActive(unitID)
+    local x, _, z = spGetUnitPosition(unitID)
+    if x then
+        local _, _, key = GetGridKey(x, z)
+        combatGrid[key] = spGetGameFrame()
+    end
+end
+
+-- Event Handlers to update Combat Grid
+function gadget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    MarkActive(unitID)
+    if attackerID then MarkActive(attackerID) end
+end
+
+function gadget:UnitWeaponFire(unitID, unitDefID, unitTeam, weaponNum, weaponDefID, projectileParams, aimPos)
+    MarkActive(unitID)
+end
+
 
 function gadget:GameFrame(n)
     -- Periodic Check & Candidate Collection (Every 3 seconds)
@@ -93,6 +123,7 @@ function gadget:GameFrame(n)
     if processingActive then
         local batchSize = 20 -- Check 20 units per frame
         local processedCount = 0
+        local currentFrame = spGetGameFrame()
 
         while processedCount < batchSize and candidatesIndex <= #candidates do
             local candidate = candidates[candidatesIndex]
@@ -101,24 +132,40 @@ function gadget:GameFrame(n)
 
             local uID = candidate.id
             if spValidUnitID(uID) then
-                 -- Expensive Safety Check
-                 local enemyID = spGetUnitNearestEnemy(uID, 2000, false)
-                 if not enemyID then
-                    -- Refund
-                    local ud = UnitDefs[candidate.defId]
-                    if ud then
-                        local metalCost = ud.metalCost or 0
-                        spAddTeamResource(candidate.team, "metal", metalCost)
+                 -- Check Safe Zone Cache (Combat Grid)
+                 local x, y, z = spGetUnitPosition(uID)
+                 local safe = true
 
-                        -- Visuals
-                        local x, y, z = spGetUnitPosition(uID)
-                        if x then
+                 if x then
+                     local gx, gz, _ = GetGridKey(x, z)
+
+                     -- Check current and neighbor cells (3x3)
+                     for dx = -1, 1 do
+                         for dz = -1, 1 do
+                             local key = (gx + dx) .. ":" .. (gz + dz)
+                             local lastActive = combatGrid[key]
+                             if lastActive and (currentFrame - lastActive < ACTIVE_DURATION) then
+                                 safe = false
+                                 break
+                             end
+                         end
+                         if not safe then break end
+                     end
+
+                     if safe then
+                        -- Refund
+                        local ud = UnitDefs[candidate.defId]
+                        if ud then
+                            local metalCost = ud.metalCost or 0
+                            spAddTeamResource(candidate.team, "metal", metalCost)
+
+                            -- Visuals
                             spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)
-                        end
 
-                        -- Destroy
-                        spDestroyUnit(uID, false, true)
-                    end
+                            -- Destroy
+                            spDestroyUnit(uID, false, true)
+                        end
+                     end
                  end
             end
         end

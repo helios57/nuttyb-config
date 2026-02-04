@@ -28,8 +28,8 @@ describe('Unit Generators', () => {
 
     test('generateMegaRaptors should generate correct number of tweaks', () => {
         const tweaks = generateMegaRaptors();
-        // 5 base raptors * 3 variants = 15 tweaks
-        expect(tweaks.length).toBe(15);
+        // (5 base raptors + 8 eco buildings) * 3 variants = 39 tweaks
+        expect(tweaks.length).toBe(39);
 
         const x2Raptor = tweaks.find(t => t.mutations.some(m => m.op === 'clone_unit' && m.target === 'raptor_land_swarmer_basic_t1_v1_compressed_x2'));
         expect(x2Raptor).toBeDefined();
