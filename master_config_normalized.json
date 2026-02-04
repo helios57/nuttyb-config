@@ -52,7 +52,7 @@
     "conditions": [
       {
         "type": "nameMatch",
-        "regex": "^raptor_land_swarmer_heal"
+        "regex": "swarmer_heal"
       }
     ],
     "mutations": [
