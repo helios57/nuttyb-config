@@ -1,0 +1,182 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - heading "NuttyB Configurator" [level=1] [ref=e3]
+  - generic [ref=e4]:
+    - button "Configuration" [ref=e5] [cursor=pointer]
+    - button "Data" [ref=e6] [cursor=pointer]
+    - button "Custom" [ref=e7] [cursor=pointer]
+    - button "Links" [ref=e8] [cursor=pointer]
+    - button "Comments" [ref=e9] [cursor=pointer]
+  - generic [ref=e10]:
+    - generic [ref=e11]:
+      - heading "Game Tweaks" [level=2] [ref=e12]
+      - generic [ref=e14]:
+        - generic [ref=e15] [cursor=pointer]:
+          - checkbox "NuttyB Main Tweaks" [checked] [ref=e16]
+          - text: NuttyB Main Tweaks
+        - generic [ref=e17] [cursor=pointer]:
+          - checkbox "NuttyB Evolving Commanders" [ref=e18]
+          - text: NuttyB Evolving Commanders
+        - generic [ref=e19] [cursor=pointer]:
+          - text: "Mode:"
+          - combobox "Mode:" [ref=e20]:
+            - option "Raptors" [selected]
+            - option "Scavengers"
+        - generic [ref=e21]:
+          - generic [ref=e22] [cursor=pointer]:
+            - text: "Raptor Health:"
+            - combobox "Raptor Health:" [ref=e23]:
+              - option "Default"
+              - option "1x HP"
+              - option "1.3x HP" [selected]
+              - option "1.5x HP"
+              - option "1.7x HP"
+              - option "2x HP"
+              - option "2.5x HP"
+              - option "3x HP"
+              - option "4x HP"
+              - option "5x HP"
+          - generic [ref=e24] [cursor=pointer]:
+            - text: "Queen Health:"
+            - combobox "Queen Health:" [ref=e25]:
+              - option "Default"
+              - option "1x QHP"
+              - option "1.3x QHP" [selected]
+              - option "1.5x QHP"
+              - option "1.7x QHP"
+              - option "2x QHP"
+              - option "2.5x QHP"
+              - option "3x QHP"
+              - option "4x QHP"
+              - option "5x QHP"
+          - heading "Raptor Settings" [level=3] [ref=e26]
+          - generic [ref=e27] [cursor=pointer]:
+            - text: "Queen Quantity:"
+            - spinbutton "Queen Quantity:" [ref=e28]: "8"
+          - generic [ref=e29] [cursor=pointer]:
+            - text: "Wave Multiplier:"
+            - spinbutton "Wave Multiplier:" [ref=e30]: "1"
+          - generic [ref=e31] [cursor=pointer]:
+            - text: "First Waves Boost:"
+            - spinbutton "First Waves Boost:" [ref=e32]: "0"
+          - generic [ref=e33] [cursor=pointer]:
+            - text: "Grace Period Multiplier:"
+            - spinbutton "Grace Period Multiplier:" [ref=e34]: "1"
+        - generic [ref=e35] [cursor=pointer]:
+          - text: "Map:"
+          - combobox "Map:" [ref=e36]:
+            - option "Full Metal Plate (12P)" [selected]
+            - option "Raptor Crater (16P)"
+            - option "Raptor Crater Inverted (16P)"
+            - option "Special Hotstepper (16P)"
+            - option "To Kill The Middle (12P)"
+            - option "Ancient Bastion Remake (8P)"
+            - option "Ancient Vault (12P)"
+            - option "Bismuth Valley (8P)"
+            - option "Darkside (12P)"
+            - option "Flats and Forests (12P)"
+            - option "Special Creek (12P)"
+            - option "Starwatcher (8P)"
+        - generic [ref=e37] [cursor=pointer]:
+          - text: "Start:"
+          - combobox "Start:" [ref=e38]:
+            - option "No Rush" [selected]
+            - option "No Rush Solo"
+            - option "Zero Grace"
+            - option "Surrounded"
+        - heading "Optimization & Scaling" [level=3] [ref=e39]
+        - generic [ref=e40] [cursor=pointer]:
+          - checkbox "Enable Singularity Fusion" [ref=e41]
+          - text: Enable Singularity Fusion
+        - generic [ref=e42] [cursor=pointer]:
+          - checkbox "Enable Adaptive Spawner" [ref=e43]
+          - text: Enable Adaptive Spawner
+        - generic [ref=e44] [cursor=pointer]:
+          - text: "Culling - Min SimSpeed:"
+          - spinbutton "Culling - Min SimSpeed:" [ref=e45]: "0.9"
+        - generic [ref=e46] [cursor=pointer]:
+          - text: "Culling - Max Units:"
+          - spinbutton "Culling - Max Units:" [ref=e47]: "5000"
+        - generic [ref=e48] [cursor=pointer]:
+          - checkbox "Mechanics & Balance" [checked] [ref=e49]
+          - text: Mechanics & Balance
+        - generic [ref=e50] [cursor=pointer]:
+          - checkbox "Cross Faction T2" [ref=e51]
+          - text: Cross Faction T2
+        - generic [ref=e52] [cursor=pointer]:
+          - checkbox "T3 Eco" [ref=e53]
+          - text: T3 Eco
+        - generic [ref=e54] [cursor=pointer]:
+          - checkbox "T3 Builders" [ref=e55]
+          - text: T3 Builders
+        - generic [ref=e56] [cursor=pointer]:
+          - checkbox "Unit Launchers" [ref=e57]
+          - text: Unit Launchers
+        - generic [ref=e58] [cursor=pointer]:
+          - checkbox "LRPC Rebalance v2" [ref=e59]
+          - text: LRPC Rebalance v2
+        - generic [ref=e60] [cursor=pointer]:
+          - checkbox "T4 Defences Test" [ref=e61]
+          - text: T4 Defences Test
+        - generic [ref=e62] [cursor=pointer]:
+          - checkbox "T4 Air Rework" [ref=e63]
+          - text: T4 Air Rework
+        - generic [ref=e64] [cursor=pointer]:
+          - checkbox "Mega Nuke" [ref=e65]
+          - text: Mega Nuke
+        - heading "Limit Max Allowed" [level=3] [ref=e66]
+        - generic [ref=e67] [cursor=pointer]:
+          - text: "T3 Builders:"
+          - 'spinbutton "T3 Builders: max/unit" [ref=e68]': "10"
+          - text: max/unit
+        - generic [ref=e69] [cursor=pointer]:
+          - text: "Unit Launchers:"
+          - 'spinbutton "Unit Launchers: max/unit" [ref=e70]': "20"
+          - text: max/unit
+        - generic [ref=e71] [cursor=pointer]:
+          - text: "Epic Ragnarok:"
+          - 'spinbutton "Epic Ragnarok: max/unit" [ref=e72]': "80"
+          - text: max/unit
+        - generic [ref=e73] [cursor=pointer]:
+          - text: "Epic Calamity:"
+          - 'spinbutton "Epic Calamity: max/unit" [ref=e74]': "80"
+          - text: max/unit
+        - generic [ref=e75] [cursor=pointer]:
+          - text: "Epic Tyrannus:"
+          - 'spinbutton "Epic Tyrannus: max/unit" [ref=e76]': "80"
+          - text: max/unit
+        - generic [ref=e77] [cursor=pointer]:
+          - text: "Epic Starfall:"
+          - 'spinbutton "Epic Starfall: max/unit" [ref=e78]': "80"
+          - text: max/unit
+        - heading "Game Multipliers" [level=3] [ref=e79]
+        - generic [ref=e80] [cursor=pointer]:
+          - text: "Resource Income:"
+          - spinbutton "Resource Income:" [ref=e81]: "1"
+        - generic [ref=e82] [cursor=pointer]:
+          - text: "Shield Power:"
+          - spinbutton "Shield Power:" [ref=e83]: "2"
+        - generic [ref=e84] [cursor=pointer]:
+          - text: "Build Range:"
+          - spinbutton "Build Range:" [ref=e85]: "1.5"
+        - generic [ref=e86] [cursor=pointer]:
+          - text: "Build Power:"
+          - spinbutton "Build Power:" [ref=e87]: "1"
+      - generic [ref=e89]:
+        - button "Reset" [ref=e90] [cursor=pointer]
+        - button "None" [ref=e91] [cursor=pointer]
+    - generic [ref=e92]:
+      - heading "Generated Commands" [level=2] [ref=e93]
+      - paragraph [ref=e94]: Copy and paste all parts separately to the lobby
+      - generic [ref=e95]:
+        - button "Copy Part 1" [ref=e96] [cursor=pointer]
+        - textbox [ref=e97]: "!preset coop !teamsize 12 !autobalance off !assistdronesbuildpowermultiplier 1 !assistdronesenabled enabled !commanderbuildersbuildpower 1000 !commanderbuildersenabled enabled !commanderbuildersrange 1000 !disablemapdamage 1 !experimentalextraunits 1 !experimentallegionfaction 1 !experimentalshields bounceeverything !maxunits 10000 !multiplier_builddistance 1.5 !multiplier_buildpower 1 !multiplier_buildtimecost 1 !multiplier_energyconversion 1 !multiplier_energycost 1 !multiplier_energyproduction 1 !multiplier_losrange 1 !multiplier_maxdamage 1 !multiplier_maxvelocity 1 !multiplier_metalcost 1 !multiplier_metalextraction 1 !multiplier_radarrange 1 !multiplier_resourceincome 1 !multiplier_shieldpower 2 !multiplier_turnrate 1 !multiplier_weapondamage 1 !multiplier_weaponrange 1 !raptor_difficulty epic !raptor_spawntimemult 1 !releasecandidates 1 !startenergy 10000 !startenergystorage 10000 !startmetal 10000 !startmetalstorage 10000 !scavunitsforplayers 1 !forceallunits 1 !unit_restrictions_noair 0 !unit_restrictions_noendgamelrpc 0 !unit_restrictions_noextractors 1 !unit_restrictions_nolrpc 0 !unit_restrictions_nonukes 0 !draft_mode disabled !unit_restrictions_notacnukes 0 $welcome-message Settings made with NuttyB Configurator https://rcorex.github.io/nuttyb-config/ !unit_market 0 !evocom 0 !nowasting all !bSet unit_restrictions_nonukes 1 !bSet raptor_queen_count 8 !balance !map Full Metal Plate !addbox 82 82 117 117 2 !clearbox 1 !raptor_queentimemult 1.3 !raptor_spawncountmult 3 !raptor_firstwavesboost 6 !raptor_graceperiodmult 3 !bset raptor_queen_count 8 !bset raptor_spawncountmult 1 !bset raptor_firstwavesboost 0 !bset raptor_graceperiodmult 1 !bset cull_simspeed 0.9 !bset cull_maxunits 5000 !bset multiplier_resourceincome 1 !bset multiplier_shieldpower 2 !bset multiplier_builddistance 1.5 !bset multiplier_buildpower 1 !bset tweakdefs1 bG9jYWwgcGFpcnMgPSBwYWlycwpsb2NhbCBpcGFpcnMgPSBpcGFpcnMKbG9jYWwgc3RyaW5nX3N1YiA9IHN0cmluZy5zdWIKbG9jYWwgc3RyaW5nX21hdGNoID0gc3RyaW5nLm1hdGNoCmxvY2FsIHN0cmluZ19sZW4gPSBzdHJpbmcubGVuCmxvY2FsIHRhYmxlX2luc2VydCA9IHRhYmxlLmluc2VydApsb2NhbCBtYXRoX2Zsb29yID0gbWF0aC5mbG9vcgpmb3IgaWQsIGRlZiBpbiBwYWlycyhVbml0RGVmcykgZG8KbG9jYWwgbmFtZSA9IGRlZi5uYW1lIG9yIGlkCmlmIHN0cmluZ19zdWIobmFtZSwgMSwgMjQpID09ICJyYXB0b3JfbGFuZF9zd2FybWVyX2hlYWwiIHRoZW4KZGVmLnJlY2xhaW1TcGVlZCA9IDEwMApkZWYuc3RlYWx0aCA9IGZhbHNlCmRlZi5idWlsZGVyID0gZmFsc2UKZGVmLmJ1aWxkU3BlZWQgPSBkZWYuYnVpbGRTcGVlZCAqICgwLjUpCmRlZi5jYW5Bc3Npc3QgPSBmYWxzZQpkZWYubWF4VGhpc1VuaXQgPSAwCmVuZAppZiAoKGRlZi5jdXN0b21QYXJhbXMgYW5kIGRlZi5jdXN0b21QYXJhbXNbInN1YmZvbGRlciJdID09ICJvdGhlci9yYXB0b3JzIikgb3IgKGRlZi5jdXN0b21wYXJhbXMgYW5kIGRlZi5jdXN0b21wYXJhbXNbInN1YmZvbGRlciJdID09ICJvdGhlci9yYXB0b3JzIikpIGFuZCBub3Qgc3RyaW5nX21hdGNoKG5hbWUsICJecmFwdG9yX3F1ZWVuXy4qIikgdGhlbgpkZWYuaGVhbHRoID0gZGVmLmhlYWx0aCAqICgxLjMpCmVuZAppZiAoKGRlZi5jdXN0b21QYXJhbXMgYW5kIGRlZi5jdXN0b21QYXJhbXNbInN1YmZvbGRlciJdID09ICJvdGhlci9yYXB0b3JzIikgb3IgKGRlZi5jdXN0b21wYXJhbXMgYW5kIGRlZi5jdXN0b21wYXJhbXNbInN1YmZvbGRlciJdID09ICJvdGhlci9yYXB0b3JzIikpIHRoZW4KZGVmLm5vQ2hhc2VDYXRlZ29yeSA9ICJPQkpFQ1QiCmlmIGRlZi5oZWFsdGggdGhlbgpkZWYubWV0YWxDb3N0ID0gbWF0aF9mbG9vcihkZWYuaGVhbHRoICogMC41NzY5MjMwNzcpCmVuZAplbmQKaWYgc3RyaW5nX3N1YihuYW1lLCAxLCAxMykgPT0gInJhcHRvcl9xdWVlbl8iIHRoZW4KZGVmLnJlcGFpcmFibGUgPSBmYWxzZQpkZWYuY2FuYmVoZWFsZWQgPSBmYWxzZQpkZWYuYnVpbGRUaW1lID0gOTk5OTk5OQpkZWYuYXV0b0hlYWwgPSAyCmRlZi5jYW5TZWxmUmVwYWlyID0gZmFsc2UKZGVmLmhlYWx0aCA9IGRlZi5oZWFsdGggKiAoMS4zKQplbmQKaWYgKG5hbWUgPT0gImFybWF2cCIgb3IgbmFtZSA9PSAiY29yYXZwIiBvciBuYW1lID09ICJsZWdhdnAiKSB0aGVuCmxvY2FsIHRhcmdldF9saXN0ID0gZGVmLmJ1aWxkb3B0aW9ucwppZiBub3QgdGFyZ2V0X2xpc3QgdGhlbgpkZWYuYnVpbGRvcHRpb25zID0ge30KdGFyZ2V0X2xpc3QgPSBkZWYuYnVpbGRvcHRpb25zCmVuZAp0YWJsZV9pbnNlcnQodGFyZ2V0X2xpc3QsICJhcm1tZWF0YmFsbCIpCmxvY2FsIHRhcmdldF9saXN0ID0gZGVmLmJ1aWxkb3B0aW9ucwppZiBub3QgdGFyZ2V0X2xpc3QgdGhlbgpkZWYuYnVpbGRvcHRpb25zID0ge30KdGFyZ2V0X2xpc3QgPSBkZWYuYnVpbGRvcHRpb25zCmVuZAp0YWJsZV9pbnNlcnQodGFyZ2V0X2xpc3QsICJjb3JjbG9nZ2VyIikKZW5kCmlmIChuYW1lID09ICJhcm1jb25zdDMiIG9yIG5hbWUgPT0gImNvcmNvbnN0MyIgb3IgbmFtZSA9PSAibGVnY29uc3QzIikgdGhlbgpkZWYubWF4VGhpc1VuaXQgPSAxMAplbmQKaWYgKG5hbWUgPT0gImFybW1lYXRiYWxsIiBvciBuYW1lID09ICJjb3JjbG9nZ2VyIikgdGhlbgpkZWYubWF4VGhpc1VuaXQgPSAyMAplbmQKaWYgc3RyaW5nX21hdGNoKG5hbWUsICJyYWduYXJvayIpIHRoZW4KZGVmLm1heFRoaXNVbml0ID0gODAKZW5kCmlmIHN0cmluZ19tYXRjaChuYW1lLCAiY2FsYW1pdHkiKSB0aGVuCmRlZi5tYXhUaGlzVW5pdCA9IDgwCmVuZAppZiBzdHJpbmdfbWF0Y2gobmFtZSwgInR5cmFubnVzIikgdGhlbgpkZWYubWF4VGhpc1VuaXQgPSA4MAplbmQKaWYgc3RyaW5nX21hdGNoKG5hbWUsICJzdGFyZmFsbCIpIHRoZW4KZGVmLm1heFRoaXNVbml0ID0gODAKZW5kCmVuZA $rename [Mod] NuttyB Raptors [1_3x QHP 1_3x HP][No Mex]"
+      - generic [ref=e98]:
+        - strong [ref=e99]: "Lobby Name:"
+        - text: $rename [Mod] NuttyB Raptors [1_3x QHP 1_3x HP][No Mex]
+      - generic [ref=e100]:
+        - button "Copy Reset All" [ref=e101] [cursor=pointer]
+        - textbox [ref=e102]: "!bset tweakdefs1 \"\" !bset tweakunits1 \"\" !bset tweakdefs2 \"\" !bset tweakunits2 \"\" !bset tweakdefs3 \"\" !bset tweakunits3 \"\" !bset tweakdefs4 \"\" !bset tweakunits4 \"\" !bset tweakdefs5 \"\" !bset tweakunits5 \"\" !bset tweakdefs6 \"\" !bset tweakunits6 \"\" !bset tweakdefs7 \"\" !bset tweakunits7 \"\" !bset tweakdefs8 \"\" !bset tweakunits8 \"\" !bset tweakdefs9 \"\" !bset tweakunits9 \"\""
+```

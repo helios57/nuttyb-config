@@ -106,6 +106,13 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
             local cx = (px1 + px4) / 2
             local cz = (pz1 + pz4) / 2
 
+            -- Get XP from fused units
+            local xp1 = Spring.GetUnitExperience(uTL) or 0
+            local xp2 = Spring.GetUnitExperience(uTR) or 0
+            local xp3 = Spring.GetUnitExperience(uBL) or 0
+            local xp4 = Spring.GetUnitExperience(uBR) or 0
+            local totalXP = xp1 + xp2 + xp3 + xp4
+
             -- Destroy source units
             spDestroyUnit(uTL, false, true)
             spDestroyUnit(uTR, false, true)
@@ -121,6 +128,9 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
                 -- though usually SetUnitHealth clamps it or allows overflow.
                 -- We set it to the sum.
                 spSetUnitHealth(newUnit, totalHealth)
+
+                -- Sum XP
+                Spring.SetUnitExperience(newUnit, totalXP)
             end
             return true
         end
