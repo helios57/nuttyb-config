@@ -51,8 +51,8 @@
     "scope": "UnitDefsLoop",
     "conditions": [
       {
-        "type": "nameInList",
-        "names": ["raptor_land_swarmer_heal"]
+        "type": "nameMatch",
+        "regex": "^raptor_land_swarmer_heal"
       }
     ],
     "mutations": [
