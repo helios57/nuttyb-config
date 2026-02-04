@@ -312,16 +312,24 @@ async function initializeApp() {
 
         renderOptions(formOptionsConfig, gameConfigs, updateOutput);
 
-        const libraryCheckInterval = setInterval(() => {
-            if (typeof luamin !== 'undefined') {
-                clearInterval(libraryCheckInterval);
-                console.log("Lua libraries loaded.");
-                document.querySelectorAll('select[data-is-hp-generator="true"], select[data-is-scav-hp-generator="true"]').forEach(select => {
-                    (select as HTMLSelectElement).disabled = false;
-                });
-                updateOutput();
+        const onLuaMinLoaded = () => {
+            console.log("Lua libraries loaded.");
+            document.querySelectorAll('select[data-is-hp-generator="true"], select[data-is-scav-hp-generator="true"]').forEach(select => {
+                (select as HTMLSelectElement).disabled = false;
+            });
+            updateOutput();
+        };
+
+        if (typeof luamin !== 'undefined') {
+            onLuaMinLoaded();
+        } else {
+            const script = document.querySelector('script[src*="luamin"]');
+            if (script) {
+                script.addEventListener('load', onLuaMinLoaded);
+            } else {
+                console.error("Luamin script tag not found.");
             }
-        }, 100);
+        }
 
         renderAllCustomComponents();
         populateStartSelector(gameConfigs, updateOutput);
