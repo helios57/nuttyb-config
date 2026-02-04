@@ -46,48 +46,48 @@
     ]
   },
   {
-    "name": "Test Swarmer Heal Adjustments",
-    "description": "Test Swarmer Heal adjustments (CI Workaround)",
+    "name": "Alpha Unit Adjustments",
+    "description": "Alpha Unit Adjustments (CI Workaround)",
     "scope": "UnitDefsLoop",
     "conditions": [
       {
         "type": "nameMatch",
-        "regex": "test_swarmer"
+        "regex": "alpha_unit"
       }
     ],
     "mutations": [
       {
         "op": "set",
-        "field": "reclaimSpeed",
-        "value": 100
-      },
-      {
-        "op": "set",
-        "field": "stealth",
+        "field": "repairable",
         "value": false
       },
       {
         "op": "set",
-        "field": "builder",
+        "field": "canbehealed",
+        "value": false
+      },
+      {
+        "op": "set",
+        "field": "buildTime",
+        "value": 9999999
+      },
+      {
+        "op": "set",
+        "field": "autoHeal",
+        "value": 2
+      },
+      {
+        "op": "set",
+        "field": "canSelfRepair",
         "value": false
       },
       {
         "op": "multiply",
-        "field": "buildSpeed",
+        "field": "health",
         "factor": {
           "type": "variable",
-          "key": "workertimeMultiplier"
+          "key": "multiplier"
         }
-      },
-      {
-        "op": "set",
-        "field": "canAssist",
-        "value": false
-      },
-      {
-        "op": "set",
-        "field": "maxThisUnit",
-        "value": 0
       }
     ]
   },
