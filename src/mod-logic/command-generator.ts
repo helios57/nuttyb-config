@@ -30,6 +30,7 @@ export interface CommandGeneratorInput {
         slot?: string;
         slotType?: string;
         tagName: string;
+        type?: string;
         id: string;
         dataset: any;
         commandBlocks?: string[];
@@ -154,8 +155,12 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
                 }
             }
 
-            if (el.dataset.modOption && el.value) {
-                commands.push(`!bset ${el.dataset.modOption} ${el.value}`);
+            if (el.dataset.modOption) {
+                if (el.type === 'checkbox') {
+                    commands.push(`!bset ${el.dataset.modOption} ${el.checked ? '1' : '0'}`);
+                } else if (el.value) {
+                    commands.push(`!bset ${el.dataset.modOption} ${el.value}`);
+                }
             }
 
             commands.forEach(cmd => { if (cmd) standardCommands.push(cmd.trim()); });

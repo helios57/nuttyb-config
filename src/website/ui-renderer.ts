@@ -112,6 +112,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
             if (optionGroup.tweakTemplateId) inputElement.dataset.tweakTemplateId = optionGroup.tweakTemplateId;
+            if (optionGroup.modOption) inputElement.dataset.modOption = optionGroup.modOption;
             inputElement.checked = !!optionGroup.default;
             inputElement.disabled = !!optionGroup.disabled;
             label.appendChild(inputElement);
