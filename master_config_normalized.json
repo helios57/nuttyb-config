@@ -6,7 +6,7 @@
     "conditions": [
       {
         "type": "nameMatch",
-        "regex": "^raptor_queen_"
+        "regex": "raptor_queen"
       }
     ],
     "mutations": [
