@@ -19,26 +19,26 @@ let rawOptionsData: RawOptionsData[] = [];
 let formOptionsConfig: FormOptionsConfig[] = [];
 let gameConfigs: GameConfigs = { maps: [], modes: [], base: [], scavengers: [] };
 
-const lobbyNameDisplay = document.getElementById('lobby-name-display')!;
+const lobbyNameDisplay = getElement<HTMLElement>('lobby-name-display');
 const copyButtons = document.querySelectorAll('.copy-button');
-const dataTableBody = document.querySelector('#data-table tbody');
-const customTweakForm = document.getElementById('custom-tweak-form') as HTMLFormElement;
-const customTweaksTableBody = document.querySelector('#custom-tweaks-table tbody');
-const mapsModesTableBody = document.querySelector('#maps-modes-table tbody');
+const dataTableBody = safeQuerySelector<HTMLElement>('#data-table tbody');
+const customTweakForm = getElement<HTMLFormElement>('custom-tweak-form');
+const customTweaksTableBody = safeQuerySelector<HTMLElement>('#custom-tweaks-table tbody');
+const mapsModesTableBody = safeQuerySelector<HTMLElement>('#maps-modes-table tbody');
 const tabButtons = document.querySelectorAll('.tab-button');
 const tabContents = document.querySelectorAll('.tab-content');
-const resetNoneBtn = document.getElementById('reset-none-btn')!;
-const resetDefaultBtn = document.getElementById('reset-default-btn')!;
-const optionsFormColumns = document.getElementById('options-form-columns')!;
+const resetNoneBtn = getElement<HTMLElement>('reset-none-btn');
+const resetDefaultBtn = getElement<HTMLElement>('reset-default-btn');
+const optionsFormColumns = getElement<HTMLElement>('options-form-columns');
 
 function updateOutput(event?: Event) {
-    const primaryModeSelect = document.getElementById('primary-mode-select') as HTMLSelectElement;
-    const raptorOnlyContainer = document.getElementById('raptor-only-options')!;
-    const scavOnlyContainer = document.getElementById('scav-only-options')!;
-    const scavHpSelect = document.getElementById('scav-hp-select') as HTMLSelectElement;
-    const bossHpSelect = document.getElementById('boss-hp-select') as HTMLSelectElement;
-    const mapsSelect = document.getElementById('maps-select') as HTMLSelectElement;
-    const modesSelect = document.getElementById('modes-select') as HTMLSelectElement;
+    const primaryModeSelect = safeQuerySelector<HTMLSelectElement>('#primary-mode-select');
+    const raptorOnlyContainer = safeQuerySelector<HTMLElement>('#raptor-only-options');
+    const scavOnlyContainer = safeQuerySelector<HTMLElement>('#scav-only-options');
+    const scavHpSelect = safeQuerySelector<HTMLSelectElement>('#scav-hp-select');
+    const bossHpSelect = safeQuerySelector<HTMLSelectElement>('#boss-hp-select');
+    const mapsSelect = safeQuerySelector<HTMLSelectElement>('#maps-select');
+    const modesSelect = safeQuerySelector<HTMLSelectElement>('#modes-select');
 
     if (primaryModeSelect && raptorOnlyContainer && scavOnlyContainer) {
         const newMode = primaryModeSelect.value;
@@ -46,12 +46,12 @@ function updateOutput(event?: Event) {
 
         if (modeChanged) {
             if (newMode === 'Scavengers') {
-                scavHpSelect.value = "1.3";
-                bossHpSelect.value = "1.3";
+                if (scavHpSelect) scavHpSelect.value = "1.3";
+                if (bossHpSelect) bossHpSelect.value = "1.3";
                 raptorOnlyContainer.querySelectorAll('select, input').forEach(el => (el as HTMLInputElement).value = "");
             } else { // Switching back to Raptors
-                scavHpSelect.value = "";
-                bossHpSelect.value = "";
+                if (scavHpSelect) scavHpSelect.value = "";
+                if (bossHpSelect) bossHpSelect.value = "";
                 raptorOnlyContainer.querySelectorAll('select, input').forEach(el => {
                     const htmlEl = el as HTMLElement;
                     let optionGroup = formOptionsConfig.find(og => og.label === htmlEl.dataset.optionType);
@@ -125,8 +125,8 @@ function updateOutput(event?: Event) {
     lobbyNameDisplay.textContent = generatedData.lobbyName;
 
     for (let i = 1; i <= 7; i++) {
-        const sectionDiv = document.getElementById(`part-${i}-section`)!;
-        const textArea = document.getElementById(`command-output-${i}`) as HTMLTextAreaElement;
+        const sectionDiv = getElement<HTMLElement>(`part-${i}-section`);
+        const textArea = getElement<HTMLTextAreaElement>(`command-output-${i}`);
         if (generatedData.sections[i-1]) {
             textArea.value = generatedData.sections[i-1];
             sectionDiv.style.display = 'grid';
@@ -143,7 +143,7 @@ function switchTab(event: Event) {
     tabButtons.forEach(button => button.classList.remove('active'));
     tabContents.forEach(content => content.classList.remove('active'));
     target.classList.add('active');
-    document.getElementById(targetTabId)!.classList.add('active');
+    getElement<HTMLElement>(targetTabId).classList.add('active');
 
     if (target.dataset.tab === 'data') {
         populateDataTable(rawOptionsData);
@@ -161,9 +161,9 @@ function renderAllCustomComponents() {
 
 function handleAddCustomTweak(event: Event) {
     event.preventDefault();
-    const desc = (document.getElementById('custom-option-desc') as HTMLInputElement).value.trim();
-    const type = (document.getElementById('custom-option-type') as HTMLSelectElement).value;
-    const tweak = (document.getElementById('custom-tweak-code') as HTMLTextAreaElement).value.trim();
+    const desc = getElement<HTMLInputElement>('custom-option-desc').value.trim();
+    const type = getElement<HTMLSelectElement>('custom-option-type').value;
+    const tweak = getElement<HTMLTextAreaElement>('custom-tweak-code').value.trim();
 
     addCustomTweak(desc, type, tweak);
     renderAllCustomComponents();
@@ -184,7 +184,7 @@ document.addEventListener('click', event => {
         const targetId = target.dataset.target;
         if (!targetId) return;
 
-        const targetTextArea = document.getElementById(targetId) as HTMLTextAreaElement;
+        const targetTextArea = getElement<HTMLTextAreaElement>(targetId);
         if (!targetTextArea) return;
 
         const originalText = target.textContent;
@@ -242,7 +242,7 @@ resetNoneBtn.addEventListener('click', () => {
 });
 
 resetDefaultBtn.addEventListener('click', () => {
-    const primaryModeSelect = document.getElementById('primary-mode-select') as HTMLSelectElement;
+    const primaryModeSelect = safeQuerySelector<HTMLSelectElement>('#primary-mode-select');
     if (primaryModeSelect) primaryModeSelect.value = 'Raptors';
 
     // Create a map for faster lookup of checkbox labels
@@ -270,15 +270,15 @@ resetDefaultBtn.addEventListener('click', () => {
         }
     });
 
-    const bossHpSelect = document.getElementById('boss-hp-select') as HTMLSelectElement;
-    const scavHpSelect = document.getElementById('scav-hp-select') as HTMLSelectElement;
+    const bossHpSelect = safeQuerySelector<HTMLSelectElement>('#boss-hp-select');
+    const scavHpSelect = safeQuerySelector<HTMLSelectElement>('#scav-hp-select');
     if (bossHpSelect) bossHpSelect.value = "";
     if (scavHpSelect) scavHpSelect.value = "";
 
-    const mapsSelect = document.getElementById('maps-select') as HTMLSelectElement;
+    const mapsSelect = safeQuerySelector<HTMLSelectElement>('#maps-select');
     if (mapsSelect && mapsSelect.options.length > 0) mapsSelect.selectedIndex = 0;
 
-    const modesSelect = document.getElementById('modes-select') as HTMLSelectElement;
+    const modesSelect = safeQuerySelector<HTMLSelectElement>('#modes-select');
     if(modesSelect && modesSelect.options.length > 0) {
         modesSelect.selectedIndex = 0;
     }
@@ -289,9 +289,42 @@ resetDefaultBtn.addEventListener('click', () => {
 customTweakForm.addEventListener('submit', handleAddCustomTweak);
 tabButtons.forEach(button => button.addEventListener('click', switchTab));
 
+function getElement<T extends HTMLElement>(id: string): T {
+    const element = document.getElementById(id);
+    if (!element) {
+        throw new Error(`Element with id '${id}' not found.`);
+    }
+    return element as T;
+}
+
+function safeQuerySelector<T extends HTMLElement>(selector: string, parent: Element | Document = document): T | null {
+    return parent.querySelector(selector) as T | null;
+}
+
+function loadScript(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${url}"]`)) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
+        document.head.appendChild(script);
+    });
+}
+
 async function initializeApp() {
     try {
         loadCustomOptions();
+
+        // Load Lua libraries first to avoid race conditions
+        await Promise.all([
+            loadScript('https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js'),
+            loadScript('https://cdn.jsdelivr.net/npm/luamin@1.0.4/luamin.min.js')
+        ]);
+        console.log("Lua libraries loaded.");
 
         const [parsedConfigs, configData, linksContent] = await Promise.all([
             parseModesFile('modes.txt'),
@@ -304,8 +337,8 @@ async function initializeApp() {
         formOptionsConfig = configData.formOptionsConfig;
 
         if (linksContent) {
-            const linksTab = document.getElementById('links-tab');
-            if (linksTab) linksTab.innerHTML = linksContent;
+            const linksTab = getElement<HTMLElement>('links-tab');
+            linksTab.innerHTML = linksContent;
         }
 
         console.log("Modes file loaded and parsed:", gameConfigs);
@@ -314,10 +347,10 @@ async function initializeApp() {
 
         const onLuaMinLoaded = () => {
             console.log("Lua libraries loaded.");
-            document.querySelectorAll('select[data-is-hp-generator="true"], select[data-is-scav-hp-generator="true"]').forEach(select => {
-                (select as HTMLSelectElement).disabled = false;
-            });
-            updateOutput();
+        document.querySelectorAll('select[data-is-hp-generator="true"], select[data-is-scav-hp-generator="true"]').forEach(select => {
+            (select as HTMLSelectElement).disabled = false;
+        });
+        updateOutput();
         };
 
         if (typeof luamin !== 'undefined') {
@@ -335,10 +368,8 @@ async function initializeApp() {
         populateStartSelector(gameConfigs, updateOutput);
 
         // Populate Reset All textarea
-        const resetOutput = document.getElementById('reset-output') as HTMLTextAreaElement;
-        if (resetOutput) {
-            resetOutput.value = Array.from({ length: 9 }, (_, i) => `!bset tweakdefs${i + 1} ""\n!bset tweakunits${i + 1} ""`).join('\n');
-        }
+        const resetOutput = getElement<HTMLTextAreaElement>('reset-output');
+        resetOutput.value = Array.from({ length: 9 }, (_, i) => `!bset tweakdefs${i + 1} ""\n!bset tweakunits${i + 1} ""`).join('\n');
 
     } catch (error) {
         console.error("Failed to initialize the configurator:", error);

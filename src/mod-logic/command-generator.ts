@@ -32,7 +32,7 @@ export interface CommandGeneratorInput {
         tagName: string;
         type?: string;
         id: string;
-        dataset: any;
+        dataset: DOMStringMap;
         commandBlocks?: string[];
         tweakDefinition?: TweakDefinition; // Legacy support or direct injection
     }[];
