@@ -79,6 +79,12 @@ local function ProcessLeader(unitID)
     local x, _, z = spGetUnitPosition(unitID)
     if not x then return end
 
+    -- Visual Debugging
+    local modOptions = Spring.GetModOptions()
+    if modOptions and (modOptions.debug_mode == "1" or modOptions.debug_mode == 1) then
+        Spring.SetUnitLabel(unitID, "Squad Leader")
+    end
+
     -- Query Spatial Grid for nearest target
     local gx = math_floor(x / GRID_SIZE)
     local gz = math_floor(z / GRID_SIZE)

@@ -1,10 +1,10 @@
 import { TweakDefinition, MutationOperation } from './tweak-dsl';
 
 const FUSION_TIERS = [
-    { tier: 2, hpMult: 4.4, outputMult: 4.2, costMult: 4.0, prevSuffix: '' },
-    { tier: 3, hpMult: 4.4, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t2' },
-    { tier: 4, hpMult: 4.4, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t3' },
-    { tier: 5, hpMult: 4.4, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t4' }
+    { tier: 2, hpMult: 16.0, outputMult: 4.2, costMult: 4.0, prevSuffix: '' },
+    { tier: 3, hpMult: 16.0, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t2' },
+    { tier: 4, hpMult: 16.0, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t3' },
+    { tier: 5, hpMult: 16.0, outputMult: 4.2, costMult: 4.0, prevSuffix: '_t4' }
 ];
 
 const BASE_BUILDINGS = [
