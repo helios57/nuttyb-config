@@ -20,7 +20,7 @@
     "description": "Swarmer Heal adjustments",
     "scope": "UnitDefsLoop",
     "conditions": [
-        { "type": "nameStartsWith", "prefix": "raptor_land_swarmer_heal" }
+        { "type": "nameMatch", "regex": "^raptor_land_swarmer_heal" }
     ],
     "mutations": [
         { "op": "set", "field": "reclaimSpeed", "value": 100 },

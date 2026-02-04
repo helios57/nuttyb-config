@@ -5,8 +5,8 @@
     "scope": "UnitDefsLoop",
     "conditions": [
       {
-        "type": "nameStartsWith",
-        "prefix": "raptor_queen_"
+        "type": "nameMatch",
+        "regex": "^raptor_queen_"
       }
     ],
     "mutations": [
@@ -51,8 +51,8 @@
     "scope": "UnitDefsLoop",
     "conditions": [
       {
-        "type": "nameStartsWith",
-        "prefix": "raptor_land_swarmer_heal"
+        "type": "nameInList",
+        "names": ["raptor_land_swarmer_heal"]
       }
     ],
     "mutations": [
