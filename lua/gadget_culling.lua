@@ -1,7 +1,7 @@
 function gadget:GetInfo()
   return {
-    name      = "Unit Culling System",
-    desc      = "Destroys units to maintain performance",
+    name      = "Eco Culler",
+    desc      = "Destroys low-utility T1 eco structures to improve performance",
     author    = "NuttyB Team",
     date      = "2024",
     license   = "GPL",
@@ -20,6 +20,12 @@ local spDestroyUnit = Spring.DestroyUnit
 local spGetTeamUnits = Spring.GetTeamUnits
 local spGetGaiaTeamID = Spring.GetGaiaTeamID
 local spGetUnitDefID = Spring.GetUnitDefID
+local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy
+local spAddTeamResource = Spring.AddTeamResource
+local spGetTeamList = Spring.GetTeamList
+local spValidUnitID = Spring.ValidUnitID
+local spGetUnitPosition = Spring.GetUnitPosition
+local spSpawnCEG = Spring.SpawnCEG
 local math_floor = math.floor
 
 local modOptions = Spring.GetModOptions()
@@ -28,19 +34,31 @@ local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
 
--- List of units safe to cull (low tier raptors)
+-- List of units to cull (T1 Generators/Converters)
 local cullableUnits = {
-    ["raptor_land_swarmer_basic_t1_v1"] = true,
-    ["raptor_land_assault_basic_t2_v1"] = true,
-    ["raptor_air_fighter_basic"] = true,
-    ["scav_unit_t1"] = true, -- Placeholder
-    ["scav_unit_t2"] = true  -- Placeholder
+    ["armsolar"] = true,
+    ["corsolar"] = true,
+    ["armwin"] = true,
+    ["corwin"] = true,
+    ["armmakr"] = true,
+    ["cormakr"] = true
 }
 
+-- Batch Processing State
+local candidates = {} -- List of {id, team, defId}
+local candidatesIndex = 1
+local processingActive = false
+
 function gadget:GameFrame(n)
-    if n % 90 == 0 then -- Check every 3 seconds
+    -- Periodic Check & Candidate Collection (Every 3 seconds)
+    if n % 90 == 0 then
         local _, simSpeed = spGetGameSpeed()
         local currentUnits = Spring.GetUnitCount()
+
+        -- Reset if previous batch not finished (prioritize fresh state)
+        candidates = {}
+        candidatesIndex = 1
+        processingActive = false
 
         local needsCulling = false
         -- If simspeed is consistently low
@@ -48,26 +66,66 @@ function gadget:GameFrame(n)
         if currentUnits > MAX_UNITS then needsCulling = true end
 
         if needsCulling then
-            local raptors = spGetTeamUnits(GAIA_TEAM_ID)
-            local cullCount = 0
-            local targetCull = 50 -- Batch size
-
-            for _, uID in pairs(raptors) do
-                if cullCount >= targetCull then break end
-
-                local udID = spGetUnitDefID(uID)
-                if udID then
-                    local ud = UnitDefs[udID]
-                    if ud and cullableUnits[ud.name] then
-                        spDestroyUnit(uID, false, true)
-                        cullCount = cullCount + 1
+            -- Collect candidates (Fast Scan)
+            local teamList = spGetTeamList()
+            for _, teamID in pairs(teamList) do
+                if teamID ~= GAIA_TEAM_ID then
+                    local units = spGetTeamUnits(teamID)
+                    for _, uID in pairs(units) do
+                         local udID = spGetUnitDefID(uID)
+                         if udID then
+                            local ud = UnitDefs[udID]
+                            if ud and cullableUnits[ud.name] then
+                                table.insert(candidates, {id = uID, team = teamID, defId = udID})
+                            end
+                         end
                     end
                 end
             end
 
-            if cullCount > 0 then
-                Spring.Echo("Culling System: Removed " .. cullCount .. " units due to load (SimSpeed: " .. simSpeed .. ", Units: " .. currentUnits .. ")")
+            if #candidates > 0 then
+                processingActive = true
             end
+        end
+    end
+
+    -- Process Batch (Every Frame if active)
+    if processingActive then
+        local batchSize = 20 -- Check 20 units per frame
+        local processedCount = 0
+
+        while processedCount < batchSize and candidatesIndex <= #candidates do
+            local candidate = candidates[candidatesIndex]
+            candidatesIndex = candidatesIndex + 1
+            processedCount = processedCount + 1
+
+            local uID = candidate.id
+            if spValidUnitID(uID) then
+                 -- Expensive Safety Check
+                 local enemyID = spGetUnitNearestEnemy(uID, 2000, false)
+                 if not enemyID then
+                    -- Refund
+                    local ud = UnitDefs[candidate.defId]
+                    if ud then
+                        local metalCost = ud.metalCost or 0
+                        spAddTeamResource(candidate.team, "metal", metalCost)
+
+                        -- Visuals
+                        local x, y, z = spGetUnitPosition(uID)
+                        if x then
+                            spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)
+                        end
+
+                        -- Destroy
+                        spDestroyUnit(uID, false, true)
+                    end
+                 end
+            end
+        end
+
+        if candidatesIndex > #candidates then
+            processingActive = false
+            candidates = {}
         end
     end
 end

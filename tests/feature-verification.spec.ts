@@ -195,4 +195,56 @@ test.describe('Feature Verification', () => {
         expect(output).toContain('!raptor_queentimemult 1.3');
     });
 
+    test('Enable Singularity Fusion', async ({ page }) => {
+        await page.goto('/');
+        const checkbox = page.getByLabel('Enable Singularity Fusion');
+        await checkbox.check();
+
+        const output = await getOutputText(page);
+        expect(output).toContain('!bset fusion_mode 1');
+
+        const lines = output.split('\n');
+        const tweakCmd = lines.find(l => l.includes('!bset tweakdefs') || l.includes('!bset tweakunits'));
+
+        expect(tweakCmd).toBeDefined();
+        if (tweakCmd) {
+            const lua = decodeCommand(tweakCmd);
+            // Should contain fusion units like 'armsolar_t2' or 'fusion_tier = 2'
+            expect(lua).toContain('is_fusion_unit = true');
+        }
+    });
+
+    test('Enable Adaptive Spawner', async ({ page }) => {
+        await page.goto('/');
+        const checkbox = page.getByLabel('Enable Adaptive Spawner');
+        await checkbox.check();
+
+        const output = await getOutputText(page);
+        expect(output).toContain('!bset adaptive_spawner 1');
+
+        const lines = output.split('\n');
+        const tweakCmd = lines.find(l => l.includes('!bset tweakdefs') || l.includes('!bset tweakunits'));
+
+        expect(tweakCmd).toBeDefined();
+        if (tweakCmd) {
+            const lua = decodeCommand(tweakCmd);
+            // Should contain mega raptors like '_compressed_x2' or 'is_compressed_unit'
+            expect(lua).toContain('is_compressed_unit = true');
+        }
+    });
+
+    test('Culling Options', async ({ page }) => {
+        await page.goto('/');
+
+        const simSpeedInput = page.getByLabel('Culling - Min SimSpeed:');
+        await simSpeedInput.fill('0.5');
+
+        const maxUnitsInput = page.getByLabel('Culling - Max Units:');
+        await maxUnitsInput.fill('8000');
+
+        const output = await getOutputText(page);
+        expect(output).toContain('!bset cull_simspeed 0.5');
+        expect(output).toContain('!bset cull_maxunits 8000');
+    });
+
 });
