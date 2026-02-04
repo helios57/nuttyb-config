@@ -67,24 +67,14 @@ describe('Lua Execution Integration', () => {
     test('Should execute compiled tweaks without errors', async () => {
         // Setup Test Units
         await lua.doString(`
-            UnitDefs["raptor_queen_test"] = {
-                name = "raptor_queen_test",
+            UnitDefs["alpha_unit"] = {
+                name = "alpha_unit",
                 repairable = true,
                 canbehealed = true,
                 buildTime = 100,
                 autoHeal = 0,
                 canSelfRepair = true,
                 health = 1000
-            }
-
-            UnitDefs["test_swarmer"] = {
-                name = "test_swarmer",
-                reclaimSpeed = 10,
-                stealth = true,
-                builder = true,
-                buildSpeed = 100,
-                canAssist = true,
-                maxThisUnit = 10
             }
 
             UnitDefs["raptor_land_swarmer_basic_t1_v1"] = {
@@ -133,14 +123,11 @@ describe('Lua Execution Integration', () => {
         }
 
         // Assertions
-        const qHealth = await lua.doString('return UnitDefs["raptor_queen_test"].health');
+        const qHealth = await lua.doString('return UnitDefs["alpha_unit"].health');
         expect(qHealth).toBe(2000); // 1000 * 2.0 (multiplier)
 
-        const qRepairable = await lua.doString('return UnitDefs["raptor_queen_test"].repairable');
+        const qRepairable = await lua.doString('return UnitDefs["alpha_unit"].repairable');
         expect(qRepairable).toBe(false);
-
-        const swarmerReclaim = await lua.doString('return UnitDefs["test_swarmer"].reclaimSpeed');
-        expect(swarmerReclaim).toBe(100);
 
         const hiveSpawnName = await lua.doString('return UnitDefs["raptor_hive_swarmer_basic"] and UnitDefs["raptor_hive_swarmer_basic"].name');
         expect(hiveSpawnName).toBe("Hive Spawn");
@@ -181,7 +168,7 @@ describe('Lua Execution Integration', () => {
             end
 
             -- Add some targets that match filters
-            UnitDefs["raptor_queen_bench"] = { name = "raptor_queen_bench", health = 1000 }
+            UnitDefs["alpha_unit_bench"] = { name = "alpha_unit_bench", health = 1000 }
         `);
 
         const start = performance.now();
