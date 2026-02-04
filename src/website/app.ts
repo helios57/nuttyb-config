@@ -91,6 +91,7 @@ function updateOutput(event?: Event) {
             slot: element.dataset.slot,
             slotType: element.dataset.slotType,
             tagName: element.tagName,
+            type: element.type,
             id: element.id,
             dataset: element.dataset,
             commandBlocks: element.dataset.commandBlocks ? JSON.parse(element.dataset.commandBlocks) : undefined
