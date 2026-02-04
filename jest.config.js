@@ -6,6 +6,6 @@ module.exports = {
       tsconfig: 'tsconfig.json',
     }],
   },
-  testPathIgnorePatterns: ['/node_modules/', '/tests/website-e2e.spec.ts', '/tests/features-e2e.spec.ts', '/tests/feature-verification.spec.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/tests/.*\\.spec\\.ts$'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 };
