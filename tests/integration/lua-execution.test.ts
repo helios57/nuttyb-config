@@ -129,6 +129,10 @@ describe('Lua Execution Integration', () => {
 
         // Assertions
         const qHealth = await lua.doString('return UnitDefs["raptor_queen_test"].health');
+        if (qHealth !== 2000) {
+            console.log("qHealth mismatch! Expected 2000, got:", qHealth);
+            console.log("Compiled Code:\n", compiledCode);
+        }
         expect(qHealth).toBe(2000); // 1000 * 2.0 (multiplier)
 
         const qRepairable = await lua.doString('return UnitDefs["raptor_queen_test"].repairable');
