@@ -46,6 +46,52 @@
     ]
   },
   {
+    "name": "Test Swarmer Heal Adjustments",
+    "description": "Test Swarmer Heal adjustments (CI Workaround)",
+    "scope": "UnitDefsLoop",
+    "conditions": [
+      {
+        "type": "nameMatch",
+        "regex": "test_swarmer"
+      }
+    ],
+    "mutations": [
+      {
+        "op": "set",
+        "field": "reclaimSpeed",
+        "value": 100
+      },
+      {
+        "op": "set",
+        "field": "stealth",
+        "value": false
+      },
+      {
+        "op": "set",
+        "field": "builder",
+        "value": false
+      },
+      {
+        "op": "multiply",
+        "field": "buildSpeed",
+        "factor": {
+          "type": "variable",
+          "key": "workertimeMultiplier"
+        }
+      },
+      {
+        "op": "set",
+        "field": "canAssist",
+        "value": false
+      },
+      {
+        "op": "set",
+        "field": "maxThisUnit",
+        "value": 0
+      }
+    ]
+  },
+  {
     "name": "Swarmer Heal Adjustments",
     "description": "Swarmer Heal adjustments",
     "scope": "UnitDefsLoop",

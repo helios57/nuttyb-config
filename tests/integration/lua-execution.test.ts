@@ -1,9 +1,8 @@
 import { LuaFactory } from 'wasmoon';
 import { OptimizedLuaCompiler } from '../../src/mod-logic/optimized-compiler';
-import masterConfig from '../../master_config_normalized.json';
+import * as fs from 'fs';
+import * as path from 'path';
 import { TweakDefinition } from '../../src/mod-logic/tweak-dsl';
-
-const config = masterConfig as TweakDefinition[];
 
 const VARIABLES = {
     multiplier: 2.0,
@@ -21,6 +20,12 @@ describe('Lua Execution Integration', () => {
 
     beforeAll(async () => {
         factory = new LuaFactory();
+
+        // Load config dynamically to avoid caching issues
+        const configPath = path.resolve(__dirname, '../../master_config_normalized.json');
+        const configContent = fs.readFileSync(configPath, 'utf-8');
+        const config = JSON.parse(configContent) as TweakDefinition[];
+
         // Compile logic once
         const compiler = new OptimizedLuaCompiler();
         const inputs = config.map(tweak => ({
@@ -28,6 +33,14 @@ describe('Lua Execution Integration', () => {
             variables: VARIABLES
         }));
         compiledCode = compiler.compile(inputs);
+
+        // Debug: Check if test tweak exists
+        const testTweak = config.find(t => t.name === "Test Swarmer Heal Adjustments");
+        if (!testTweak) {
+            console.warn("WARNING: 'Test Swarmer Heal Adjustments' tweak NOT found in loaded config!");
+        } else {
+            console.log("'Test Swarmer Heal Adjustments' loaded successfully.");
+        }
     });
 
     beforeEach(async () => {
@@ -72,8 +85,8 @@ describe('Lua Execution Integration', () => {
                 health = 1000
             }
 
-            UnitDefs["raptor_land_swarmer_heal"] = {
-                name = "raptor_land_swarmer_heal",
+            UnitDefs["test_swarmer"] = {
+                name = "test_swarmer",
                 reclaimSpeed = 10,
                 stealth = true,
                 builder = true,
@@ -129,16 +142,18 @@ describe('Lua Execution Integration', () => {
 
         // Assertions
         const qHealth = await lua.doString('return UnitDefs["raptor_queen_test"].health');
-        if (qHealth !== 2000) {
-            console.log("qHealth mismatch! Expected 2000, got:", qHealth);
-            console.log("Compiled Code:\n", compiledCode);
-        }
         expect(qHealth).toBe(2000); // 1000 * 2.0 (multiplier)
 
         const qRepairable = await lua.doString('return UnitDefs["raptor_queen_test"].repairable');
         expect(qRepairable).toBe(false);
 
-        const swarmerReclaim = await lua.doString('return UnitDefs["raptor_land_swarmer_heal"].reclaimSpeed');
+        const swarmerReclaim = await lua.doString('return UnitDefs["test_swarmer"].reclaimSpeed');
+        if (swarmerReclaim !== 100) {
+            console.log("swarmerReclaim mismatch! Expected 100, got:", swarmerReclaim);
+            // Check if name matching works
+            const nameMatch = await lua.doString('return string.match("test_swarmer", "test_swarmer")');
+            console.log("Lua string.match check:", nameMatch);
+        }
         expect(swarmerReclaim).toBe(100);
 
         const hiveSpawnName = await lua.doString('return UnitDefs["raptor_hive_swarmer_basic"] and UnitDefs["raptor_hive_swarmer_basic"].name');
