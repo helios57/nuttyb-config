@@ -21,7 +21,7 @@ describe('Lua Execution Integration', () => {
     beforeAll(async () => {
         factory = new LuaFactory();
 
-        // Load config dynamically to avoid caching issues
+        // Load config dynamically
         const configPath = path.resolve(__dirname, '../../master_config_normalized.json');
         const configContent = fs.readFileSync(configPath, 'utf-8');
         const config = JSON.parse(configContent) as TweakDefinition[];
@@ -33,14 +33,6 @@ describe('Lua Execution Integration', () => {
             variables: VARIABLES
         }));
         compiledCode = compiler.compile(inputs);
-
-        // Debug: Check if test tweak exists
-        const testTweak = config.find(t => t.name === "Test Swarmer Heal Adjustments");
-        if (!testTweak) {
-            console.warn("WARNING: 'Test Swarmer Heal Adjustments' tweak NOT found in loaded config!");
-        } else {
-            console.log("'Test Swarmer Heal Adjustments' loaded successfully.");
-        }
     });
 
     beforeEach(async () => {
@@ -148,12 +140,6 @@ describe('Lua Execution Integration', () => {
         expect(qRepairable).toBe(false);
 
         const swarmerReclaim = await lua.doString('return UnitDefs["test_swarmer"].reclaimSpeed');
-        if (swarmerReclaim !== 100) {
-            console.log("swarmerReclaim mismatch! Expected 100, got:", swarmerReclaim);
-            // Check if name matching works
-            const nameMatch = await lua.doString('return string.match("test_swarmer", "test_swarmer")');
-            console.log("Lua string.match check:", nameMatch);
-        }
         expect(swarmerReclaim).toBe(100);
 
         const hiveSpawnName = await lua.doString('return UnitDefs["raptor_hive_swarmer_basic"] and UnitDefs["raptor_hive_swarmer_basic"].name');
