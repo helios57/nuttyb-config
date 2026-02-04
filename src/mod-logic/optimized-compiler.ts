@@ -290,10 +290,10 @@ export class OptimizedLuaCompiler {
         for (const cond of conditions) {
             switch (cond.type) {
                 case 'nameMatch':
-                    conds.push(`string_match(${unitNameVar}, "${cond.regex}")`);
+                    conds.push(`string_match(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
                     break;
                 case 'nameNotMatch':
-                    conds.push(`not string_match(${unitNameVar}, "${cond.regex}")`);
+                    conds.push(`not string_match(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
                     break;
                 case 'nameStartsWith': {
                     const prefix = typeof cond.prefix === 'string' ? cond.prefix : this.resolveValueSource(cond.prefix, variables).replace(/"/g, '');
@@ -301,7 +301,7 @@ export class OptimizedLuaCompiler {
                          const pVal = this.resolveValueSource(cond.prefix, variables);
                          conds.push(`string_sub(${unitNameVar}, 1, string_len(${pVal})) == ${pVal}`);
                     } else {
-                        conds.push(`string_sub(${unitNameVar}, 1, ${cond.prefix.length}) == "${cond.prefix}"`);
+                        conds.push(`string_sub(${unitNameVar}, 1, ${cond.prefix.length}) == "${this.escapeLuaString(cond.prefix)}"`);
                     }
                     break;
                 }
@@ -310,16 +310,16 @@ export class OptimizedLuaCompiler {
                          const sVal = this.resolveValueSource(cond.suffix, variables);
                          conds.push(`string_sub(${unitNameVar}, -string_len(${sVal})) == ${sVal}`);
                     } else {
-                        conds.push(`string_sub(${unitNameVar}, -${cond.suffix.length}) == "${cond.suffix}"`);
+                        conds.push(`string_sub(${unitNameVar}, -${cond.suffix.length}) == "${this.escapeLuaString(cond.suffix)}"`);
                     }
                     break;
                 }
                 case 'customParam':
-                    const val = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${cond.value}"` : cond.value);
+                    const val = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${this.escapeLuaString(cond.value)}"` : cond.value);
                     conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] == ${val}) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] == ${val}))`);
                     break;
                 case 'customParamMatch':
-                    conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] and string_match(${defVar}.customParams["${cond.key}"], "${cond.regex}")) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] and string_match(${defVar}.customparams["${cond.key}"], "${cond.regex}")))`);
+                    conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] and string_match(${defVar}.customParams["${cond.key}"], "${this.escapeLuaString(cond.regex)}")) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] and string_match(${defVar}.customparams["${cond.key}"], "${this.escapeLuaString(cond.regex)}")))`);
                     break;
                 case 'fieldValue':
                     const fVal = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${cond.value}"` : cond.value);
