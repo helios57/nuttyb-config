@@ -26,6 +26,10 @@ local spGetUnitPosition = Spring.GetUnitPosition
 local spGetGaiaTeamID = Spring.GetGaiaTeamID
 local spGetGameSpeed = Spring.GetGameSpeed
 local spGetFPS = Spring.GetFPS
+local spGetUnitHealth = Spring.GetUnitHealth
+local spSetUnitHealth = Spring.SetUnitHealth
+local spGetUnitExperience = Spring.GetUnitExperience
+local spSetUnitExperience = Spring.SetUnitExperience
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
 
@@ -37,6 +41,7 @@ local currentCompressionFactor = 1
 
 -- Mapping logic
 local function GetCompressedDefID(unitDefID, factor)
+    if not unitDefID then return nil end
     local ud = UnitDefs[unitDefID]
     if not ud then return nil end
     local name = ud.name
@@ -79,6 +84,10 @@ function gadget:GameFrame(n)
 end
 
 function gadget:UnitCreated(unitID, unitDefID, teamID)
+    -- Interceptor Pattern:
+    -- This gadget intercepts units spawned by the mission script (or other sources).
+    -- If high compression is active, it destroys the original unit and replaces it
+    -- with a higher-tier "compressed" variant (e.g., 1x10HP instead of 10x1HP).
     if teamID ~= GAIA_TEAM_ID then return end
 
     local ud = UnitDefs[unitDefID]
@@ -124,4 +133,53 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
 
     -- Always destroy the original unit
     spDestroyUnit(unitID, false, true)
+end
+
+function gadget:UnitCollision(unitID, unitDefID, teamID, colliderID, colliderDefID, colliderTeamID)
+    -- Only Gaia vs Gaia (Raptors)
+    if teamID ~= GAIA_TEAM_ID or colliderTeamID ~= GAIA_TEAM_ID then return end
+
+    -- Only if lagging severely (SimSpeed < 0.8)
+    -- We can use the cached compression factor as a proxy for lag state?
+    -- currentCompressionFactor is updated every 30 frames.
+    -- If factor >= 10, it means we are in deep lag (SimSpeed < 0.8).
+    if not currentCompressionFactor or currentCompressionFactor < 10 then return end
+
+    -- Check if both are Raptors
+    local ud1 = UnitDefs[unitDefID]
+    local ud2 = UnitDefs[colliderDefID]
+    if not (ud1 and ud2) then return end
+
+    local isRaptor1 = string.find(ud1.name, "raptor")
+    local isRaptor2 = string.find(ud2.name, "raptor")
+
+    if isRaptor1 and isRaptor2 then
+        -- Merge Logic: Bias towards keeping the one with more health
+        local h1 = spGetUnitHealth(unitID) or 0
+        local h2 = spGetUnitHealth(colliderID) or 0
+
+        local survivor, victim, sH, vH
+        if h1 >= h2 then
+            survivor = unitID
+            victim = colliderID
+            sH = h1
+            vH = h2
+        else
+            survivor = colliderID
+            victim = unitID
+            sH = h2
+            vH = h1
+        end
+
+        -- Destroy victim
+        spDestroyUnit(victim, false, true)
+
+        -- Absorb Health
+        spSetUnitHealth(survivor, sH + vH)
+
+        -- Absorb XP
+        local xp1 = spGetUnitExperience(survivor) or 0
+        local xp2 = spGetUnitExperience(victim) or 0
+        spSetUnitExperience(survivor, xp1 + xp2)
+    end
 end

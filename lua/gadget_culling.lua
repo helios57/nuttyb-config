@@ -26,11 +26,16 @@ local spGetTeamList = Spring.GetTeamList
 local spValidUnitID = Spring.ValidUnitID
 local spGetUnitPosition = Spring.GetUnitPosition
 local spSpawnCEG = Spring.SpawnCEG
+local spSendMessage = Spring.SendMessage
 local math_floor = math.floor
 
 local modOptions = Spring.GetModOptions()
 local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
 local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
+
+function gadget:Initialize()
+    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS))
+end
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
 
@@ -48,6 +53,9 @@ local cullableUnits = {
 local candidates = {} -- List of {id, team, defId}
 local candidatesIndex = 1
 local processingActive = false
+local cullState = "IDLE" -- IDLE, WARNING, ACTIVE
+local warningStartTime = 0
+local WARNING_DURATION = 300 -- 10 seconds
 
 -- Combat Grid (Safe Zone Caching)
 local combatGrid = {} -- Key: "gx:gz", Value: timestamp (frame)
@@ -80,42 +88,57 @@ end
 
 
 function gadget:GameFrame(n)
-    -- Periodic Check & Candidate Collection (Every 3 seconds)
-    if n % 90 == 0 then
+    -- State Machine Update (Every 30 frames)
+    if n % 30 == 0 then
         local _, simSpeed = spGetGameSpeed()
         local currentUnits = Spring.GetUnitCount()
+        local conditionsMet = (simSpeed < MIN_SIM_SPEED) or (currentUnits > MAX_UNITS)
 
-        -- Reset if previous batch not finished (prioritize fresh state)
-        candidates = {}
-        candidatesIndex = 1
-        processingActive = false
+        if cullState == "IDLE" then
+            if conditionsMet then
+                cullState = "WARNING"
+                warningStartTime = n
+                spSendMessage("⚠️ Performance Critical! Eco Culling in 10s...")
+            end
+        elseif cullState == "WARNING" then
+            if not conditionsMet then
+                cullState = "IDLE"
+                spSendMessage("✅ Performance Stabilized. Culling Cancelled.")
+            elseif (n - warningStartTime) >= WARNING_DURATION then
+                cullState = "ACTIVE"
+                spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
 
-        local needsCulling = false
-        -- If simspeed is consistently low
-        if simSpeed < MIN_SIM_SPEED then needsCulling = true end
-        if currentUnits > MAX_UNITS then needsCulling = true end
+                -- Collection Logic
+                candidates = {}
+                candidatesIndex = 1
+                processingActive = false
 
-        if needsCulling then
-            -- Collect candidates (Fast Scan)
-            local teamList = spGetTeamList()
-            for _, teamID in pairs(teamList) do
-                if teamID ~= GAIA_TEAM_ID then
-                    local units = spGetTeamUnits(teamID)
-                    for _, uID in pairs(units) do
-                         local udID = spGetUnitDefID(uID)
-                         if udID then
-                            local ud = UnitDefs[udID]
-                            if ud and cullableUnits[ud.name] then
-                                table.insert(candidates, {id = uID, team = teamID, defId = udID})
-                            end
-                         end
+                local teamList = spGetTeamList()
+                for _, teamID in pairs(teamList) do
+                    if teamID ~= GAIA_TEAM_ID then
+                        local units = spGetTeamUnits(teamID)
+                        for _, uID in pairs(units) do
+                             local udID = spGetUnitDefID(uID)
+                             if udID then
+                                local ud = UnitDefs[udID]
+                                if ud and cullableUnits[ud.name] then
+                                    table.insert(candidates, {id = uID, team = teamID, defId = udID})
+                                end
+                             end
+                        end
                     end
                 end
-            end
 
-            if #candidates > 0 then
-                processingActive = true
+                if #candidates > 0 then
+                    processingActive = true
+                else
+                    cullState = "IDLE"
+                end
             end
+        elseif cullState == "ACTIVE" then
+             if not processingActive then
+                 cullState = "IDLE"
+             end
         end
     end
 
