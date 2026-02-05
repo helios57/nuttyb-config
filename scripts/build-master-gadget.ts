@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const STATIC_TWEAKS_FILE = path.join(__dirname, '../lua/StaticTweaks.lua');
 const IMPORTED_TWEAKS_DIR = path.join(__dirname, '../lua/imported_tweaks');
 const GADGETS_DIR = path.join(__dirname, '../lua');
 const OUTPUT_FILE = path.join(__dirname, '../lua/MasterGadget.lua');
@@ -13,36 +12,81 @@ const GADGET_FILES = [
     'gadget_raptor_ai_optimized.lua'
 ];
 
+// Unified Tweaks is the only file we need from imported_tweaks now
+const UNIFIED_TWEAKS_FILE = 'UnifiedTweaks.lua';
+
 const MANDATORY_GLOBALS = [
     'pairs', 'ipairs', 'next', 'tostring', 'tonumber', 'type', 'assert', 'error', 'select', 'unpack',
     'table.insert', 'table.remove', 'table.sort', 'table.concat',
     'math.max', 'math.min', 'math.floor', 'math.ceil', 'math.random', 'math.abs', 'math.sqrt',
     'string.find', 'string.match', 'string.sub', 'string.len', 'string.format',
-    'Spring.GetModOptions', 'Spring.GetUnitDefID', 'Spring.GetUnitCount', 'Spring.Echo',
-    'UnitDefs'
+    'Spring.GetModOptions', 'Spring.GetUnitDefID', 'Spring.GetUnitCount', 'Spring.GetGameSpeed',
+    'Spring.GetFPS', 'Spring.GetUnitPosition', 'Spring.DestroyUnit', 'Spring.CreateUnit',
+    'Spring.SetUnitColor', 'Spring.GetUnitHealth', 'Spring.SetUnitHealth', 'Spring.GetUnitExperience',
+    'Spring.SetUnitExperience', 'Spring.GetGaiaTeamID', 'Spring.GetTeamList', 'Spring.GetTeamUnits',
+    'Spring.AddTeamResource', 'Spring.ValidUnitID', 'Spring.SpawnCEG', 'Spring.SendMessage',
+    'Spring.GetTeamStartPosition', 'Spring.GetUnitsInCylinder', 'Spring.GiveOrderToUnit',
+    'Spring.SetUnitLabel', 'Spring.SetUnitNeutral', 'Spring.GetUnitNearestEnemy'
+    // 'UnitDefs', 'UnitDefNames' -- Removed to ensure global access and avoid shadowing issues
 ];
 
+// Helper to mask strings to protect them during regex operations
+function maskStrings(content: string): { masked: string, store: string[] } {
+    const store: string[] = [];
+    // Match double quotes, single quotes, and long strings [[ ... ]] or [=[ ... ]=]
+    const masked = content.replace(/("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|\[(=*)\[[\s\S]*?\]\4\])/g, (match) => {
+        store.push(match);
+        return `__STR_${store.length - 1}__`;
+    });
+    return { masked, store };
+}
+
+function restoreStrings(content: string, store: string[]): string {
+    return content.replace(/__STR_(\d+)__/g, (_, index) => store[parseInt(index)]);
+}
+
+function stripDebugPrints(content: string): string {
+    // Mask strings first so we don't mess up parens inside strings
+    const { masked, store } = maskStrings(content);
+
+    let cleaned = masked;
+
+    // Remove Spring.Echo(...) and print(...)
+    // Handles one level of nested parentheses: ( ... ( ... ) ... )
+    const debugRegex = /\b(Spring\.Echo|print)\s*\((?:[^()]*|\([^()]*\))*\)/g;
+
+    cleaned = cleaned.replace(debugRegex, '');
+
+    return restoreStrings(cleaned, store);
+}
+
 function MinifyLua(content: string): string {
+    const { masked, store } = maskStrings(content);
+
+    let cleaned = masked;
+
     // 1. Remove block comments --[[ ... ]]
-    // Use non-greedy match.
-    let cleaned = content.replace(/--\[\[[\s\S]*?\]\]/g, '');
+    // Note: Lua block comments can have equals signs: --[==[ ... ]==]
+    cleaned = cleaned.replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, ' ');
 
     // 2. Remove single line comments
-    // CAUTION: This regex assumes -- is not inside a string.
-    cleaned = cleaned.replace(/--.*$/gm, '');
+    cleaned = cleaned.replace(/--.*$/gm, ' ');
 
-    // 3. Split, trim, remove empty lines
-    const lines = cleaned.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+    // 3. Normalize whitespace
+    // Replace tabs/newlines with space, then collapse multiple spaces
+    cleaned = cleaned.replace(/\s+/g, ' ');
 
-    return lines.join('\n');
+    // 4. Trim
+    cleaned = cleaned.trim();
+
+    return restoreStrings(cleaned, store);
 }
 
 function generateCommonLua(): string {
     const code = `
 -- Common Utilities
 local function table_merge(dest, src)
+    if not dest then dest = {} end
     for k, v in pairs(src) do
         if (type(v) == "table") and (type(dest[k]) == "table") then
             table_merge(dest[k], v)
@@ -82,65 +126,23 @@ if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
 if not table.copy then table.copy = table_copy end
 `;
+    // We don't strip debug prints from common lua (there shouldn't be any), but we minify
     return MinifyLua(code);
 }
 
 function processImportedTweaks(): string {
-    if (!fs.existsSync(IMPORTED_TWEAKS_DIR)) {
-        console.warn(`Imported tweaks directory not found: ${IMPORTED_TWEAKS_DIR}`);
+    const filePath = path.join(IMPORTED_TWEAKS_DIR, UNIFIED_TWEAKS_FILE);
+    if (!fs.existsSync(filePath)) {
+        console.warn(`Unified tweaks file not found: ${filePath}`);
         return "";
     }
+    console.log(`Processing tweak: ${UNIFIED_TWEAKS_FILE}`);
+    let content = fs.readFileSync(filePath, 'utf-8');
 
-    let result = "";
+    content = stripDebugPrints(content);
 
-    const files = fs.readdirSync(IMPORTED_TWEAKS_DIR)
-        .filter(f => f.endsWith('.lua'))
-        .sort();
-
-    for (const file of files) {
-        const filePath = path.join(IMPORTED_TWEAKS_DIR, file);
-        console.log(`Processing tweak: ${file}`);
-        let content = fs.readFileSync(filePath, 'utf-8');
-
-        // Apply cleaning first to handle logic
-        let cleanedContent = MinifyLua(content);
-
-        let codeBlock = "";
-
-        if (cleanedContent.startsWith('{')) {
-            codeBlock = `
-do
-    local newUnits = ${cleanedContent}
-    if UnitDefs and newUnits then
-        for name, def in pairs(newUnits) do
-            if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
-            else
-                UnitDefs[name] = def
-            end
-        end
-    end
-end
-`;
-            codeBlock = MinifyLua(codeBlock);
-        } else {
-            codeBlock = cleanedContent;
-        }
-
-        result += `${codeBlock}\n`;
-    }
-    return result;
-}
-
-function processStaticTweaks(): string {
-    if (fs.existsSync(STATIC_TWEAKS_FILE)) {
-        console.log(`Loading static tweaks from ${STATIC_TWEAKS_FILE}`);
-        const content = fs.readFileSync(STATIC_TWEAKS_FILE, 'utf-8');
-        return MinifyLua(content);
-    } else {
-        console.warn(`Static tweaks file not found: ${STATIC_TWEAKS_FILE}`);
-        return "";
-    }
+    // Minify
+    return MinifyLua(content);
 }
 
 interface ProcessedGadget {
@@ -152,16 +154,21 @@ interface ProcessedGadget {
 
 function processGadget(filename: string): ProcessedGadget {
     console.log(`Processing gadget: ${filename}`);
-    const raw = fs.readFileSync(path.join(GADGETS_DIR, filename), 'utf-8');
+    let raw = fs.readFileSync(path.join(GADGETS_DIR, filename), 'utf-8');
+
+    // Strip debug prints
+    raw = stripDebugPrints(raw);
+
     const baseName = filename.replace('gadget_', '').replace('.lua', '');
     const prefix = baseName.replace(/_/g, '') + '_';
 
     // Remove GetInfo
     let content = raw.replace(/function\s+gadget:GetInfo\(\)([\s\S]*?)end/g, '');
 
-    // Remove SyncedCode check
+    // Remove SyncedCode check (we wrap strictly in MasterGadget)
     content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
 
+    // Minify partial
     content = MinifyLua(content);
 
     // Identify events
@@ -182,13 +189,7 @@ function processGadget(filename: string): ProcessedGadget {
     const initFuncName = `Initialize_${prefix.slice(0, -1)}`;
 
     // Wrap
-    content = `
-local function ${initFuncName}()
-${content}
-end
-${initFuncName}()
-`;
-    content = MinifyLua(content);
+    content = ` local function ${initFuncName}() ${content} end ${initFuncName}() `;
 
     return {
         name: filename,
@@ -200,11 +201,13 @@ ${initFuncName}()
 
 function scanContent(content: string): Set<string> {
     const globals = new Set<string>();
-    // Match Spring.*, math.*, table.*, string.*, and exact matches for basic globals
-    const regex = /\b(Spring\.[a-zA-Z0-9_]+|math\.[a-zA-Z0-9_]+|table\.[a-zA-Z0-9_]+|string\.[a-zA-Z0-9_]+|pairs|ipairs|next|type|tostring|tonumber|assert|error|select|unpack|UnitDefs)\b/g;
+    const { masked } = maskStrings(content);
+
+    // Scan for globals
+    const regex = /\b(Spring\.[a-zA-Z0-9_]+|math\.[a-zA-Z0-9_]+|table\.[a-zA-Z0-9_]+|string\.[a-zA-Z0-9_]+|pairs|ipairs|next|type|tostring|tonumber|assert|error|select|unpack|UnitDefs|UnitDefNames)\b/g;
 
     let match;
-    while ((match = regex.exec(content)) !== null) {
+    while ((match = regex.exec(masked)) !== null) {
         globals.add(match[1]);
     }
     return globals;
@@ -212,6 +215,7 @@ function scanContent(content: string): Set<string> {
 
 function generateLocalName(globalName: string): string {
     if (globalName === 'UnitDefs') return 'UnitDefs';
+    if (globalName === 'UnitDefNames') return 'UnitDefNames';
     if (!globalName.includes('.')) return globalName;
 
     const parts = globalName.split('.');
@@ -224,15 +228,16 @@ function generateLocalName(globalName: string): string {
 }
 
 function localizeContent(content: string, globals: string[]): string {
-    let result = content;
+    // We must mask strings to avoid replacement inside strings
+    const { masked, store } = maskStrings(content);
 
-    // Sort globals by length (descending) to avoid partial replacements (e.g. replacing 'math.max' before 'math.maxInteger' if that existed)
-    // Also ensures Spring.GetUnitDefID is replaced before Spring.GetUnitDefIDList if needed.
+    let result = masked;
+
     const sortedGlobals = [...globals].sort((a, b) => b.length - a.length);
 
     for (const g of sortedGlobals) {
         const localName = generateLocalName(g);
-        if (localName === g) continue; // No replacement needed for simple globals like 'pairs'
+        if (localName === g) continue;
 
         // Use word boundary to avoid partial replacement, escape dot
         const escapedG = g.replace(/\./g, '\\.');
@@ -240,15 +245,12 @@ function localizeContent(content: string, globals: string[]): string {
         result = result.replace(regex, localName);
     }
 
-    // Special case: map table.merge to table_merge (which comes from CommonLua)
-    // table.merge is likely not in globals list if scanContent didn't find it, or if it matched table.merge
-    // If table.merge was found, it generated local name 'table_merge'.
-    // However, table.merge might not be in the Localized Globals block if it doesn't exist natively.
-    // So we rely on replacement to 'table_merge' which is defined by CommonLua.
+    // Special case for table.merge/mergeInPlace from CommonLua
     result = result.replace(/\btable\.merge\b/g, 'table_merge');
     result = result.replace(/\btable\.mergeInPlace\b/g, 'table_mergeInPlace');
+    result = result.replace(/\btable\.copy\b/g, 'table_copy');
 
-    return result;
+    return restoreStrings(result, store);
 }
 
 async function main() {
@@ -256,7 +258,7 @@ async function main() {
 
     const commonLua = generateCommonLua();
     const importedTweaksLua = processImportedTweaks();
-    const staticTweaksLua = processStaticTweaks();
+    // Static Tweaks removed/merged
 
     const gadgets = GADGET_FILES.map(processGadget);
 
@@ -265,76 +267,57 @@ async function main() {
 
     // Scan all content
     // Note: We don't scan commonLua because it defines its own locals and polyfills
-    const allContentToScan = [importedTweaksLua, staticTweaksLua, ...gadgets.map(g => g.content)];
+    const allContentToScan = [importedTweaksLua, ...gadgets.map(g => g.content)];
     allContentToScan.forEach(c => {
         scanContent(c).forEach(g => allGlobals.add(g));
     });
 
     // Generate Localized Globals Block
-    let localizedGlobalsBlock = `-- Localized Globals (Performance Optimization)\n`;
+    let localizedGlobalsBlock = `-- Localized Globals\n`;
     const sortedGlobals = Array.from(allGlobals).sort();
 
     const localizedMap: string[] = [];
 
     sortedGlobals.forEach(g => {
-        // Skip table.merge/mergeInPlace from top localization as they are polyfilled in CommonLua
-        if (g === 'table.merge' || g === 'table.mergeInPlace') return;
+        if (g === 'table.merge' || g === 'table.mergeInPlace' || g === 'table.copy') return;
 
         const localName = generateLocalName(g);
-        localizedGlobalsBlock += `local ${localName} = ${g}\n`;
+        // Only generate if different (e.g. pairs -> pairs doesn't need alias unless we want local pairs = pairs)
+        // Creating local alias for built-ins is good for upvalue perf.
+        localizedGlobalsBlock += `local ${localName} = ${g}; `;
         localizedMap.push(g);
     });
+    localizedGlobalsBlock += '\n';
 
     // Localize Content
-    // We apply localization to Tweaks and Gadgets.
-    // CommonLua is NOT localized because it defines the base functions.
     const localizedImportedTweaks = localizeContent(importedTweaksLua, localizedMap);
-    const localizedStaticTweaks = localizeContent(staticTweaksLua, localizedMap);
 
     gadgets.forEach(g => {
         g.content = localizeContent(g.content, localizedMap);
     });
 
-    let finalFile = `function gadget:GetInfo()
-return {
-name="NuttyB Master Gadget",
-desc="Combined logic and tweaks for NuttyB Mod",
-author="NuttyB Team (Generated)",
-date="${new Date().getFullYear()}",
-license="GPL",
-layer=0,
-enabled=true
-}
-end
-if (not gadgetHandler:IsSyncedCode()) then
-return
-end
-${localizedGlobalsBlock}
-`;
+    // Header
+    let finalFile = `function gadget:GetInfo() return { name="NuttyB Master Gadget", desc="Combined logic and tweaks for NuttyB Mod", author="NuttyB Team (Generated)", date="${new Date().getFullYear()}", license="GPL", layer=0, enabled=true } end if (not gadgetHandler:IsSyncedCode()) then return end `;
 
+    finalFile += localizedGlobalsBlock;
+
+    // Events Declarations
     const allEvents = new Set<string>();
     gadgets.forEach(g => {
         g.events.forEach(e => allEvents.add(e));
         g.events.forEach(e => {
-             finalFile += `local ${g.prefix}${e}\n`;
+             finalFile += `local ${g.prefix}${e}; `;
         });
     });
 
-    finalFile += `\n`;
     finalFile += commonLua;
-
-    finalFile += `\n`;
     finalFile += localizedImportedTweaks;
 
-    finalFile += `\n`;
-    finalFile += localizedStaticTweaks;
-
-    finalFile += `\n`;
     gadgets.forEach(g => {
         finalFile += g.content;
     });
 
-    finalFile += `\n`;
+    // Events Dispatch
     allEvents.forEach(evt => {
         finalFile += `function gadget:${evt}(...)\n`;
         gadgets.forEach(g => {
@@ -345,7 +328,8 @@ ${localizedGlobalsBlock}
         finalFile += `end\n`;
     });
 
-    // Final cleanup of the assembled file to ensure clean structure (but no luamin)
+    // Final minification pass to ensure everything is compact (Using Safe Minify)
+    // We mask strings again because assembly introduced newlines/spaces between blocks
     finalFile = MinifyLua(finalFile);
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
