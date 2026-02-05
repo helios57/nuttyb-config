@@ -177,27 +177,24 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
         raptorTweaks.forEach(t => compilerInputs.push({ tweak: t, variables: {} }));
     }
 
-    // Compile Generated Tweaks
+    // Compile Generated Tweaks (Batched)
     if (compilerInputs.length > 0) {
-        const compiler = new OptimizedLuaCompiler();
-        const luaCode = compiler.compile(compilerInputs);
-
-        // Validation
-        const validation = validateLua(luaCode);
-        if (validation.valid) {
-            const utf8SafeString = unescape(encodeURIComponent(luaCode));
-            const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-            // Add as a 'tweakdefs' custom tweak (slot preference handled later)
-            customTweaksToProcess.unshift({
-                id: 0, // System generated
-                desc: 'Optimized Config',
-                type: 'tweakdefs',
-                tweak: base64Code
-            });
-        } else {
-             console.error(`Lua validation failed for generated config: ${validation.error}`);
-        }
+        const generatedTweaks = compileBatched(compilerInputs);
+        // Prepend batches in order (batch 1, batch 2, etc.) to ensure slot assignment logic (1, 2, ...) works cleanly.
+        // unshift adds to the front. We want Batch 1 to be first (processed first in final list?)
+        // customTweaksToProcess is processed later into 'customCommands'.
+        // logic: for each tweak, find first available slot.
+        // So order in customTweaksToProcess determines slot order?
+        // Yes: customTweaksToProcess.forEach...
+        // So we should push them in order?
+        // existing code used unshift for the single tweak, likely to prioritize it over user-added ones?
+        // If we want generated tweaks to take slots 1..N, we should put them at the START of customTweaksToProcess.
+        // So we unshift.
+        // But if we have [Batch1, Batch2], we should unshift(Batch2), then unshift(Batch1) -> [Batch1, Batch2, UserCustoms]
+        // So we reverse or unshift spread reversed?
+        // Actually: customTweaksToProcess.unshift(...generatedTweaks) puts them at start.
+        // If generatedTweaks is [B1, B2], unshift(B1, B2) -> [B1, B2, ...]. Correct.
+        customTweaksToProcess.unshift(...generatedTweaks);
     }
 
     const usedTweakDefs = new Set<number>();
@@ -231,6 +228,9 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     // Default to true if not provided (legacy/fallback)
     const isMainTweaksEnabled = input.isMainTweaksEnabled !== false;
 
+    // Custom Tweaks first (e.g. tweakdefs)
+    finalCommands.push(...customCommands);
+
     if(isGameModeTriggered) {
         if (isMainTweaksEnabled && gameConfigs.base.length > 0) {
             finalCommands.push(...gameConfigs.base);
@@ -240,7 +240,8 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
         }
     }
 
-    finalCommands.push(...presetCommands, ...standardCommands, ...customCommands);
+    // Reordered: Custom Tweaks first
+    finalCommands.push(...presetCommands, ...standardCommands);
 
     const isScavengers = primaryModeSelectValue === 'Scavengers';
 
@@ -328,4 +329,78 @@ export function generateCommands(input: CommandGeneratorInput): GeneratedCommand
     const finalSections = sectionsData.map(section => section.commands.join('\n'));
 
     return { lobbyName: (anyOptionSelected ? renameCommand : 'No Options Selected'), sections: finalSections };
+}
+
+function compileBatched(inputs: CompilerInput[]): CustomTweak[] {
+    const CHUNK_SIZE_LIMIT = 10000; // Character limit for Base64 string
+    const generatedTweaks: CustomTweak[] = [];
+
+    // Create compiler
+    const compiler = new OptimizedLuaCompiler();
+
+    // Calculate overhead
+    const emptyCode = compiler.compile([]);
+    // Estimate overhead size in Base64 (approx)
+    // Overhead is mostly headers.
+
+    // To pack efficiently, we need to know the size of each input.
+    // This is expensive but necessary.
+    // Optimization: We can reuse the compiler instance.
+
+    const inputSizes = inputs.map(input => {
+        const code = compiler.compile([input]);
+        return code.length - emptyCode.length; // Approximate incremental size
+    });
+
+    const overheadSize = emptyCode.length;
+
+    let currentBatch: CompilerInput[] = [];
+    let currentSize = overheadSize;
+
+    for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i];
+        const inputSize = inputSizes[i];
+
+        // Check if adding this input would exceed limit
+        // We use a safety factor of 1.35 for Base64 expansion + URL encoding safety
+        const estimatedBase64Size = (currentSize + inputSize) * 1.35;
+
+        if (currentBatch.length > 0 && estimatedBase64Size > CHUNK_SIZE_LIMIT) {
+            // Finalize current batch
+            processBatch(currentBatch);
+            currentBatch = [];
+            currentSize = overheadSize;
+        }
+
+        currentBatch.push(input);
+        currentSize += inputSize;
+    }
+
+    // Process remaining
+    if (currentBatch.length > 0) {
+        processBatch(currentBatch);
+    }
+
+    function processBatch(batch: CompilerInput[]) {
+        const luaCode = compiler.compile(batch);
+        const validation = validateLua(luaCode);
+
+        if (validation.valid) {
+            const utf8SafeString = unescape(encodeURIComponent(luaCode));
+            const base64Code = btoa(utf8SafeString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+            generatedTweaks.push({
+                id: 0,
+                desc: `Optimized Config (Part ${generatedTweaks.length + 1})`,
+                type: 'tweakdefs',
+                tweak: base64Code
+            });
+        } else {
+            console.error(`Lua validation failed for batch ${generatedTweaks.length + 1}: ${validation.error}`);
+            // Fallback: try to include it anyway or skip?
+            // If validation fails, it's a bug in compiler.
+        }
+    }
+
+    return generatedTweaks;
 }
