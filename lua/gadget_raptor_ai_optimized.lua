@@ -29,52 +29,20 @@ local math_floor = math.floor
 local math_random = math.random
 local spSetUnitLabel = Spring.SetUnitLabel
 local spGetModOptions = Spring.GetModOptions
+local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy
 
 -- Constants
 local RAPTOR_TEAM_ID = Spring.GetGaiaTeamID()
 local BUCKET_COUNT = 30
-local GRID_SIZE = 512
 local SQUAD_SIZE = 20
 
 -- State
 local raptorUnits = {} -- Map: unitID -> { bucket, isLeader, leaderID, squadID }
-local targetGrid = {} -- Map: gridKey -> list of unitIDs (targets)
 
 -- Squad Management State
 local currentSquadID = 1
 local currentSquadCount = 0
 local currentLeaderID = nil
-
--- Helper: Get Grid Key
-local function GetGridKey(x, z)
-    local gx = math_floor(x / GRID_SIZE)
-    local gz = math_floor(z / GRID_SIZE)
-    return gx .. ":" .. gz
-end
-
--- Spatial Partitioning: Register Target
-local function RegisterTarget(unitID)
-    local x, _, z = spGetUnitPosition(unitID)
-    if x then
-        local key = GetGridKey(x, z)
-        if not targetGrid[key] then targetGrid[key] = {} end
-        table.insert(targetGrid[key], unitID)
-    end
-end
-
--- Rebuild Grid
-local function RebuildTargetGrid()
-    targetGrid = {}
-    local teams = spGetTeamList()
-    for _, teamID in pairs(teams) do
-        if teamID ~= RAPTOR_TEAM_ID then
-            local units = spGetTeamUnits(teamID)
-            for _, uID in pairs(units) do
-                RegisterTarget(uID)
-            end
-        end
-    end
-end
 
 -- Logic: Squad Leader (Full Pathing/Targeting)
 local function ProcessLeader(unitID)
@@ -87,32 +55,9 @@ local function ProcessLeader(unitID)
         spSetUnitLabel(unitID, "Squad Leader")
     end
 
-    -- Query Spatial Grid for nearest target
-    local gx = math_floor(x / GRID_SIZE)
-    local gz = math_floor(z / GRID_SIZE)
-
-    local bestTarget = nil
-    local minDistSq = 99999999
-
-    -- Search 3x3 grid cells
-    for dx = -1, 1 do
-        for dz = -1, 1 do
-            local key = (gx + dx) .. ":" .. (gz + dz)
-            local targets = targetGrid[key]
-            if targets then
-                for _, tID in pairs(targets) do
-                    local tx, _, tz = spGetUnitPosition(tID)
-                    if tx then
-                        local distSq = (tx - x)^2 + (tz - z)^2
-                        if distSq < minDistSq then
-                            minDistSq = distSq
-                            bestTarget = tID
-                        end
-                    end
-                end
-            end
-        end
-    end
+    -- Use Engine C++ call for nearest enemy (Much faster than Lua grid)
+    -- Range 2000 elmos
+    local bestTarget = spGetUnitNearestEnemy(unitID, 2000, false)
 
     if bestTarget then
         -- Attack specific target
@@ -184,8 +129,6 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
                 squadID = currentSquadID
             }
         end
-    else
-        RegisterTarget(unitID)
     end
 end
 
@@ -202,11 +145,6 @@ end
 
 -- GameFrame: Time-Slicing Scheduler
 function gadget:GameFrame(n)
-    -- Rebuild target grid periodically
-    if n % 30 == 0 then
-        RebuildTargetGrid()
-    end
-
     local currentBucket = n % BUCKET_COUNT
 
     for id, data in pairs(raptorUnits) do
