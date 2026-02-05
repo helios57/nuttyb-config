@@ -9,6 +9,7 @@
     "test:e2e": "npx playwright test",
     "build": "webpack",
     "start": "npx serve",
+    "build:master": "npx ts-node --project scripts/tsconfig.json scripts/build-master-gadget.ts",
     "package": "npm run build && node build-release.js",
     "release": "standard-version"
   },
@@ -23,6 +24,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.2.0",
     "jsdom": "^24.0.0",
+    "luamin": "^1.0.4",
     "standard-version": "^9.5.0",
     "ts-jest": "^29.1.2",
     "ts-loader": "^9.5.1",
@@ -32,7 +34,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "luamin": "^1.0.4",
     "luaparse": "^0.3.1"
   }
 }
