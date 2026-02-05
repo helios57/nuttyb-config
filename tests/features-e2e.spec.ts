@@ -59,7 +59,8 @@ test.describe('MasterGadget Static Verification', () => {
                 decode = function(str) return { units = { names = {}, descriptions = {} } } end
             }
             VFS = {
-                LoadFile = function(path) return "{}" end
+                LoadFile = function(path) return "{}" end,
+                Include = function(path) end
             }
 
             -- Utils often used
