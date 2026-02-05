@@ -43,11 +43,20 @@ local GAIA_TEAM_ID = spGetGaiaTeamID()
 -- Counters for each unit type
 local spawnCounters = {}
 
+-- Caches
+local isRaptorCache = {} -- unitDefID -> boolean
+local compressedDefCache = {} -- unitDefID .. ":" .. factor -> compressedDefID
+
 -- Dynamic Compression State
 local currentCompressionFactor = 1
 
 -- Mapping logic
 local function GetCompressedDefID(unitDefID, factor)
+    local cacheKey = unitDefID .. ":" .. factor
+    if compressedDefCache[cacheKey] ~= nil then
+        return compressedDefCache[cacheKey]
+    end
+
     if not unitDefID then return nil end
     local ud = UnitDefs[unitDefID]
     if not ud then return nil end
@@ -55,7 +64,10 @@ local function GetCompressedDefID(unitDefID, factor)
     local suffix = "_compressed_x" .. factor
     local newName = name .. suffix
     local newDef = UnitDefNames[newName]
-    return newDef and newDef.id or nil
+
+    local result = newDef and newDef.id or nil
+    compressedDefCache[cacheKey] = result
+    return result
 end
 
 function gadget:GameFrame(n)
@@ -97,21 +109,29 @@ end
 
 function gadget:UnitCreated(unitID, unitDefID, teamID)
     -- Interceptor Pattern:
-    -- This gadget intercepts units spawned by the mission script (or other sources).
-    -- If high compression is active, it destroys the original unit and replaces it
-    -- with a higher-tier "compressed" variant (e.g., 1x10HP instead of 10x1HP).
     if teamID ~= GAIA_TEAM_ID then return end
 
-    local ud = UnitDefs[unitDefID]
-    if not ud then return end
-
-    -- Check if this is a compressible raptor
-    if ud.customParams and ud.customParams.is_compressed_unit then return end
-
-    -- Filter: Only apply to known raptors
-    if not (string.find(ud.name, "raptor_land") or string.find(ud.name, "raptor_air")) then
-        return
+    -- Cache Check for IsRaptor
+    local isRaptor = isRaptorCache[unitDefID]
+    if isRaptor == nil then
+        local ud = UnitDefs[unitDefID]
+        if ud then
+            if ud.customParams and ud.customParams.is_compressed_unit then
+                isRaptor = false -- Don't compress already compressed units
+            else
+                if string.find(ud.name, "raptor_land") or string.find(ud.name, "raptor_air") then
+                    isRaptor = true
+                else
+                    isRaptor = false
+                end
+            end
+        else
+            isRaptor = false
+        end
+        isRaptorCache[unitDefID] = isRaptor
     end
+
+    if not isRaptor then return end
 
     local factor = currentCompressionFactor
 
@@ -160,16 +180,19 @@ function gadget:UnitCollision(unitID, unitDefID, teamID, colliderID, colliderDef
     if teamID ~= GAIA_TEAM_ID or colliderTeamID ~= GAIA_TEAM_ID then return end
 
     -- Only if lagging severely (SimSpeed < 0.8)
-    -- We can use the cached compression factor as a proxy for lag state?
-    -- currentCompressionFactor is updated every 30 frames.
-    -- If factor >= 10, it means we are in deep lag (SimSpeed < 0.8).
     if not currentCompressionFactor or currentCompressionFactor < 10 then return end
 
-    -- Check if both are Raptors
+    -- Use cache for collision check too if strictly needed, but collision is less frequent than creation?
+    -- Actually collision is very frequent.
+    -- But we need to know if it's a "raptor" generically, not just compressible ones.
+    -- The cache 'isRaptorCache' is specific to "compressible raptors" (land/air).
+    -- Here we check for any "raptor".
+
     local ud1 = UnitDefs[unitDefID]
     local ud2 = UnitDefs[colliderDefID]
     if not (ud1 and ud2) then return end
 
+    -- Simple string check is probably fine here as it only runs on Gaia-Gaia collision in high lag.
     local isRaptor1 = string.find(ud1.name, "raptor")
     local isRaptor2 = string.find(ud2.name, "raptor")
 

@@ -13,6 +13,28 @@ const GADGET_FILES = [
     'gadget_raptor_ai_optimized.lua'
 ];
 
+// Mapping: filename -> modOption key
+const TWEAK_FILES: Record<string, string> = {
+    'Defs_Cross_Faction_T2.lua': 'nuttyb_cross_faction_t2',
+    'Defs_Main.lua': 'nuttyb_main_defs',
+    'Defs_Mega_Nuke.lua': 'meganuke',
+    'Defs_T3_Builders.lua': 'nuttyb_t3_builders',
+    'Defs_T3_Eco.lua': 'nuttyb_t3_eco',
+    'Defs_T4_Air.lua': 'nuttyb_t4_air',
+    'Defs_T4_Defenses.lua': 'nuttyb_t4_defenses',
+    'Defs_T4_Eco.lua': 'nuttyb_t4_eco',
+    'Defs_T4_Epics.lua': 'nuttyb_t4_epics',
+    'Defs_Unit_Launchers.lua': 'nuttyb_unit_launchers',
+    'Defs_Waves_Experimental_Wave_Challenge.lua': 'nuttyb_wave_mode_exp',
+    'Defs_Waves_Mini_Bosses.lua': 'nuttyb_wave_mode_mini',
+    'Units_EVO_XP.lua': 'nuttyb_evo_xp',
+    'Units_LRPC_v2.lua': 'nuttyb_lrpc_v2',
+    'Units_Main.lua': 'nuttyb_main_units',
+    'Units_NuttyB_Evolving_Commanders_Armada.lua': 'nuttyb_evo_com_arm',
+    'Units_NuttyB_Evolving_Commanders_Cortex.lua': 'nuttyb_evo_com_cor',
+    'Units_NuttyB_Evolving_Commanders_Legion.lua': 'nuttyb_evo_com_leg',
+};
+
 function generateCommonLua(): string {
     return `
 -- Common Utilities
@@ -64,27 +86,51 @@ function processImportedTweaks(): string {
         return "";
     }
 
-    const file = 'Defs_Mega_Nuke.lua';
-    const modOption = 'meganuke';
-    const filePath = path.join(IMPORTED_TWEAKS_DIR, file);
+    let result = "";
 
-    if (fs.existsSync(filePath)) {
-        console.log(`Processing tweak: ${file} (ModOption: ${modOption})`);
-        let content = fs.readFileSync(filePath, 'utf-8');
+    // Sort keys to ensure deterministic order (Defs before Units usually implies D < U, which works)
+    const files = Object.keys(TWEAK_FILES).sort();
 
-        // Note: Defs_Mega_Nuke.lua uses 'do ... end' block and modifies UnitDefs directly,
-        // so we don't need the heuristic wrapper for it.
-        // We just wrap it in the mod option check.
+    for (const file of files) {
+        const modOption = TWEAK_FILES[file];
+        const filePath = path.join(IMPORTED_TWEAKS_DIR, file);
 
-        let result = `\n-- Tweak: ${file}\n`;
-        result += `if (tonumber(Spring.GetModOptions().${modOption}) == 1) then\n`;
-        result += `${content}\n`;
-        result += `end\n`;
-        return result;
-    } else {
-        console.warn(`Tweak file missing: ${file}`);
-        return "";
+        if (fs.existsSync(filePath)) {
+            console.log(`Processing tweak: ${file} (ModOption: ${modOption})`);
+            let content = fs.readFileSync(filePath, 'utf-8');
+
+            // Check if file returns a table (heuristic: starts with { after comments)
+            // Strip comments to check
+            const stripped = content.replace(/--.*$/gm, '').trim();
+            if (stripped.startsWith('{')) {
+                // Wrap in table merge logic
+                content = `
+                local newUnits = ${content}
+                if UnitDefs and newUnits then
+                    for name, def in pairs(newUnits) do
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
+                    end
+                end
+                `;
+            }
+
+            result += `\n-- Tweak: ${file}\n`;
+            if (file === 'Defs_Mega_Nuke.lua') {
+                result += `if (tonumber(Spring.GetModOptions().${modOption}) == 1) then\n`;
+                result += `${content}\n`;
+                result += `end\n`;
+            } else {
+                result += `${content}\n`;
+            }
+        } else {
+             console.warn(`Tweak file missing: ${file}`);
+        }
     }
+    return result;
 }
 
 function processStaticTweaks(): string {
