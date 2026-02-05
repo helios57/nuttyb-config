@@ -1,10 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
+// @ts-ignore
+import * as luamin from 'luamin';
 
 const STATIC_TWEAKS_FILE = path.join(__dirname, '../lua/StaticTweaks.lua');
 const IMPORTED_TWEAKS_DIR = path.join(__dirname, '../lua/imported_tweaks');
 const GADGETS_DIR = path.join(__dirname, '../lua');
 const OUTPUT_FILE = path.join(__dirname, '../lua/MasterGadget.lua');
+const MEGA_NUKE_OUTPUT_FILE = path.join(__dirname, '../lua/Defs_Mega_Nuke.lua');
 
 const GADGET_FILES = [
     'gadget_adaptive_spawner.lua',
@@ -84,13 +87,7 @@ function processImportedTweaks(): string {
         console.log(`Processing tweak: ${file}`);
         let content = fs.readFileSync(filePath, 'utf-8');
 
-        content = content.replace(/^-- Decoded from tweakdata\.txt.*$/gm, '');
-        content = content.replace(/^--NuttyB .*$/gm, '');
-        content = content.replace(/^-- Authors: .*$/gm, '');
-        content = content.replace(/^-- docs\.google\.com.*$/gm, '');
-        content = content.replace(/^-- [A-Z0-9_]+_(START|END)$/gm, '');
-        content = content.trim();
-
+        // Simple strip for checking start character
         const strippedToCheck = content.replace(/--.*$/gm, '').trim();
         let codeBlock = "";
 
@@ -113,10 +110,15 @@ end
             codeBlock = content;
         }
 
-        result += `\n-- Tweak: ${file}\n`;
         if (file === 'Defs_Mega_Nuke.lua') {
+            // Write strictly isolated file
+            // Use luamin to minify the isolated file
+            const minifiedNuke = luamin.minify(codeBlock);
+            fs.writeFileSync(MEGA_NUKE_OUTPUT_FILE, minifiedNuke);
+            console.log(`Generated isolated file: ${MEGA_NUKE_OUTPUT_FILE} (${minifiedNuke.length} chars)`);
+
             result += `if (tonumber(Spring.GetModOptions().meganuke) == 1) then\n`;
-            result += `${codeBlock}\n`;
+            result += `VFS.Include("lua/Defs_Mega_Nuke.lua")\n`;
             result += `end\n`;
         } else {
             result += `${codeBlock}\n`;
@@ -176,7 +178,6 @@ function processGadget(filename: string): ProcessedGadget {
 local function ${initFuncName}()
 ${content}
 end
--- Always Initialize
 ${initFuncName}()
 `;
 
@@ -286,23 +287,20 @@ async function main() {
     });
 
     let finalFile = `function gadget:GetInfo()
-  return {
-    name      = "NuttyB Master Gadget",
-    desc      = "Combined logic and tweaks for NuttyB Mod",
-    author    = "NuttyB Team (Generated)",
-    date      = "${new Date().getFullYear()}",
-    license   = "GPL",
-    layer     = 0,
-    enabled   = true
-  }
+return {
+name="NuttyB Master Gadget",
+desc="Combined logic and tweaks for NuttyB Mod",
+author="NuttyB Team (Generated)",
+date="${new Date().getFullYear()}",
+license="GPL",
+layer=0,
+enabled=true
+}
 end
-
 if (not gadgetHandler:IsSyncedCode()) then
-  return
+return
 end
-
 ${localizedGlobalsBlock}
--- Forward Declarations for Gadget Events
 `;
 
     const allEvents = new Set<string>();
@@ -313,30 +311,39 @@ ${localizedGlobalsBlock}
         });
     });
 
-    finalFile += `\n-- Common Utilities\n`;
+    finalFile += `\n`;
     finalFile += commonLua;
 
-    finalFile += `\n-- Imported Tweaks Logic (Configurable)\n`;
+    finalFile += `\n`;
     finalFile += localizedImportedTweaks;
 
-    finalFile += `\n-- Static Tweaks Logic (Base)\n`;
+    finalFile += `\n`;
     finalFile += localizedStaticTweaks;
 
-    finalFile += `\n-- Gadget Logic\n`;
+    finalFile += `\n`;
     gadgets.forEach(g => {
         finalFile += g.content;
     });
 
-    finalFile += `\n-- Master Dispatcher\n`;
+    finalFile += `\n`;
     allEvents.forEach(evt => {
         finalFile += `function gadget:${evt}(...)\n`;
         gadgets.forEach(g => {
             if (g.events.includes(evt)) {
-                 finalFile += `    if ${g.prefix}${evt} then ${g.prefix}${evt}(...) end\n`;
+                 finalFile += `if ${g.prefix}${evt} then ${g.prefix}${evt}(...) end\n`;
             }
         });
         finalFile += `end\n`;
     });
+
+    // Use luamin for final minification
+    console.log('Minifying MasterGadget.lua...');
+    try {
+        finalFile = luamin.minify(finalFile);
+    } catch (e) {
+        console.error('Error minifying Lua:', e);
+        process.exit(1);
+    }
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
