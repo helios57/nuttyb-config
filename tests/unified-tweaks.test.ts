@@ -2,7 +2,7 @@ import { LuaFactory } from 'wasmoon';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Static Tweaks Verification', () => {
+describe('Unified Tweaks Verification', () => {
     let luaFactory: LuaFactory;
     let lua: any;
 
@@ -14,11 +14,24 @@ describe('Static Tweaks Verification', () => {
             _G.UnitDefs = {}
             _G.UnitDefNames = {}
 
-            -- Polyfill table.merge (simple version)
+            -- Polyfill table.merge (simple version) as expected by UnifiedTweaks if not localized
             table.merge = function(dest, src)
                 local res = {}
                 for k,v in pairs(dest) do res[k] = v end
                 for k,v in pairs(src) do res[k] = v end
+                return res
+            end
+
+            -- Polyfill table.mergeInPlace
+            table.mergeInPlace = function(dest, src)
+                if not dest or not src then return end
+                for k,v in pairs(src) do dest[k] = v end
+            end
+
+            -- Polyfill table.copy
+            table.copy = function(t)
+                local res = {}
+                for k,v in pairs(t) do res[k] = v end
                 return res
             end
 
@@ -48,7 +61,7 @@ describe('Static Tweaks Verification', () => {
     });
 
     test('Generates Tiered Units', async () => {
-        const tweaksPath = path.join(__dirname, '../lua/StaticTweaks.lua');
+        const tweaksPath = path.join(__dirname, '../lua/imported_tweaks/UnifiedTweaks.lua');
         const tweaksCode = fs.readFileSync(tweaksPath, 'utf-8');
         await lua.doString(tweaksCode);
 
@@ -69,7 +82,7 @@ describe('Static Tweaks Verification', () => {
     });
 
     test('Generates Compressed Units', async () => {
-        const tweaksPath = path.join(__dirname, '../lua/StaticTweaks.lua');
+        const tweaksPath = path.join(__dirname, '../lua/imported_tweaks/UnifiedTweaks.lua');
         const tweaksCode = fs.readFileSync(tweaksPath, 'utf-8');
         await lua.doString(tweaksCode);
 
