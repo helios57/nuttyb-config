@@ -114,7 +114,14 @@ function adaptLegacyMutation(m: LegacyMutation): MutationOperation {
         };
     }
 
-    if (m.target && !m.field && m.op !== 'assign_math_floor' && m.op !== 'clone_unit') {
+    const adaptedM = { ...m };
+
+    // Recursively adapt nested mutations (e.g. inside clone_unit)
+    if (adaptedM.mutations) {
+        adaptedM.mutations = adaptedM.mutations.map(adaptLegacyMutation);
+    }
+
+    if (adaptedM.target && !adaptedM.field && adaptedM.op !== 'assign_math_floor' && adaptedM.op !== 'clone_unit') {
         // Legacy 'target' -> 'field' for operations like 'set', 'multiply'
         // assign_math_floor uses 'target' as actual target, so we keep it?
         // DSL: assign_math_floor: target: UnitDefField; source: UnitDefField
@@ -122,13 +129,13 @@ function adaptLegacyMutation(m: LegacyMutation): MutationOperation {
         // For clone_unit: target is target name string.
 
         return {
-            ...m,
-            field: m.target,
+            ...adaptedM,
+            field: adaptedM.target,
             target: undefined // Remove legacy
         } as unknown as MutationOperation;
     }
 
-    return m as unknown as MutationOperation;
+    return adaptedM as unknown as MutationOperation;
 }
 
 function hydrate(obj: any, values: Record<string, any>): any {

@@ -224,6 +224,7 @@ function gadget:GameFrame(n)
 
                             -- Destroy
                             spDestroyUnit(uID, false, true)
+                            end
                         end
                      end
                  end
