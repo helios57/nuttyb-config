@@ -158,12 +158,14 @@ end
 for g,o in pairs({'raptor_antinuke','raptor_turret_acid_t2_v1','raptor_turret_acid_t3_v1','raptor_turret_acid_t4_v1','raptor_turret_antiair_t2_v1','raptor_turret_antiair_t3_v1','raptor_turret_antiair_t4_v1','raptor_turret_antinuke_t2_v1','raptor_turret_antinuke_t3_v1','raptor_turret_basic_t2_v1','raptor_turret_basic_t3_v1','raptor_turret_basic_t4_v1','raptor_turret_burrow_t2_v1','raptor_turret_emp_t2_v1','raptor_turret_emp_t3_v1','raptor_turret_emp_t4_v1','raptor_worm_green'
 })do
     local p=a[o]
-    p.maxthisunit=10;
-    p.health=p.health*2;
-    if p.weapondefs then
-        for g,q in pairs(p.weapondefs)do
-            q.reloadtime=q.reloadtime/1.5;
-            q.range=q.range/2
+    if p then
+        p.maxthisunit=10;
+        p.health=p.health*2;
+        if p.weapondefs then
+            for g,q in pairs(p.weapondefs)do
+                q.reloadtime=q.reloadtime/1.5;
+                q.range=q.range/2
+            end
         end
     end
 end
@@ -179,9 +181,11 @@ local s= {'raptor_air_bomber_basic_t2_v1','raptor_air_bomber_basic_t2_v2','rapto
 }
 for g,t in pairs(s)do
     local j=a[t]
-    if j.weapondefs then
-        for g,u in pairs(j.weapondefs)do
-            u.damage.default=u.damage.default/1.30
+    if j then
+        if j.weapondefs then
+            for g,u in pairs(j.weapondefs)do
+                u.damage.default=u.damage.default/1.30
+            end
         end
     end
 end

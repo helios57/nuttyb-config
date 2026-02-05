@@ -88,15 +88,28 @@ local function table_mergeInPlace(dest, src)
     end
 end
 
+local function table_copy(t)
+    if type(t) ~= "table" then return t end
+    local res = {}
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            res[k] = table_copy(v)
+        else
+            res[k] = v
+        end
+    end
+    return res
+end
+
 -- Polyfill table.merge and table.mergeInPlace if missing
 if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
+if not table.copy then table.copy = table_copy end
 
 -- Imported Tweaks Logic (Configurable)
 
 -- Tweak: Defs_Cross_Faction_T2.lua
-if (tonumber(Spring.GetModOptions().nuttyb_cross_faction_t2) == 1) then
-    -- Cross Faction T2
+-- Cross Faction T2
 -- Decoded from tweakdata.txt line 4
 
 --Cross Faction Tax 70%
@@ -159,11 +172,9 @@ table.mergeInPlace(unitDefs,taxedDefs)
 end
 -- CROSS_FACTION_END
 
-end
 
 -- Tweak: Defs_Main.lua
-if (tonumber(Spring.GetModOptions().nuttyb_main_defs) == 1) then
-    -- Main tweakdefs
+-- Main tweakdefs
 -- Decoded from tweakdata.txt line 1
 
 --NuttyB v1.52b Def Main
@@ -323,12 +334,14 @@ end
 for g,o in pairs({'raptor_antinuke','raptor_turret_acid_t2_v1','raptor_turret_acid_t3_v1','raptor_turret_acid_t4_v1','raptor_turret_antiair_t2_v1','raptor_turret_antiair_t3_v1','raptor_turret_antiair_t4_v1','raptor_turret_antinuke_t2_v1','raptor_turret_antinuke_t3_v1','raptor_turret_basic_t2_v1','raptor_turret_basic_t3_v1','raptor_turret_basic_t4_v1','raptor_turret_burrow_t2_v1','raptor_turret_emp_t2_v1','raptor_turret_emp_t3_v1','raptor_turret_emp_t4_v1','raptor_worm_green'
 })do
     local p=a[o]
-    p.maxthisunit=10;
-    p.health=p.health*2;
-    if p.weapondefs then
-        for g,q in pairs(p.weapondefs)do
-            q.reloadtime=q.reloadtime/1.5;
-            q.range=q.range/2
+    if p then
+        p.maxthisunit=10;
+        p.health=p.health*2;
+        if p.weapondefs then
+            for g,q in pairs(p.weapondefs)do
+                q.reloadtime=q.reloadtime/1.5;
+                q.range=q.range/2
+            end
         end
     end
 end
@@ -344,9 +357,11 @@ local s= {'raptor_air_bomber_basic_t2_v1','raptor_air_bomber_basic_t2_v2','rapto
 }
 for g,t in pairs(s)do
     local j=a[t]
-    if j.weapondefs then
-        for g,u in pairs(j.weapondefs)do
-            u.damage.default=u.damage.default/1.30
+    if j then
+        if j.weapondefs then
+            for g,u in pairs(j.weapondefs)do
+                u.damage.default=u.damage.default/1.30
+            end
         end
     end
 end
@@ -609,11 +624,10 @@ local I= {
 end
 -- MAIN_DEFS_END
 
-end
 
 -- Tweak: Defs_Mega_Nuke.lua
 if (tonumber(Spring.GetModOptions().meganuke) == 1) then
-    -- Mega Nuke
+-- Mega Nuke
 -- Decoded from tweakdata.txt line 15
 
 --NuttyB v1.52 Mega Nuke
@@ -733,8 +747,7 @@ end
 end
 
 -- Tweak: Defs_T3_Builders.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t3_builders) == 1) then
-    -- T3 Builders
+-- T3 Builders
 -- Decoded from tweakdata.txt line 6
 
 --T3 Cons & Taxed Factories
@@ -815,15 +828,17 @@ for l,m in pairs(b)do
         end
         local r=n and'armshltx'or o and'corgant'or'leggant'
         local s=a[r]
-        h(r,r..e, {
-            energycost=s.energycost*f,
-            icontype=r,
-            metalcost=s.metalcost*f,
-            name=d[m]..'Experimental Gantry Taxed',
-            customparams= {
-                i18n_en_humanname=d[m]..'Experimental Gantry Taxed',i18n_en_tooltip='Produces Experimental Units'
-            }
-        })
+        if s then
+            h(r,r..e, {
+                energycost=s.energycost*f,
+                icontype=r,
+                metalcost=s.metalcost*f,
+                name=d[m]..'Experimental Gantry Taxed',
+                customparams= {
+                    i18n_en_humanname=d[m]..'Experimental Gantry Taxed',i18n_en_tooltip='Produces Experimental Units'
+                }
+            })
+        end
         local t,
         u= {}, {
             m..'nanotct2',m..'nanotct3',m..'alab',m..'avp',m..'aap',m..'gatet3',m..'flak',p and'legdeflector'or m..'gate',p and'legforti'or m..'fort',n and'armshltx'or m..'gant'
@@ -879,8 +894,10 @@ for l,m in pairs(b)do
             },
             buildoptions=t
         })
-        a[j].weapondefs= {}
-        a[j].weapons= {}
+        if a[j] then
+            a[j].weapondefs= {}
+            a[j].weapons= {}
+        end
         j=m..'t3airaide'
         h('armfify',j, {
             blocking=false,
@@ -912,8 +929,10 @@ for l,m in pairs(b)do
             },
             buildoptions=t
         })
-        a[j].weapondefs= {}
-        a[j].weapons= {}
+        if a[j] then
+            a[j].weapondefs= {}
+            a[j].weapons= {}
+        end
         local z=n and'armshltx'or o and'corgant'or'leggant'
         if a[z]and a[z].buildoptions then
             local A=m..'t3aide'
@@ -932,11 +951,9 @@ for l,m in pairs(b)do
 end
 -- T3_BUILDERS_END
 
-end
 
 -- Tweak: Defs_T3_Eco.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t3_eco) == 1) then
-    -- T3 Eco
+-- T3 Eco
 
 -- T3_ECO_START
 do
@@ -999,11 +1016,9 @@ end
 end
 -- T3_ECO_END
 
-end
 
 -- Tweak: Defs_T4_Air.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t4_air) == 1) then
-    -- T4 Air Rework
+-- T4 Air Rework
 -- Authors: BackBash
 -- T4_AIR_START
 do
@@ -1174,67 +1189,67 @@ do
 end
 -- T4_AIR_END
 
-end
 
 -- Tweak: Defs_T4_Defenses.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t4_defenses) == 1) then
-    -- T4 Defences NuttyB Balance
+-- T4 Defences NuttyB Balance
 -- Authors: Hedgehogzs
 -- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
 
 -- LEGENDARY_PULSAR_START
 do
 local a,b,c = UnitDefs or {}, table.merge, 'armannit4'
-a[c] = b(a['armannit3'], {
-    name='Legendary Pulsar',
-    description='Rapid tachyon burst supergun.',
-    buildtime=240000,
-    health=30000,
-    metalcost=43840,
-    energycost=1096000,
-    icontype="armannit3",
-    customparams={
-        i18n_en_humanname='Legendary Pulsar',
-        i18n_en_tooltip='Fires devastating, rapid-fire tachyon bolts',
-        techlevel=4
-    },
-    weapondefs={
-        tachyon_burst_cannon={
-            collidefriendly=0,
-            collidefeature=0,
-            avoidfeature=0,
-            avoidfriendly=0,
-            name='Tachyon Burst Cannon',
-            weapontype='LaserCannon',
-            rgbcolor='1 0 1',
-            burst=3,
-            burstrate=0.40,
-            reloadtime=5,
-            accuracy=400,
-            areaofeffect=12,
-            range=1800,
-            energypershot=12000,
-            turret=true,
-            soundstart='annigun1',
-            soundhit='xplolrg3',
-            size=6,
-            impulsefactor=0,
-            weaponvelocity=3100,
-            thickness=10,
-            laserflaresize=8,
-            texture3="largebeam",
-            tilelength=150,
-            tolerance=10000,
-            beamtime=3,
-            explosiongenerator='custom:tachyonshot',
-            damage={ default=8000 },
-            allowNonBlockingAim=true
+if a['armannit3'] then
+    a[c] = b(a['armannit3'], {
+        name='Legendary Pulsar',
+        description='Rapid tachyon burst supergun.',
+        buildtime=240000,
+        health=30000,
+        metalcost=43840,
+        energycost=1096000,
+        icontype="armannit3",
+        customparams={
+            i18n_en_humanname='Legendary Pulsar',
+            i18n_en_tooltip='Fires devastating, rapid-fire tachyon bolts',
+            techlevel=4
+        },
+        weapondefs={
+            tachyon_burst_cannon={
+                collidefriendly=0,
+                collidefeature=0,
+                avoidfeature=0,
+                avoidfriendly=0,
+                name='Tachyon Burst Cannon',
+                weapontype='LaserCannon',
+                rgbcolor='1 0 1',
+                burst=3,
+                burstrate=0.40,
+                reloadtime=5,
+                accuracy=400,
+                areaofeffect=12,
+                range=1800,
+                energypershot=12000,
+                turret=true,
+                soundstart='annigun1',
+                soundhit='xplolrg3',
+                size=6,
+                impulsefactor=0,
+                weaponvelocity=3100,
+                thickness=10,
+                laserflaresize=8,
+                texture3="largebeam",
+                tilelength=150,
+                tolerance=10000,
+                beamtime=3,
+                explosiongenerator='custom:tachyonshot',
+                damage={ default=8000 },
+                allowNonBlockingAim=true
+            }
+        },
+        weapons={
+            [1]={ badtargetcategory="VTOL GROUNDSCOUT", def='tachyon_burst_cannon', onlytargetcategory='SURFACE' }
         }
-    },
-    weapons={
-        [1]={ badtargetcategory="VTOL GROUNDSCOUT", def='tachyon_burst_cannon', onlytargetcategory='SURFACE' }
-    }
-})
+    })
+end
 local builders_arm={
 	'armaca','armack','armacsub','armacv',
 	'armt3airaide','armt3aide'
@@ -1267,72 +1282,74 @@ end
 -- LEGENDARY_BASTION_START
 do
 local a,b,c = UnitDefs or {}, table.merge, 'legbastiont4'
-a[c] = b(
-a['legbastion'], {
-    name='Legendary Bastion',
-    description='Purple heatray defensive tower.',
-    health=28000,
-    metalcost=65760,
-    energycost=1986500,
-    buildtime=180000,
-    footprintx=6,
-    footprintz=6,
-    icontype="legbastion",
-    objectname='scavs/scavbeacon_t4.s3o',
-    script='scavs/scavbeacon.cob',
-    buildpic='scavengers/SCAVBEACON.DDS',
-    damagemodifier=0.20,
-    customparams={
-        i18n_en_humanname='Legendary Bastion',
-        i18n_en_tooltip='Projects a devastating purple heatray',
-        maxrange=1450,
-        techlevel=4
-    },
-    weapondefs={
-        legendary_bastion_ray={
-            areaofeffect=24,
-            collidefriendly=0,
-            collidefeature=0,
-            avoidfeature=0,
-            avoidfriendly=0,
-            beamtime=0.3,
-            camerashake=0,
-            corethickness=0.3,
-            craterareaofeffect=120,
-            craterboost=0,
-            cratermult=0,
-            edgeeffectiveness=0.45,
-            energypershot=3000,
-            explosiongenerator="custom:laserhit-medium-purple",
-            firestarter=90,
-            firetolerance=300,
-            impulsefactor=0,
-            laserflaresize=2,
-            name="Legendary Heat Ray",
-            noselfdamage=true,
-            predictboost=0.3,
-            proximitypriority=1,
-            range=1450,
-            reloadtime=0.3,
-            rgbcolor="1.0 0.2 1.0",
-            rgbcolor2="0.9 1.0 0.5",
-            soundhitdry="",
-            soundhitwet="sizzle",
-            soundstart="banthie2",
-            soundstartvolume=25,
-            soundtrigger=1,
-            thickness=5.5,
-            turret=true,
-            weapontype="BeamLaser",
-            weaponvelocity=1500,
-            allowNonBlockingAim=true,
-            damage={ default=2500, vtol=15 }
+if a['legbastion'] then
+    a[c] = b(
+    a['legbastion'], {
+        name='Legendary Bastion',
+        description='Purple heatray defensive tower.',
+        health=28000,
+        metalcost=65760,
+        energycost=1986500,
+        buildtime=180000,
+        footprintx=6,
+        footprintz=6,
+        icontype="legbastion",
+        objectname='scavs/scavbeacon_t4.s3o',
+        script='scavs/scavbeacon.cob',
+        buildpic='scavengers/SCAVBEACON.DDS',
+        damagemodifier=0.20,
+        customparams={
+            i18n_en_humanname='Legendary Bastion',
+            i18n_en_tooltip='Projects a devastating purple heatray',
+            maxrange=1450,
+            techlevel=4
+        },
+        weapondefs={
+            legendary_bastion_ray={
+                areaofeffect=24,
+                collidefriendly=0,
+                collidefeature=0,
+                avoidfeature=0,
+                avoidfriendly=0,
+                beamtime=0.3,
+                camerashake=0,
+                corethickness=0.3,
+                craterareaofeffect=120,
+                craterboost=0,
+                cratermult=0,
+                edgeeffectiveness=0.45,
+                energypershot=3000,
+                explosiongenerator="custom:laserhit-medium-purple",
+                firestarter=90,
+                firetolerance=300,
+                impulsefactor=0,
+                laserflaresize=2,
+                name="Legendary Heat Ray",
+                noselfdamage=true,
+                predictboost=0.3,
+                proximitypriority=1,
+                range=1450,
+                reloadtime=0.3,
+                rgbcolor="1.0 0.2 1.0",
+                rgbcolor2="0.9 1.0 0.5",
+                soundhitdry="",
+                soundhitwet="sizzle",
+                soundstart="banthie2",
+                soundstartvolume=25,
+                soundtrigger=1,
+                thickness=5.5,
+                turret=true,
+                weapontype="BeamLaser",
+                weaponvelocity=1500,
+                allowNonBlockingAim=true,
+                damage={ default=2500, vtol=15 }
+            }
+        },
+        weapons={
+            [1]={ badtargetcategory='VTOL GROUNDSCOUT', def='legendary_bastion_ray', onlytargetcategory='SURFACE' }
         }
-    },
-    weapons={
-        [1]={ badtargetcategory='VTOL GROUNDSCOUT', def='legendary_bastion_ray', onlytargetcategory='SURFACE' }
-    }
-})
+    })
+end
 local builders_leg={
 	'legaca','legack','legacsub','legacv',
 	'legt3airaide','legt3aide'
@@ -1365,135 +1382,137 @@ end
 -- LEGENDARY_BULWARK_START
 do
 local a,b,c = UnitDefs or {}, table.merge, 'cordoomt4'
-a[c] = b(
-a['cordoomt3'], {
-    name='Legendary Bulwark',
-    description='Defensive bulwark annihilates approachers',
-    buildtime=250000,
-    health=42000,
-    metalcost=61650,
-    energycost=1712500,
-    damagemodifier=0.15,
-    energystorage=5000,
-    radardistance=1400,
-    sightdistance=1100,
-    icontype="cordoomt3",
-    customparams={
-        i18n_en_humanname='Legendary Bulwark',
-        i18n_en_tooltip='The ultimate defensive structure',
-        paralyzemultiplier=0.2,
-        techlevel=4
-    },
-    weapondefs={
-        legendary_overload_scatter={
-            collidefriendly=0,
-            collidefeature=0,
-            avoidfeature=0,
-            avoidfriendly=0,
-            name='Overload Scatter Beamer',
-            weapontype='BeamLaser',
-            range=1000,
-            reloadtime=0.1,
-            sprayangle=2000,
-            projectiles=12,
-            rgbcolor='0.8 0.1 1.0',
-            accuracy=50,
-            areaofeffect=8,
-            beamdecay=0.05,
-            beamtime=0.1,
-            beamttl=1,
-            corethickness=0.05,
-            burnblow=true,
-            cylindertargeting=1,
-            edgeeffectiveness=0.15,
-            explosiongenerator='custom:laserhit-medium-purple',
-            firestarter=100,
-            impulsefactor=0.123,
-            intensity=0.3,
-            laserflaresize=11.35,
-            noselfdamage=true,
-            soundhitwet='sizzle',
-            soundstart='beamershot2',
-            tolerance=5000,
-            thickness=2,
-            turret=true,
-            weaponvelocity=1000,
-            damage={ default=600 }
+if a['cordoomt3'] then
+    a[c] = b(
+    a['cordoomt3'], {
+        name='Legendary Bulwark',
+        description='Defensive bulwark annihilates approachers',
+        buildtime=250000,
+        health=42000,
+        metalcost=61650,
+        energycost=1712500,
+        damagemodifier=0.15,
+        energystorage=5000,
+        radardistance=1400,
+        sightdistance=1100,
+        icontype="cordoomt3",
+        customparams={
+            i18n_en_humanname='Legendary Bulwark',
+            i18n_en_tooltip='The ultimate defensive structure',
+            paralyzemultiplier=0.2,
+            techlevel=4
         },
-        legendary_heat_ray={
-            collidefriendly=0,
-            collidefeature=0,
-            avoidfeature=0,
-            avoidfriendly=0,
-            name='Armageddon Heat Ray',
-            weapontype='BeamLaser',
-            range=1300,
-            reloadtime=4.0,
-            areaofeffect=72,
-            beamtime=0.6,
-            cameraShake=350,
-            corethickness=0.40,
-            craterareaofeffect=72,
-            energypershot=1200,
-            explosiongenerator='custom:genericshellexplosion-medium-beam',
-            impulsefactor=0,
-            largebeamlaser=true,
-            laserflaresize=8.8,
-            noselfdamage=true,
-            rgbcolor='0.9 1.0 0.5',
-            rgbcolor2='0.8 0 0',
-            scrollspeed=5,
-            soundhitdry='',
-            soundhitwet='sizzle',
-            soundstart='heatray2xl',
-            soundtrigger=1,
-            thickness=7,
-            tolerance=10000,
-            turret=true,
-            weaponvelocity=1800,
-            damage={ default=9000, commanders=1350 }
+        weapondefs={
+            legendary_overload_scatter={
+                collidefriendly=0,
+                collidefeature=0,
+                avoidfeature=0,
+                avoidfriendly=0,
+                name='Overload Scatter Beamer',
+                weapontype='BeamLaser',
+                range=1000,
+                reloadtime=0.1,
+                sprayangle=2000,
+                projectiles=12,
+                rgbcolor='0.8 0.1 1.0',
+                accuracy=50,
+                areaofeffect=8,
+                beamdecay=0.05,
+                beamtime=0.1,
+                beamttl=1,
+                corethickness=0.05,
+                burnblow=true,
+                cylindertargeting=1,
+                edgeeffectiveness=0.15,
+                explosiongenerator='custom:laserhit-medium-purple',
+                firestarter=100,
+                impulsefactor=0.123,
+                intensity=0.3,
+                laserflaresize=11.35,
+                noselfdamage=true,
+                soundhitwet='sizzle',
+                soundstart='beamershot2',
+                tolerance=5000,
+                thickness=2,
+                turret=true,
+                weaponvelocity=1000,
+                damage={ default=600 }
+            },
+            legendary_heat_ray={
+                collidefriendly=0,
+                collidefeature=0,
+                avoidfeature=0,
+                avoidfriendly=0,
+                name='Armageddon Heat Ray',
+                weapontype='BeamLaser',
+                range=1300,
+                reloadtime=4.0,
+                areaofeffect=72,
+                beamtime=0.6,
+                cameraShake=350,
+                corethickness=0.40,
+                craterareaofeffect=72,
+                energypershot=1200,
+                explosiongenerator='custom:genericshellexplosion-medium-beam',
+                impulsefactor=0,
+                largebeamlaser=true,
+                laserflaresize=8.8,
+                noselfdamage=true,
+                rgbcolor='0.9 1.0 0.5',
+                rgbcolor2='0.8 0 0',
+                scrollspeed=5,
+                soundhitdry='',
+                soundhitwet='sizzle',
+                soundstart='heatray2xl',
+                soundtrigger=1,
+                thickness=7,
+                tolerance=10000,
+                turret=true,
+                weaponvelocity=1800,
+                damage={ default=9000, commanders=1350 }
+            },
+            legendary_point_defense={
+                collidefriendly=0,
+                collidefeature=0,
+                avoidfeature=0,
+                avoidfriendly=0,
+                name='Point Defense Laser',
+                weapontype='BeamLaser',
+                range=750,
+                reloadtime=0.5,
+                areaofeffect=12,
+                beamtime=0.3,
+                corethickness=0.32,
+                energypershot=500,
+                explosiongenerator='custom:laserhit-large-blue',
+                firestarter=90,
+                impactonly=1,
+                impulsefactor=0,
+                largebeamlaser=true,
+                laserflaresize=8.8,
+                noselfdamage=true,
+                proximitypriority=0,
+                rgbcolor='0 0 1',
+                soundhitdry='',
+                soundhitwet='sizzle',
+                soundstart='annigun1',
+                soundtrigger=1,
+                texture3='largebeam',
+                thickness=5.5,
+                tilelength=150,
+                tolerance=10000,
+                turret=true,
+                weaponvelocity=1500,
+                damage={ default=450, commanders=999 }
+            }
         },
-        legendary_point_defense={
-            collidefriendly=0,
-            collidefeature=0,
-            avoidfeature=0,
-            avoidfriendly=0,
-            name='Point Defense Laser',
-            weapontype='BeamLaser',
-            range=750,
-            reloadtime=0.5,
-            areaofeffect=12,
-            beamtime=0.3,
-            corethickness=0.32,
-            energypershot=500,
-            explosiongenerator='custom:laserhit-large-blue',
-            firestarter=90,
-            impactonly=1,
-            impulsefactor=0,
-            largebeamlaser=true,
-            laserflaresize=8.8,
-            noselfdamage=true,
-            proximitypriority=0,
-            rgbcolor='0 0 1',
-            soundhitdry='',
-            soundhitwet='sizzle',
-            soundstart='annigun1',
-            soundtrigger=1,
-            texture3='largebeam',
-            thickness=5.5,
-            tilelength=150,
-            tolerance=10000,
-            turret=true,
-            weaponvelocity=1500,
-            damage={ default=450, commanders=999 }
+        weapons={
+            [1]={ def='legendary_overload_scatter', onlytargetcategory='SURFACE' },
+            [2]={ def='legendary_heat_ray', onlytargetcategory='SURFACE' },
+            [3]={ def='legendary_point_defense', onlytargetcategory='SURFACE' }
         }
-    },
-    weapons={
-        [1]={ def='legendary_overload_scatter', onlytargetcategory='SURFACE' },
-        [2]={ def='legendary_heat_ray', onlytargetcategory='SURFACE' },
-        [3]={ def='legendary_point_defense', onlytargetcategory='SURFACE' }
-    }
-})
+    })
+end
 local builders_cor={
 	'coraca','corack','coracsub','coracv',
 	'cort3airaide','cort3aide'
@@ -1523,11 +1542,9 @@ end
 end
 -- LEGENDARY_BULWARK_END
 
-end
 
 -- Tweak: Defs_T4_Eco.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t4_eco) == 1) then
-    -- T4_ECO_START
+-- T4_ECO_START
 do
 
 local unitDefs = UnitDefs or {}
@@ -1741,476 +1758,481 @@ end
 -- T4_ECO_END
 
 
-end
-
 -- Tweak: Defs_T4_Epics.lua
-if (tonumber(Spring.GetModOptions().nuttyb_t4_epics) == 1) then
-    --Epic Ragnarok, Calamity, Starfall, & Bastion
+--Epic Ragnarok, Calamity, Starfall, & Bastion
 --Authors: Altwaal
 
 -- RAGNAROK_START
 do
 local a,b=UnitDefs or{},table.merge
-a.epic_ragnarok=b(a['armvulc'],{
-  name='Epic Ragnarok',
-  description='Beam supergun deletes distant heavies by Altwaal',
-  buildtime=920000,
-  maxthisunit=80,
-  health=140000,
-  footprintx=6,
-  footprintz=6,
-  metalcost=180000,
-  energycost=2600000,
-  energystorage = 18000,
-  icontype="armvulc",
-  customparams={
-    i18n_en_humanname='Epic Ragnarok',
-    i18n_en_tooltip='Ultimate Rapid-Fire Laser Beams Blaster by Altwaal',
-    techlevel=4
-  },
-  weapondefs={
-    apocalypse_plasma_cannon={
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      name='Apocalypse Plasma Cannon',
-      weapontype='BeamLaser',
-      rgbcolor='1.0 0.2 0.1',
-      camerashake=0,
-      reloadtime=1,
-      accuracy=10,
-      areaofeffect=160,
-      range=3080,
-      energypershot=42000,
-      turret=true,
-      soundstart='lrpcshot3',
-      soundhit='rflrpcexplo',
-      soundhitvolume=40,
-      size=8,
-      impulsefactor=1.3,
-      weaponvelocity=3100,
-      thickness=12,
-      laserflaresize=8,
-      texture3="largebeam",
-      tilelength=150,
-      tolerance=10000,
-      beamtime=0.12,
-      corethickness=0.4,
-      explosiongenerator='custom:tachyonshot',
-      craterboost=0.15,
-      cratermult=0.15,
-      edgeeffectiveness=0.25,
-      impactonly=1,
-      noselfdamage=true,
-      soundtrigger=1,
-      lightintensity=0.05,
-      lightradius=60,
-      damage={
-        default=22000,
-        shields=6000,
-        subs=2657
+if a['armvulc'] then
+    a.epic_ragnarok=b(a['armvulc'],{
+      name='Epic Ragnarok',
+      description='Beam supergun deletes distant heavies by Altwaal',
+      buildtime=920000,
+      maxthisunit=80,
+      health=140000,
+      footprintx=6,
+      footprintz=6,
+      metalcost=180000,
+      energycost=2600000,
+      energystorage = 18000,
+      icontype="armvulc",
+      customparams={
+        i18n_en_humanname='Epic Ragnarok',
+        i18n_en_tooltip='Ultimate Rapid-Fire Laser Beams Blaster by Altwaal',
+        techlevel=4
       },
-      allowNonBlockingAim=true
-    }
-  },
-  weapons={
-    [1]={
-      def='apocalypse_plasma_cannon'
-    }
-  }
-})
-local builders_arm = { 'armaca', 'armack', 'armacsub', 'armacv', 'armt3airaide', 'armt3aide' }
+      weapondefs={
+        apocalypse_plasma_cannon={
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          name='Apocalypse Plasma Cannon',
+          weapontype='BeamLaser',
+          rgbcolor='1.0 0.2 0.1',
+          camerashake=0,
+          reloadtime=1,
+          accuracy=10,
+          areaofeffect=160,
+          range=3080,
+          energypershot=42000,
+          turret=true,
+          soundstart='lrpcshot3',
+          soundhit='rflrpcexplo',
+          soundhitvolume=40,
+          size=8,
+          impulsefactor=1.3,
+          weaponvelocity=3100,
+          thickness=12,
+          laserflaresize=8,
+          texture3="largebeam",
+          tilelength=150,
+          tolerance=10000,
+          beamtime=0.12,
+          corethickness=0.4,
+          explosiongenerator='custom:tachyonshot',
+          craterboost=0.15,
+          cratermult=0.15,
+          edgeeffectiveness=0.25,
+          impactonly=1,
+          noselfdamage=true,
+          soundtrigger=1,
+          lightintensity=0.05,
+          lightradius=60,
+          damage={
+            default=22000,
+            shields=6000,
+            subs=2657
+          },
+          allowNonBlockingAim=true
+        }
+      },
+      weapons={
+        [1]={
+          def='apocalypse_plasma_cannon'
+        }
+      }
+    })
+    local builders_arm = { 'armaca', 'armack', 'armacsub', 'armacv', 'armt3airaide', 'armt3aide' }
 
-local function ensureBuildOptions(builderNames, optionName)
-	if not a[optionName] then
-		return
-	end
+    local function ensureBuildOptions(builderNames, optionName)
+        if not a[optionName] then
+            return
+        end
 
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
 
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
 
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+
+    local function removeBuildOption(builderNames, optionName)
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder and builder.buildoptions then
+                local buildoptions = builder.buildoptions
+                for j = #buildoptions, 1, -1 do
+                    if buildoptions[j] == optionName then
+                        table.remove(buildoptions, j)
+                    end
+                end
+            end
+        end
+    end
+
+    removeBuildOption(builders_arm, 'armvulc')
+    ensureBuildOptions(builders_arm, 'epic_ragnarok')
 end
-
-local function removeBuildOption(builderNames, optionName)
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder and builder.buildoptions then
-			local buildoptions = builder.buildoptions
-			for j = #buildoptions, 1, -1 do
-				if buildoptions[j] == optionName then
-					table.remove(buildoptions, j)
-				end
-			end
-		end
-	end
-end
-
-removeBuildOption(builders_arm, 'armvulc')
-ensureBuildOptions(builders_arm, 'epic_ragnarok')
 end
 -- RAGNAROK_END
 
 -- CALAMITY_START
 do
 local a,b=UnitDefs or{},table.merge
-a.epic_calamity=b(a['corbuzz'],{
-  name='Epic Calamity',
-  description='Huge plasma sieges slow groups by Altwaal',
-  maxthisunit=80,
-  footprintx=6,
-  footprintz=6,
-  buildtime=920000,
-  health=145000,
-  metalcost=165000,
-  energycost=2700000,
-  energystorage = 18000,
-  icontype="corbuzz",
-  customparams={
-    i18n_en_humanname='Epic Calamity',
-    i18n_en_tooltip='Ultimate Rapid-Fire Laser Machine Gun by Altwaal',
-    techlevel=4
-  },
-  weapondefs={
-    cataclysm_plasma_howitzer={
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      impactonly=1,
-      name='Cataclysm Plasma Howitzer',
-      weapontype='Cannon',
-      rgbcolor='0.15 0.6 0.5',
-      camerashake=0,
-      reloadtime=0.5,
-      accuracy=10,
-      areaofeffect=220,
-      range=3150,
-      energypershot=22000,
-      turret=true,
-      soundstart='lrpcshot3',
-      soundhit='rflrpcexplo',
-      soundhitvolume=50,
-      size=12,
-      impulsefactor=2.0,
-      weaponvelocity=2500,
-      turnrate=20000,
-      thickness=18,
-      laserflaresize=8,
-      texture3="largebeam",
-      tilelength=200,
-      tolerance=10000,
-      explosiongenerator='custom:tachyonshot',
-      craterboost=0.15,
-      cratermult=0.15,
-      edgeeffectiveness=0.35,
-      lightintensity=0.05,
-      lightradius=60,
-      damage={
-        default=9000,
-        shields=5490,
-        subs=2350
+if a['corbuzz'] then
+    a.epic_calamity=b(a['corbuzz'],{
+      name='Epic Calamity',
+      description='Huge plasma sieges slow groups by Altwaal',
+      maxthisunit=80,
+      footprintx=6,
+      footprintz=6,
+      buildtime=920000,
+      health=145000,
+      metalcost=165000,
+      energycost=2700000,
+      energystorage = 18000,
+      icontype="corbuzz",
+      customparams={
+        i18n_en_humanname='Epic Calamity',
+        i18n_en_tooltip='Ultimate Rapid-Fire Laser Machine Gun by Altwaal',
+        techlevel=4
       },
-      allowNonBlockingAim=true
-    }
-  },
-  weapons={
-    [1]={
-      def='cataclysm_plasma_howitzer'
-    }
-  }
-})
-local builders_cor={'coraca','corack','coracsub','coracv','cort3airaide','cort3aide'}
+      weapondefs={
+        cataclysm_plasma_howitzer={
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          impactonly=1,
+          name='Cataclysm Plasma Howitzer',
+          weapontype='Cannon',
+          rgbcolor='0.15 0.6 0.5',
+          camerashake=0,
+          reloadtime=0.5,
+          accuracy=10,
+          areaofeffect=220,
+          range=3150,
+          energypershot=22000,
+          turret=true,
+          soundstart='lrpcshot3',
+          soundhit='rflrpcexplo',
+          soundhitvolume=50,
+          size=12,
+          impulsefactor=2.0,
+          weaponvelocity=2500,
+          turnrate=20000,
+          thickness=18,
+          laserflaresize=8,
+          texture3="largebeam",
+          tilelength=200,
+          tolerance=10000,
+          explosiongenerator='custom:tachyonshot',
+          craterboost=0.15,
+          cratermult=0.15,
+          edgeeffectiveness=0.35,
+          lightintensity=0.05,
+          lightradius=60,
+          damage={
+            default=9000,
+            shields=5490,
+            subs=2350
+          },
+          allowNonBlockingAim=true
+        }
+      },
+      weapons={
+        [1]={
+          def='cataclysm_plasma_howitzer'
+        }
+      }
+    })
+    local builders_cor={'coraca','corack','coracsub','coracv','cort3airaide','cort3aide'}
 
-local function ensureBuildOptions(builderNames, optionName)
-	if not a[optionName] then
-		return
-	end
+    local function ensureBuildOptions(builderNames, optionName)
+        if not a[optionName] then
+            return
+        end
 
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
 
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
 
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+
+    local function removeBuildOption(builderNames, optionName)
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder and builder.buildoptions then
+                local buildoptions = builder.buildoptions
+                for j = #buildoptions, 1, -1 do
+                    if buildoptions[j] == optionName then
+                        table.remove(buildoptions, j)
+                    end
+                end
+            end
+        end
+    end
+
+    removeBuildOption(builders_cor, 'corbuzz')
+    ensureBuildOptions(builders_cor, 'epic_calamity')
 end
-
-local function removeBuildOption(builderNames, optionName)
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder and builder.buildoptions then
-			local buildoptions = builder.buildoptions
-			for j = #buildoptions, 1, -1 do
-				if buildoptions[j] == optionName then
-					table.remove(buildoptions, j)
-				end
-			end
-		end
-	end
-end
-
-removeBuildOption(builders_cor, 'corbuzz')
-ensureBuildOptions(builders_cor, 'epic_calamity')
 end
 -- CALAMITY_END
 
 -- STARFALL_START
 do
 local a,b=UnitDefs or{},table.merge
-a.epic_starfall=b(a['legstarfall'],{
-  name='Epic Starfall',
-  description='Rapid-fire Ion Plasma by Altwaal',
-  buildtime=920000,
-  health=145000,
-  metalcost=180000,
-  energycost=3400000,
-  maxthisunit = 80,
-  collisionvolumescales='61 128 61',
-  footprintx=6,
-  footprintz=6,
-  customparams={
-    i18n_en_humanname='Epic Starfall',
-    i18n_en_tooltip='Rapid-fire Ion Plasma by Altwaal',
-    techlevel=4,
-    modelradius=150
-  },
-  weapondefs={
-    starfire={
-      accuracy=10,
-      areaofeffect=256,
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      avoidground=false,
-      burst=61,
-      burstrate=0.10,
-      sprayangle=20,
-      highTrajectory=1,
-      cegtaj="starfire",
-      craterboost=0.1,
-      cratermult=0.1,
-      edgeeffectiveness=0.95,
-      energypershot=36000,
-      fireTolerance=364,
-      tolerance=364,
-      explosiongenerator="custom:starfire-explosion",
-      gravityaffected="true",
-      impulsefactor=0.5,
-      name="Very Long-Range High-Trajectory 63-Salvo Plasma Launcher",
-      noselfdamage=true,
-      range=3150,
-      reloadtime=8,
-      rgbcolor="0.7 0.7 1.0",
-      soundhit="rflrpcexplo",
-      soundhitwet="splshbig",
-      soundstart="lrpcshot",
-      soundhitvolume=36,
-      turret=true,
-      weapontimer=14,
-      weapontype="Cannon",
-      weaponvelocity=650,
-      windup = 5,
-      damage={
-        default=2200,
-        shields=740,
-        subs=220
+if a['legstarfall'] then
+    a.epic_starfall=b(a['legstarfall'],{
+      name='Epic Starfall',
+      description='Rapid-fire Ion Plasma by Altwaal',
+      buildtime=920000,
+      health=145000,
+      metalcost=180000,
+      energycost=3400000,
+      maxthisunit = 80,
+      collisionvolumescales='61 128 61',
+      footprintx=6,
+      footprintz=6,
+      customparams={
+        i18n_en_humanname='Epic Starfall',
+        i18n_en_tooltip='Rapid-fire Ion Plasma by Altwaal',
+        techlevel=4,
+        modelradius=150
       },
-    }
-  },
-  weapons={
-    [1]={
-      def='starfire',
-      onlytargetcategory='SURFACE',
-      badtargetcategory='VTOL'
-    }
-  }
-})
-local builders_leg_starfall={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
+      weapondefs={
+        starfire={
+          accuracy=10,
+          areaofeffect=256,
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          avoidground=false,
+          burst=61,
+          burstrate=0.10,
+          sprayangle=20,
+          highTrajectory=1,
+          cegtaj="starfire",
+          craterboost=0.1,
+          cratermult=0.1,
+          edgeeffectiveness=0.95,
+          energypershot=36000,
+          fireTolerance=364,
+          tolerance=364,
+          explosiongenerator="custom:starfire-explosion",
+          gravityaffected="true",
+          impulsefactor=0.5,
+          name="Very Long-Range High-Trajectory 63-Salvo Plasma Launcher",
+          noselfdamage=true,
+          range=3150,
+          reloadtime=8,
+          rgbcolor="0.7 0.7 1.0",
+          soundhit="rflrpcexplo",
+          soundhitwet="splshbig",
+          soundstart="lrpcshot",
+          soundhitvolume=36,
+          turret=true,
+          weapontimer=14,
+          weapontype="Cannon",
+          weaponvelocity=650,
+          windup = 5,
+          damage={
+            default=2200,
+            shields=740,
+            subs=220
+          },
+        }
+      },
+      weapons={
+        [1]={
+          def='starfire',
+          onlytargetcategory='SURFACE',
+          badtargetcategory='VTOL'
+        }
+      }
+    })
+    local builders_leg_starfall={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
 
-local function ensureBuildOptions(builderNames, optionName)
-	if not a[optionName] then
-		return
-	end
+    local function ensureBuildOptions(builderNames, optionName)
+        if not a[optionName] then
+            return
+        end
 
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
 
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
 
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+
+    local function removeBuildOption(builderNames, optionName)
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder and builder.buildoptions then
+                local buildoptions = builder.buildoptions
+                for j = #buildoptions, 1, -1 do
+                    if buildoptions[j] == optionName then
+                        table.remove(buildoptions, j)
+                    end
+                end
+            end
+        end
+    end
+
+    removeBuildOption(builders_leg_starfall, 'legstarfall')
+    ensureBuildOptions(builders_leg_starfall, 'epic_starfall')
 end
-
-local function removeBuildOption(builderNames, optionName)
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder and builder.buildoptions then
-			local buildoptions = builder.buildoptions
-			for j = #buildoptions, 1, -1 do
-				if buildoptions[j] == optionName then
-					table.remove(buildoptions, j)
-				end
-			end
-		end
-	end
-end
-
-removeBuildOption(builders_leg_starfall, 'legstarfall')
-ensureBuildOptions(builders_leg_starfall, 'epic_starfall')
 end
 -- STARFALL_END
 
 -- BASTION_START
 do
 local a,b=UnitDefs or{},table.merge
-a.epic_bastion=b(a['legbastion'],{
-  name='Epic Bastion',
-  description='Heat ray tower melts swarms by Altwaal',
-  buildtime=150000,
-  footprintx=6,
-  footprintz=6,
-  health=70000,
-  metalcost=26000,
-  energycost=860000,
-  energystorage = 6000,
-  sightdistance=1200,
-  radardistance=1740,
-  paralyzemultiplier=0.4,
-  customparams={
-    i18n_en_humanname='Epic Bastion',
-    i18n_en_tooltip='Sweeping heat ray; place on approach lanes to clear waves by Altwaal',
-    techlevel=3
-  },
-  weapondefs={
-    dmaw={
-      weapontype="BeamLaser",
-      damage={
-        default=750,
-        vtol=75
-      },
-      range=1450,
-      rgbcolor="0.65 0.2 0.05",
-      rgbcolor2="0.6 0.4 0.2",
-      lightcolor='0.55 0.25 0.08',
-      lightintensity=0.01,
-      lightradius=16,
-      explosiongenerator="custom:heatray-huge",
-      energypershot=12000,
-      reloadtime=4,
-      beamtime=0.1,
-      turret=true,
-      weaponvelocity=1500,
-      thickness=5.5,
-      areaofeffect=120,
-      edgeeffectiveness=0.45,
-      name="Epic Bastion Ray",
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      impactonly=1,
-      laserflaresize=9,
-      corethickness=0.4,
-      soundstart="heatray3",
-      soundstartvolume=38,
-      soundhitdry="",
-      soundhitwet="sizzle",
-      soundtrigger=1,
-      firetolerance=300,
-      noselfdamage=true,
-      predictboost=0.3,
-      proximitypriority=1,
-      impulsefactor=0,
-      camerashake=0,
-      craterareaofeffect=0,
-      craterboost=0.1,
-      cratermult=0.1,
+if a['legbastion'] then
+    a.epic_bastion=b(a['legbastion'],{
+      name='Epic Bastion',
+      description='Heat ray tower melts swarms by Altwaal',
+      buildtime=150000,
+      footprintx=6,
+      footprintz=6,
+      health=70000,
+      metalcost=26000,
+      energycost=860000,
+      energystorage = 6000,
+      sightdistance=1200,
+      radardistance=1740,
+      paralyzemultiplier=0.4,
       customparams={
-        sweepfire=4,--multiplier for displayed dps during the 'bonus' sweepfire stage
+        i18n_en_humanname='Epic Bastion',
+        i18n_en_tooltip='Sweeping heat ray; place on approach lanes to clear waves by Altwaal',
+        techlevel=3
       },
-      tracks=false,
-    }
-  },
-  weapons={
-    [1]={
-      def='dmaw',
-      fastautoretargeting=true
-    }
-  }
-})
-local builders_leg_bastion={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
+      weapondefs={
+        dmaw={
+          weapontype="BeamLaser",
+          damage={
+            default=750,
+            vtol=75
+          },
+          range=1450,
+          rgbcolor="0.65 0.2 0.05",
+          rgbcolor2="0.6 0.4 0.2",
+          lightcolor='0.55 0.25 0.08',
+          lightintensity=0.01,
+          lightradius=16,
+          explosiongenerator="custom:heatray-huge",
+          energypershot=12000,
+          reloadtime=4,
+          beamtime=0.1,
+          turret=true,
+          weaponvelocity=1500,
+          thickness=5.5,
+          areaofeffect=120,
+          edgeeffectiveness=0.45,
+          name="Epic Bastion Ray",
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          impactonly=1,
+          laserflaresize=9,
+          corethickness=0.4,
+          soundstart="heatray3",
+          soundstartvolume=38,
+          soundhitdry="",
+          soundhitwet="sizzle",
+          soundtrigger=1,
+          firetolerance=300,
+          noselfdamage=true,
+          predictboost=0.3,
+          proximitypriority=1,
+          impulsefactor=0,
+          camerashake=0,
+          craterareaofeffect=0,
+          craterboost=0.1,
+          cratermult=0.1,
+          customparams={
+            sweepfire=4,--multiplier for displayed dps during the 'bonus' sweepfire stage
+          },
+          tracks=false,
+        }
+      },
+      weapons={
+        [1]={
+          def='dmaw',
+          fastautoretargeting=true
+        }
+      }
+    })
+    local builders_leg_bastion={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
 
-local function ensureBuildOptions(builderNames, optionName)
-	if not a[optionName] then
-		return
-	end
+    local function ensureBuildOptions(builderNames, optionName)
+        if not a[optionName] then
+            return
+        end
 
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
 
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
 
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+    for i=3,10 do
+        builders_leg_bastion[#builders_leg_bastion+1]='legcomlvl'..i
+    end
+    ensureBuildOptions(builders_leg_bastion, 'epic_bastion')
 end
-for i=3,10 do
-	builders_leg_bastion[#builders_leg_bastion+1]='legcomlvl'..i
-end
-ensureBuildOptions(builders_leg_bastion, 'epic_bastion')
 end
 -- BASTION_END
 
@@ -2269,39 +2291,39 @@ if e then
 	})
 
 	d.epic_elysium=u
+
+    local builders_leg_elysium={'legaca','legack','legacsub','legacv','legt3aide','legt3airaide'}
+
+    local function ensureBuildOptions(builderNames, optionName)
+        if not d[optionName] then
+            return
+        end
+
+        for i = 1, #builderNames do
+            local builder = d[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
+
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
+
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+    for i=3,10 do
+        table.insert(builders_leg_elysium,'legcomlvl'..i)
+    end
+    ensureBuildOptions(builders_leg_elysium, 'epic_elysium')
 end
-
-local builders_leg_elysium={'legaca','legack','legacsub','legacv','legt3aide','legt3airaide'}
-
-local function ensureBuildOptions(builderNames, optionName)
-	if not d[optionName] then
-		return
-	end
-
-	for i = 1, #builderNames do
-		local builder = d[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
-
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
-
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
-end
-for i=3,10 do
-	table.insert(builders_leg_elysium,'legcomlvl'..i)
-end
-ensureBuildOptions(builders_leg_elysium, 'epic_elysium')
 end
 -- EPIC_ELYSIUM_END
 
@@ -2309,155 +2331,155 @@ end
 
 do
 local a,b=UnitDefs or{},table.merge
-a.epic_fortress=b(a['legapopupdef'],{
-  name='Epic Fortress',
-  description='EMP proof Swarm Destroyer by Pyrem',
-  buildtime=300000,
-  health=60000,
-  metalcost=25200,
-  energycost=315000,
-  sightdistance=1500,
-  customparams={
-    i18n_en_humanname='Epic Fortress',
-    i18n_en_tooltip='EMP proof Swarm Destroyer by Pyrem',
-    techlevel=3,
-    paralyzemultiplier=0.0
-  },
-  weapondefs={
-    epic_riot_devastator={
-      name='Epic Riot Devastator',
-      weapontype='Cannon',
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      damage={
-        default=4900
+if a['legapopupdef'] then
+    a.epic_fortress=b(a['legapopupdef'],{
+      name='Epic Fortress',
+      description='EMP proof Swarm Destroyer by Pyrem',
+      buildtime=300000,
+      health=60000,
+      metalcost=25200,
+      energycost=315000,
+      sightdistance=1500,
+      customparams={
+        i18n_en_humanname='Epic Fortress',
+        i18n_en_tooltip='EMP proof Swarm Destroyer by Pyrem',
+        techlevel=3,
+        paralyzemultiplier=0.0
       },
-      accuracy=10,
-      areaofeffect=164,
-      areaofeffect=220,
-      edgeeffectiveness=0.50,
-      range=1300,
-      reloadtime=1.6,
-      energypershot=2400,
-      turret=true,
-      weaponvelocity=900,
-      camerashake=0,
-      explosiongenerator='custom:genericshellexplosion-medium',
-      rgbcolor='1.0 0.3 0.5',
-      size=10,
-      soundhitvolume=22,
-      soundstartvolume=18.0,
-      impulsefactor=3.2,
-      craterboost=0.25,
-      cratermult=0.25,
-      noselfdamage=true,
-      impactonly=true,
-      burnblow=true,
-      proximitypriority=5
-    },
-    epic_minigun={
-      accuracy=2,
-      areaofeffect=32,
-      collidefriendly=0,
-      collidefeature=0,
-      avoidfeature=0,
-      avoidfriendly=0,
-      burst = 6,
-			burstrate = 0.066,
-      burnblow=false,
-      craterareaofeffect=0,
-      craterboost=0,
-      cratermult=0,
-      duration=0.05,
-      edgeeffectiveness=0.85,
-      explosiongenerator="custom:plasmahit-sparkonly",
-      falloffrate=0.15,
-      firestarter=5,
-      impulsefactor=2.0,
-      intensity=1.2,
-      name="Epic Rotary Cannons",
-      noselfdamage=true,
-      impactonly=true,
-      ownerExpAccWeight=4.0,
-      proximitypriority=6,
-      range=1000,
-      reloadtime=0.4,
-      rgbcolor="1 0.4 0.6",
-      soundhit="bimpact3",
-      soundhitwet="splshbig",
-      soundstart="mgun6heavy",
-      soundstartvolume=6.5,
-      soundtrigger=true,
-      sprayangle=450,
-      texture1="shot",
-      texture2="empty",
-      thickness=4.5,
-      tolerance=3000,
-      turret=true,
-      weapontype="LaserCannon",
-      weaponvelocity=1300,
-      damage={
-        default=60,
-        vtol=60,
+      weapondefs={
+        epic_riot_devastator={
+          name='Epic Riot Devastator',
+          weapontype='Cannon',
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          damage={
+            default=4900
+          },
+          accuracy=10,
+          areaofeffect=164,
+          areaofeffect=220,
+          edgeeffectiveness=0.50,
+          range=1300,
+          reloadtime=1.6,
+          energypershot=2400,
+          turret=true,
+          weaponvelocity=900,
+          camerashake=0,
+          explosiongenerator='custom:genericshellexplosion-medium',
+          rgbcolor='1.0 0.3 0.5',
+          size=10,
+          soundhitvolume=22,
+          soundstartvolume=18.0,
+          impulsefactor=3.2,
+          craterboost=0.25,
+          cratermult=0.25,
+          noselfdamage=true,
+          impactonly=true,
+          burnblow=true,
+          proximitypriority=5
+        },
+        epic_minigun={
+          accuracy=2,
+          areaofeffect=32,
+          collidefriendly=0,
+          collidefeature=0,
+          avoidfeature=0,
+          avoidfriendly=0,
+          burst = 6,
+                burstrate = 0.066,
+          burnblow=false,
+          craterareaofeffect=0,
+          craterboost=0,
+          cratermult=0,
+          duration=0.05,
+          edgeeffectiveness=0.85,
+          explosiongenerator="custom:plasmahit-sparkonly",
+          falloffrate=0.15,
+          firestarter=5,
+          impulsefactor=2.0,
+          intensity=1.2,
+          name="Epic Rotary Cannons",
+          noselfdamage=true,
+          impactonly=true,
+          ownerExpAccWeight=4.0,
+          proximitypriority=6,
+          range=1000,
+          reloadtime=0.4,
+          rgbcolor="1 0.4 0.6",
+          soundhit="bimpact3",
+          soundhitwet="splshbig",
+          soundstart="mgun6heavy",
+          soundstartvolume=6.5,
+          soundtrigger=true,
+          sprayangle=450,
+          texture1="shot",
+          texture2="empty",
+          thickness=4.5,
+          tolerance=3000,
+          turret=true,
+          weapontype="LaserCannon",
+          weaponvelocity=1300,
+          damage={
+            default=60,
+            vtol=60,
+          }
+        }
+      },
+      weapons={
+        [1]={
+          def='epic_riot_devastator',
+          onlytargetcategory='SURFACE'
+        },
+        [2]={
+          def='epic_minigun',
+          onlytargetcategory='SURFACE'
+        },
+        [3]={
+          def='epic_minigun',
+          onlytargetcategory='SURFACE'
+        }
       }
-    }
-  },
-  weapons={
-    [1]={
-      def='epic_riot_devastator',
-      onlytargetcategory='SURFACE'
-    },
-    [2]={
-      def='epic_minigun',
-      onlytargetcategory='SURFACE'
-    },
-    [3]={
-      def='epic_minigun',
-      onlytargetcategory='SURFACE'
-    }
-  }
-})
-local builders_leg={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
+    })
+    local builders_leg={'legaca','legack','legacsub','legacv','legt3airaide','legt3aide'}
 
-local function ensureBuildOptions(builderNames, optionName)
-	if not a[optionName] then
-		return
-	end
+    local function ensureBuildOptions(builderNames, optionName)
+        if not a[optionName] then
+            return
+        end
 
-	for i = 1, #builderNames do
-		local builder = a[builderNames[i]]
-		if builder then
-			local buildoptions = builder.buildoptions or {}
-			builder.buildoptions = buildoptions
+        for i = 1, #builderNames do
+            local builder = a[builderNames[i]]
+            if builder then
+                local buildoptions = builder.buildoptions or {}
+                builder.buildoptions = buildoptions
 
-			local hasOption = false
-			for j = 1, #buildoptions do
-				if buildoptions[j] == optionName then
-					hasOption = true
-					break
-				end
-			end
+                local hasOption = false
+                for j = 1, #buildoptions do
+                    if buildoptions[j] == optionName then
+                        hasOption = true
+                        break
+                    end
+                end
 
-			if not hasOption then
-				buildoptions[#buildoptions + 1] = optionName
-			end
-		end
-	end
+                if not hasOption then
+                    buildoptions[#buildoptions + 1] = optionName
+                end
+            end
+        end
+    end
+    for i=3,10 do
+        builders_leg[#builders_leg+1]='legcomlvl'..i
+    end
+    ensureBuildOptions(builders_leg, 'epic_fortress')
 end
-for i=3,10 do
-	builders_leg[#builders_leg+1]='legcomlvl'..i
-end
-ensureBuildOptions(builders_leg, 'epic_fortress')
 end
 -- FORTRESS_END
 
-end
 
 -- Tweak: Defs_Unit_Launchers.lua
-if (tonumber(Spring.GetModOptions().nuttyb_unit_launchers) == 1) then
-    -- Unit Launchers
+-- Unit Launchers
 
 --Meatballlunch Reloaded
 -- UNIT_LAUNCHERS_START
@@ -2569,10 +2591,8 @@ end
 end
 -- UNIT_LAUNCHERS_END
 
-end
 
 -- Tweak: Defs_Waves_Experimental_Wave_Challenge.lua
-if (tonumber(Spring.GetModOptions().nuttyb_wave_mode_exp) == 1) then
 
                 local newUnits = -- Experimental Wave Challenge
 -- Authors: BackBash
@@ -2779,15 +2799,17 @@ if (tonumber(Spring.GetModOptions().nuttyb_wave_mode_exp) == 1) then
 
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
 
-end
 
 -- Tweak: Defs_Waves_Mini_Bosses.lua
-if (tonumber(Spring.GetModOptions().nuttyb_wave_mode_mini) == 1) then
-    -- Mini Bosses
+-- Mini Bosses
 -- Decoded from tweakdata.txt line 3
 
 --Mini Bosses v2f
@@ -2799,8 +2821,10 @@ local a,b,c,d,e,
 f=UnitDefs or {},table.merge,table.copy,'raptor_matriarch_basic','customfusionexplo',Spring;
 local g,
 h=1.3,1.3;
-h=a[d].health/60000;
-g=a['raptor_queen_epic'].health/1250000;
+if a[d] and a['raptor_queen_epic'] then
+    if a[d].health then h=a[d].health/60000 end
+    if a['raptor_queen_epic'].health then g=a['raptor_queen_epic'].health/1250000 end
+end
 local i=1;
 if f.Utilities.Gametype.IsRaptors()then
     i=(#f.GetTeamList()-2)/12
@@ -2838,11 +2862,12 @@ function k(c,d,e)
         a[c],e or {})
     end
 end
-local d=a[d].health;
+local d_health=0;
+if a[d] and a[d].health then d_health=a[d].health end
 k('raptor_queen_veryeasy','raptor_miniq_a', {
     name='Queenling Prima',
     icontype='raptor_queen_veryeasy',
-    health=d*5,
+    health=d_health*5,
     customparams= {
         i18n_en_humanname='Queenling Prima',i18n_en_tooltip='Majestic and bold, ruler of the hunt.'
     }
@@ -2850,7 +2875,7 @@ k('raptor_queen_veryeasy','raptor_miniq_a', {
 k('raptor_queen_easy','raptor_miniq_b', {
     name='Queenling Secunda',
     icontype='raptor_queen_easy',
-    health=d*6,
+    health=d_health*6,
     customparams= {
         i18n_en_humanname='Queenling Secunda',i18n_en_tooltip='Swift and sharp, a noble among raptors.'
     }
@@ -2858,13 +2883,17 @@ k('raptor_queen_easy','raptor_miniq_b', {
 k('raptor_queen_normal','raptor_miniq_c', {
     name='Queenling Tertia',
     icontype='raptor_queen_normal',
-    health=d*7,
+    health=d_health*7,
     customparams= {
         i18n_en_humanname='Queenling Tertia',i18n_en_tooltip='Refined tastes. Likes her prey rare.'
     }
 })
+if a.raptor_miniq_b and a['raptor_matriarch_acid'] then
 a.raptor_miniq_b.weapondefs.acidgoo=c(a['raptor_matriarch_acid'].weapondefs.acidgoo)
+end
+if a.raptor_miniq_c and a['raptor_matriarch_electric'] then
 a.raptor_miniq_c.weapondefs.empgoo=c(a['raptor_matriarch_electric'].weapondefs.goo)
+end
 for a,a in ipairs{
     {'raptor_matriarch_basic','raptor_mama_ba','Matrona','Claws charged with vengeance.'
         }, {'raptor_matriarch_fire','raptor_mama_fi','Pyro Matrona','A firestorm of maternal wrath.'
@@ -2875,7 +2904,7 @@ for a,a in ipairs{
     k(a[1],a[2], {
         name=a[3],
         icontype=a[1],
-        health=d*1.5,
+        health=d_health*1.5,
         customparams= {
         i18n_en_humanname=a[3],i18n_en_tooltip=a[4]}
     })
@@ -2883,7 +2912,7 @@ end;
 k('critter_penguinking','raptor_consort', {
     name='Raptor Consort',
     icontype='corkorg',
-    health=d*4,
+    health=d_health*4,
     mass=100000,
     nochasecategory="MOBILE VTOL OBJECT",
     sonarstealth=false,
@@ -2893,11 +2922,13 @@ k('critter_penguinking','raptor_consort', {
         i18n_en_humanname='Raptor Consort',i18n_en_tooltip='Sneaky powerful little terror.'
     }
 })
+if a.raptor_consort and a['raptor_queen_epic'] then
 a.raptor_consort.weapondefs.goo=c(a['raptor_queen_epic'].weapondefs.goo)
+end
 k('raptor_consort','raptor_doombringer', {
     name='Doombringer',
     icontype='armafust3',
-    health=d*12,
+    health=d_health*12,
     speed=50,
     customparams= {
         i18n_en_humanname='Doombringer',i18n_en_tooltip=[[Your time is up. The Queens called for backup.]]
@@ -3198,11 +3229,9 @@ end
 end
 -- MINI_BOSSES_END
 
-end
 
 -- Tweak: Units_EVO_XP.lua
-if (tonumber(Spring.GetModOptions().nuttyb_evo_xp) == 1) then
-    -- EVO_XP_START
+-- EVO_XP_START
 for name, ud in pairs(UnitDefs) do
 	if string.match(name, 'comlvl%d') or string.match(name, 'armcom') or string.match(name, 'corcom') or string.match(name, 'legcom') then
 		ud.customparams = ud.customparams or {}
@@ -3213,11 +3242,9 @@ for name, ud in pairs(UnitDefs) do
 end
 -- EVO_XP_END
 
-end
 
 -- Tweak: Units_LRPC_v2.lua
-if (tonumber(Spring.GetModOptions().nuttyb_lrpc_v2) == 1) then
-    -- LRPC Rebalance v2
+-- LRPC Rebalance v2
 -- LRPC_START
 do
 local UnitDefs = UnitDefs or {}
@@ -3283,10 +3310,8 @@ end
 end
 -- LRPC_END
 
-end
 
 -- Tweak: Units_Main.lua
-if (tonumber(Spring.GetModOptions().nuttyb_main_units) == 1) then
 
                 local newUnits = --NuttyB v1.52 Units Main
 -- Authors: ChrispyNut, BackBash
@@ -3955,14 +3980,16 @@ if (tonumber(Spring.GetModOptions().nuttyb_main_units) == 1) then
 
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
 
-end
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Armada.lua
-if (tonumber(Spring.GetModOptions().nuttyb_evo_com_arm) == 1) then
 
                 local newUnits = -- ARMADA_COMMANDER_START
 --NuttyB v1.52c Armada Com
@@ -4587,14 +4614,16 @@ if (tonumber(Spring.GetModOptions().nuttyb_evo_com_arm) == 1) then
 
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
 
-end
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Cortex.lua
-if (tonumber(Spring.GetModOptions().nuttyb_evo_com_cor) == 1) then
 
                 local newUnits = -- CORTEX_COMMANDER_START
 --NuttyB v1.52c Cortex Com
@@ -5201,14 +5230,16 @@ if (tonumber(Spring.GetModOptions().nuttyb_evo_com_cor) == 1) then
 
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
 
-end
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Legion.lua
-if (tonumber(Spring.GetModOptions().nuttyb_evo_com_leg) == 1) then
 
                 local newUnits = -- LEGION_COMMANDER_START
 --NuttyB v1.52c Legion Com
@@ -5807,11 +5838,14 @@ if (tonumber(Spring.GetModOptions().nuttyb_evo_com_leg) == 1) then
 
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
 
-end
 
 -- Static Tweaks Logic (Base)
 local tm = table.merge

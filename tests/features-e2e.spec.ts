@@ -20,6 +20,11 @@ test.describe('MasterGadget Static Verification', () => {
             Spring = {
                 GetModOptions = function() return { meganuke = "1" } end,
                 Echo = function(msg) end,
+                Utilities = {
+                    Gametype = {
+                        IsRaptors = function() return false end
+                    }
+                },
                 GetGaiaTeamID = function() return 100 end,
                 GetUnitCount = function() return 0 end,
                 GetGameSpeed = function() return 1.0, 1.0 end,
@@ -48,6 +53,14 @@ test.describe('MasterGadget Static Verification', () => {
                 IsSyncedCode = function() return true end
             }
             gadget = {}
+
+            -- Mock Json and VFS
+            Json = {
+                decode = function(str) return { units = { names = {}, descriptions = {} } } end
+            }
+            VFS = {
+                LoadFile = function(path) return "{}" end
+            }
 
             -- Utils often used
             if not table.merge then

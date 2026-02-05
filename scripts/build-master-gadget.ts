@@ -60,9 +60,23 @@ local function table_mergeInPlace(dest, src)
     end
 end
 
+local function table_copy(t)
+    if type(t) ~= "table" then return t end
+    local res = {}
+    for k, v in pairs(t) do
+        if type(v) == "table" then
+            res[k] = table_copy(v)
+        else
+            res[k] = v
+        end
+    end
+    return res
+end
+
 -- Polyfill table.merge and table.mergeInPlace if missing
 if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
+if not table.copy then table.copy = table_copy end
 `;
 }
 
@@ -94,18 +108,24 @@ function processImportedTweaks(): string {
                 local newUnits = ${content}
                 if UnitDefs and newUnits then
                     for name, def in pairs(newUnits) do
-                        UnitDefs[name] = def -- Simple assignment, assumes full def or later processing
+                        if UnitDefs[name] then
+                            table.mergeInPlace(UnitDefs[name], def)
+                        else
+                            UnitDefs[name] = def
+                        end
                     end
                 end
                 `;
             }
 
-            result += `
--- Tweak: ${file}
-if (tonumber(Spring.GetModOptions().${modOption}) == 1) then
-    ${content}
-end
-`;
+            result += `\n-- Tweak: ${file}\n`;
+            if (file === 'Defs_Mega_Nuke.lua') {
+                result += `if (tonumber(Spring.GetModOptions().${modOption}) == 1) then\n`;
+                result += `${content}\n`;
+                result += `end\n`;
+            } else {
+                result += `${content}\n`;
+            }
         } else {
              console.warn(`Tweak file missing: ${file}`);
         }
