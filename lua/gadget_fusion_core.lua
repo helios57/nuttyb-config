@@ -171,3 +171,19 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
     -- Case 4: This is BR. Check TL, TR, BL.
     if ExecuteMerge(FindAt(x-fpX, z-fpZ), FindAt(x, z-fpZ), FindAt(x-fpX, z), unitID) then return end
 end
+
+function gadget:UnitDestroyed(unitID, unitDefID, teamID)
+    -- Mega Nuke Logic (Triggered if ENABLE_MEGANUKE is true)
+    if not (ENABLE_MEGANUKE or (modOptions and modOptions.meganuke == "1")) then return end
+
+    -- Check if it is a high-tier fusion unit
+    local tier = unitTier[unitDefID]
+    if tier and tier >= 3 then
+        local x, y, z = spGetUnitPosition(unitID)
+        -- Spawn a large explosion
+        if Spring.SpawnCEG then
+            Spring.SpawnCEG("atomic_blast", x, y, z, 0, 1, 0)
+        end
+        -- Could add Area Damage here if needed
+    end
+end

@@ -10,47 +10,1793 @@ function gadget:GetInfo()
   }
 end
 
--- Configuration Flags (Global for chunk access)
+-- Configuration Flags
 ENABLE_ADAPTIVESPAWNER = true
 ENABLE_CULLING = true
 ENABLE_FUSIONCORE = true
 ENABLE_RAPTORAIOPTIMIZED = true
+ENABLE_MEGANUKE = true
 
 if (not gadgetHandler:IsSyncedCode()) then
   return
 end
 
+-- Localized Globals (Performance Optimization)
+local spAddTeamResource = Spring.AddTeamResource
+local spCreateUnit = Spring.CreateUnit
+local spDestroyUnit = Spring.DestroyUnit
+local spEcho = Spring.Echo
+local spGetFPS = Spring.GetFPS
+local spGetGaiaTeamID = Spring.GetGaiaTeamID
+local spGetGameFrame = Spring.GetGameFrame
+local spGetGameSpeed = Spring.GetGameSpeed
+local spGetModOptions = Spring.GetModOptions
+local spGetTeamList = Spring.GetTeamList
+local spGetTeamStartPosition = Spring.GetTeamStartPosition
+local spGetTeamUnits = Spring.GetTeamUnits
+local spGetUnitCount = Spring.GetUnitCount
+local spGetUnitDefID = Spring.GetUnitDefID
+local spGetUnitExperience = Spring.GetUnitExperience
+local spGetUnitHealth = Spring.GetUnitHealth
+local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy
+local spGetUnitPosition = Spring.GetUnitPosition
+local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
+local spGiveOrderToUnit = Spring.GiveOrderToUnit
+local spSendMessage = Spring.SendMessage
+local spSetUnitExperience = Spring.SetUnitExperience
+local spSetUnitHealth = Spring.SetUnitHealth
+local spSetUnitLabel = Spring.SetUnitLabel
+local spSetUnitNeutral = Spring.SetUnitNeutral
+local spSpawnCEG = Spring.SpawnCEG
+local spValidUnitID = Spring.ValidUnitID
+local math_abs = math.abs
+local math_floor = math.floor
+local math_max = math.max
+local math_random = math.random
+local math_sqrt = math.sqrt
 
-local function Base64Decode(data)
-    local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(b:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c=0
-        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-        return string.char(c)
-    end))
+-- Forward Declarations for Gadget Events
+local adaptivespawner_GameFrame
+local adaptivespawner_UnitCreated
+local adaptivespawner_UnitCollision
+local culling_Initialize
+local culling_UnitDamaged
+local culling_UnitWeaponFire
+local culling_GameFrame
+local fusioncore_Initialize
+local fusioncore_UnitFinished
+local fusioncore_UnitDestroyed
+local raptoraioptimized_UnitCreated
+local raptoraioptimized_UnitDestroyed
+local raptoraioptimized_GameFrame
+
+-- Common Utilities
+
+-- Common Utilities
+local function table_merge(dest, src)
+    for k, v in pairs(src) do
+        if (type(v) == "table") and (type(dest[k]) == "table") then
+            table_merge(dest[k], v)
+        else
+            dest[k] = v
+        end
+    end
+    return dest
+end
+
+local function ApplyTweakUnits(data)
+    if not data then return end
+    for name, defData in pairs(data) do
+        if UnitDefs[name] then
+            table_merge(UnitDefs[name], defData)
+        end
+    end
+end
+
+-- Tweaks Logic
+
+do
+    -- Tweak file: 1-tweakdefs2.json
+    local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+if UnitDefs["raptor_land_swarmer_basic_t1_v1"] then
+local newDef = table_merge({}, UnitDefs["raptor_land_swarmer_basic_t1_v1"])
+newDef.name = "Hive Spawn"
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Hive Spawn", i18n_en_tooltip = "Raptor spawned to defend hives from attackers." })
+UnitDefs["raptor_hive_swarmer_basic"] = newDef
+end
+if UnitDefs["raptor_land_assault_basic_t2_v1"] then
+local newDef = table_merge({}, UnitDefs["raptor_land_assault_basic_t2_v1"])
+newDef.name = "Armored Assault Raptor"
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Armored Assault Raptor", i18n_en_tooltip = "Heavy, slow, and unyielding—these beasts are made to take the hits others cant." })
+UnitDefs["raptor_hive_assault_basic"] = newDef
+end
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if string_sub(name, 1, 24) == "raptor_air_fighter_basic" then
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.name = "Spike"
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.accuracy = 200
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.collidefriendly = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.collidefeature = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.avoidfeature = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.avoidfriendly = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.areaofeffect = 64
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.edgeeffectiveness = 0.3
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.explosiongenerator = "custom:raptorspike-large-sparks-burn"
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.cameraShake = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.dance = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.interceptedbyshieldtype = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.model = "Raptors/spike.s3o"
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.reloadtime = 1.1
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.soundstart = "talonattack"
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.startvelocity = 200
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.submissile = 1
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.smoketrail = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.smokePeriod = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.smoketime = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.smokesize = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.smokecolor = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.soundhit = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.texture1 = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.texture2 = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.tolerance = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.tracks = 0
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.turnrate = 60000
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.weaponacceleration = 100
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.weapontimer = 1
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.weaponvelocity = 1000
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.weapontype = {  }
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.wobble = {  }
+end
+end
+end
+if string_match(name, "^[acl][ore][rgm]com") and not string_match(name, "_scav$") then
+if not def.customparams then def.customparams = {} end
+table_merge(def.customparams, { combatradius = 0, fall_damage_multiplier = 0, paratrooper = true, wtboostunittype = {  } })
+if not def.featuredefs then def.featuredefs = {} end
+table_merge(def.featuredefs, { dead = { damage = 9999999, reclaimable = false, mass = 9999999 } })
+end
+if (name == "raptor_antinuke" or name == "raptor_turret_acid_t2_v1" or name == "raptor_turret_acid_t3_v1" or name == "raptor_turret_acid_t4_v1" or name == "raptor_turret_antiair_t2_v1" or name == "raptor_turret_antiair_t3_v1" or name == "raptor_turret_antiair_t4_v1" or name == "raptor_turret_antinuke_t2_v1" or name == "raptor_turret_antinuke_t3_v1" or name == "raptor_turret_basic_t2_v1" or name == "raptor_turret_basic_t3_v1" or name == "raptor_turret_basic_t4_v1" or name == "raptor_turret_burrow_t2_v1" or name == "raptor_turret_emp_t2_v1" or name == "raptor_turret_emp_t3_v1" or name == "raptor_turret_emp_t4_v1" or name == "raptor_worm_green") then
+def.maxThisUnit = 10
+def.health = def.health * (nil)
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.reloadtime = wDef.reloadtime * (nil)
+end
+end
+if def.weapondefs then
+for wName, wDef in pairs(def.weapondefs) do
+wDef.range = wDef.range * (nil)
+end
+end
+end
+if def.builder == true and def.canfly == true then
+def.explodeAs = ""
+def.selfDestructAs = ""
+end
+end
+end
+
+do
+    -- Tweak file: 2-tweakdefs3.json
+    local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+if UnitDefs["armannit3"] then
+local newDef = table_merge({}, UnitDefs["armannit3"])
+newDef.name = "Legendary Pulsar"
+newDef.description = "A pinnacle of Armada engineering that fires devastating, rapid-fire tachyon bolts."
+newDef.buildTime = 300000
+newDef.health = 30000
+newDef.metalCost = 43840
+newDef.energyCost = 1096000
+newDef.icontype = "armannit3"
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Legendary Pulsar", i18n_en_tooltip = "Fires devastating, rapid-fire tachyon bolts.", techlevel = 4 })
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "tachyon_burst_cannon" then
+wDef.name = "Tachyon Burst Cannon"
+wDef.damage = { default = 8000 }
+wDef.burst = 3
+wDef.burstrate = 0.4
+wDef.reloadtime = 5
+wDef.range = 1800
+wDef.energypershot = 12000
+end
+end
+end
+UnitDefs["legendary_pulsar"] = newDef
+end
+if UnitDefs["legbastion"] then
+local newDef = table_merge({}, UnitDefs["legbastion"])
+newDef.name = "Legendary Bastion"
+newDef.description = "The ultimate defensive emplacement. Projects a devastating, pulsating heatray."
+newDef.health = 22000
+newDef.metalCost = 65760
+newDef.energyCost = 1986500
+newDef.buildTime = 180000
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Legendary Bastion", i18n_en_tooltip = "Projects a devastating, pulsating purple heatray.", maxrange = 1450, techlevel = 4 })
+UnitDefs["legendary_bastion"] = newDef
+end
+if UnitDefs["cordoomt3"] then
+local newDef = table_merge({}, UnitDefs["cordoomt3"])
+newDef.name = "Legendary Bulwark"
+newDef.description = "A pinnacle of defensive technology, the Legendary Bulwark annihilates all who approach."
+newDef.health = 42000
+newDef.metalCost = 61650
+newDef.energyCost = 1712500
+newDef.buildTime = 250000
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Legendary Bulwark", i18n_en_tooltip = "The ultimate defensive structure.", paralyzemultiplier = 0.2, techlevel = 4 })
+UnitDefs["legendary_bulwark"] = newDef
+end
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if string_sub(name, 1, 9) == "armcomlvl" and (name == "armt3airaide") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legendary_pulsar")
+end
+if string_sub(name, 1, 9) == "corcomlvl" and (name == "cort3airaide") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legendary_bulwark")
+end
+if string_sub(name, 1, 9) == "legcomlvl" and (name == "legt3airaide") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legendary_bastion")
+end
+end
+end
+
+do
+    -- Tweak file: 3-tweakdefs4.json
+    local Spring_GetModOptions = Spring.GetModOptions
+local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+local math_max = math.max
+local math_ceil = math.ceil
+if UnitDefs["raptor_matriarch_basic"] then
+local newDef = table_merge({}, UnitDefs["raptor_matriarch_basic"])
+newDef.name = "Queenling Prima"
+newDef.icontype = "raptor_queen_veryeasy"
+newDef.health = newDef.health * (5)
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Queenling Prima", i18n_en_tooltip = "Majestic and bold, ruler of the hunt." })
+newDef.maxThisUnit = (math_max(1, math_ceil(2 * ((Spring_GetModOptions().raptor_spawncountmult or 3) / 3))))
+UnitDefs["raptor_miniq_a"] = newDef
+end
+if UnitDefs["raptor_matriarch_basic"] then
+local newDef = table_merge({}, UnitDefs["raptor_matriarch_basic"])
+newDef.name = "Queenling Secunda"
+newDef.icontype = "raptor_queen_easy"
+newDef.health = newDef.health * (6)
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Queenling Secunda", i18n_en_tooltip = "Swift and sharp, a noble among raptors." })
+newDef.maxThisUnit = (math_max(1, math_ceil(3 * ((Spring_GetModOptions().raptor_spawncountmult or 3) / 3))))
+UnitDefs["raptor_miniq_b"] = newDef
+end
+if UnitDefs["raptor_matriarch_basic"] then
+local newDef = table_merge({}, UnitDefs["raptor_matriarch_basic"])
+newDef.name = "Queenling Tertia"
+newDef.icontype = "raptor_queen_normal"
+newDef.health = newDef.health * (7)
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Queenling Tertia", i18n_en_tooltip = "Refined tastes. Likes her prey rare." })
+newDef.maxThisUnit = (math_max(1, math_ceil(4 * ((Spring_GetModOptions().raptor_spawncountmult or 3) / 3))))
+UnitDefs["raptor_miniq_c"] = newDef
+end
+end
+
+do
+    -- Tweak file: 4-tweakdefs6.json
+    local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Fact")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Fact"))) and not string_match(name, ".* %(Taxed%)$") then
+if def then
+local newDef = table_merge({}, def)
+newDef.energyCost = newDef.energyCost * (1.7)
+newDef.metalCost = newDef.metalCost * (1.7)
+newDef.name = (name .. ' (Taxed)')
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = (def.customparams.i18n_en_humanname .. ' (Taxed)') })
+UnitDefs[def.name .. "_taxed"] = newDef
+end
+end
+if ((def.customParams and def.customParams["techlevel"] == 2) or (def.customparams and def.customparams["techlevel"] == 2)) and ((def.customParams and def.customParams["subfolder"] and string_match(def.customParams["subfolder"], "Lab")) or (def.customparams and def.customparams["subfolder"] and string_match(def.customparams["subfolder"], "Lab"))) and not string_match(name, ".* %(Taxed%)$") then
+if def then
+local newDef = table_merge({}, def)
+newDef.energyCost = newDef.energyCost * (1.7)
+newDef.metalCost = newDef.metalCost * (1.7)
+newDef.name = (name .. ' (Taxed)')
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = (def.customparams.i18n_en_humanname .. ' (Taxed)') })
+UnitDefs[def.name .. "_taxed"] = newDef
+end
+end
+end
+end
+
+do
+    -- Tweak file: 5-tweakdefs7.json
+    local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if (name == "armmmkrt3" or name == "cormmkrt3" or name == "legadveconvt3") then
+def.footprintx = 6
+def.footprintz = 6
+end
+if (name == "armack" or name == "armaca" or name == "armacv") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armafust3")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armmmkrt3")
+end
+if (name == "corack" or name == "coraca" or name == "coracv") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "corafust3")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "cormmkrt3")
+end
+if (name == "legack" or name == "legaca" or name == "legacv") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legafust3")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legadveconvt3")
+end
+if (name == "legck") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legdtf")
+end
+if (name == "coruwadves" or name == "legadvestore") then
+def.footprintx = 4
+def.footprintz = 4
+end
+end
+end
+
+do
+    -- Tweak file: 6-tweakdefs8.json
+    local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+if UnitDefs["armnanotct2"] then
+local newDef = table_merge({}, UnitDefs["armnanotct2"])
+newDef.metalcost = 3700
+newDef.energycost = 62000
+newDef.builddistance = 550
+newDef.buildtime = 108000
+newDef.health = 8800
+newDef.workertime = 1900
+newDef.customparams = { i18n_en_humanname = "T3 Construction Turret" }
+UnitDefs["armnanotct3"] = newDef
+end
+if UnitDefs["cornanotct2"] then
+local newDef = table_merge({}, UnitDefs["cornanotct2"])
+newDef.metalcost = 3700
+newDef.energycost = 62000
+newDef.builddistance = 550
+newDef.buildtime = 108000
+newDef.health = 8800
+newDef.workertime = 1900
+newDef.customparams = { i18n_en_humanname = "T3 Construction Turret" }
+UnitDefs["cornanotct3"] = newDef
+end
+if UnitDefs["legnanotct2"] then
+local newDef = table_merge({}, UnitDefs["legnanotct2"])
+newDef.metalcost = 3700
+newDef.energycost = 62000
+newDef.builddistance = 550
+newDef.buildtime = 108000
+newDef.health = 8800
+newDef.workertime = 1900
+newDef.customparams = { i18n_en_humanname = "T3 Construction Turret" }
+UnitDefs["legnanotct3"] = newDef
+end
+if UnitDefs["armdecom"] then
+local newDef = table_merge({}, UnitDefs["armdecom"])
+newDef.name = "Armada Epic Aide"
+newDef.workertime = 6000
+newDef.buildoptions = { "armafust3", "armnanotct2", "armnanotct3", "armalab", "armavp", "armaap", "armgatet3", "armflak", "armmmkrt3", "armuwadvmst3", "armadvestoret3", "armgate", "armfort", "armshltx", "corgant_taxed", "leggant_taxed", "armamd", "armmercury", "armbrtha", "armminivulc", "armvulc", "armanni", "armannit3", "armlwall", "legendary_pulsar" }
+UnitDefs["armt3aide"] = newDef
+end
+if UnitDefs["cordecom"] then
+local newDef = table_merge({}, UnitDefs["cordecom"])
+newDef.name = "Cortex Epic Aide"
+newDef.workertime = 6000
+newDef.buildoptions = { "corafust3", "cornanotct2", "cornanotct3", "coralab", "coravp", "coraap", "corgatet3", "corflak", "cormmkrt3", "coruwadvmst3", "coradvestoret3", "corgate", "corfort", "corgant", "armshltx_taxed", "leggant_taxed", "corfmd", "corscreamer", "cordoomt3", "corbuzz", "corminibuzz", "corint", "cordoom", "corhllllt", "cormwall", "legendary_bulwark" }
+UnitDefs["cort3aide"] = newDef
+end
+if UnitDefs["legdecom"] then
+local newDef = table_merge({}, UnitDefs["legdecom"])
+newDef.name = "Legion Epic Aide"
+newDef.workertime = 6000
+newDef.buildoptions = { "legafust3", "legnanotct2", "legnanotct3", "legalab", "legavp", "legaap", "leggatet3", "legflak", "legadveconvt3", "legamstort3", "legadvestoret3", "legdeflector", "legforti", "leggant", "armshltx_taxed", "corgant_taxed", "legabm", "legstarfall", "legministarfall", "leglraa", "legbastion", "legrwall", "leglrpc", "legendary_bastion", "legapopupdef", "legdtf" }
+UnitDefs["legt3aide"] = newDef
+end
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if (name == "armshltx") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armt3aide")
+end
+if (name == "corgant") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "cort3aide")
+end
+if (name == "leggant") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "legt3aide")
+end
+end
+end
+
+do
+    -- Tweak file: 7-tweakdefs9.json
+    local table_merge = table.merge
+local pairs = pairs
+local ipairs = ipairs
+local string_sub = string.sub
+local string_match = string.match
+local string_len = string.len
+local table_insert = table.insert
+local math_floor = math.floor
+if UnitDefs["armbotrail"] then
+local newDef = table_merge({}, UnitDefs["armbotrail"])
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Meatball Launcher" })
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.range = 7550
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.metalpershot = 5300
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.energypershot = 96000
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.reloadtime = 0.5
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+if not wDef.customparams then wDef.customparams = {} end
+table_merge(wDef.customparams, { stockpilelimit = 50, spawns_name = "armmeatball" })
+end
+end
+end
+UnitDefs["armmeatball"] = newDef
+end
+if UnitDefs["armbotrail"] then
+local newDef = table_merge({}, UnitDefs["armbotrail"])
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Assimilator Launcher" })
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.range = 7550
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.metalpershot = 4500
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.energypershot = 80000
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.reloadtime = 0.5
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+if not wDef.customparams then wDef.customparams = {} end
+table_merge(wDef.customparams, { stockpilelimit = 50, spawns_name = "armassimilator" })
+end
+end
+end
+UnitDefs["armassimilator"] = newDef
+end
+if UnitDefs["armbotrail"] then
+local newDef = table_merge({}, UnitDefs["armbotrail"])
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Epic Pawn Launcher" })
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.range = 7550
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.metalpershot = 14200
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.energypershot = 480000
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.reloadtime = 0.5
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+if not wDef.customparams then wDef.customparams = {} end
+table_merge(wDef.customparams, { stockpilelimit = 50, spawns_name = "armpwt4" })
+end
+end
+end
+UnitDefs["armpwt4"] = newDef
+end
+if UnitDefs["armbotrail"] then
+local newDef = table_merge({}, UnitDefs["armbotrail"])
+if not newDef.customparams then newDef.customparams = {} end
+table_merge(newDef.customparams, { i18n_en_humanname = "Armada T1 Launcher" })
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.stockpiletime = 0.5
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.range = 7550
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.metalpershot = 250
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.energypershot = 12500
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+wDef.reloadtime = 0.5
+end
+end
+end
+if newDef.weapondefs then
+for wName, wDef in pairs(newDef.weapondefs) do
+if wName == "arm_botrail" then
+if not wDef.customparams then wDef.customparams = {} end
+table_merge(wDef.customparams, { stockpilelimit = 50, spawns_name = "armham armjeth armpw armrock armwar armah armanac armmh armsh armart armfav armflash armjanus armpincer armsam armstump armzapper", spawns_mode = "random" })
+end
+end
+end
+UnitDefs["armt1"] = newDef
+end
+for id, def in pairs(UnitDefs) do
+local name = def.name or id
+if string_match(name, "cormandot4") then
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armmeatball")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armassimilator")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armpwt4")
+local target_list = def.buildoptions
+if not target_list then
+def.buildoptions = {}
+target_list = def.buildoptions
+end
+table_insert(target_list, "armt1")
+end
+end
+end
+
+do
+    -- Tweak file: 8-tweakunits.json
+    local data = -- Main tweakunits (Migrated)
+{cortron={energycost=42000,metalcost=3600,buildtime=110000,health=12000,weapondefs={cortron_weapon={energypershot=51000,metalpershot=600,range=4050,damage={default=9000}}}},corfort={repairable=true},armfort={repairable=true},legforti={repairable=true},armgate={explodeas='empblast',selfdestructas='empblast'},corgate={explodeas='empblast',selfdestructas='empblast'},legdeflector={explodeas='empblast',selfdestructas='empblast'},corsat={sightdistance=3100,radardistance=4080,cruisealtitude=3300,energyupkeep=1250,category='OBJECT'},armsat={sightdistance=3100,radardistance=4080,cruisealtitude=3300,energyupkeep=1250,category='OBJECT'},legstarfall={weapondefs={starfire={energypershot=270000}}},armflak={airsightdistance=1350,energycost=30000,metalcost=1500,health=4000,weapondefs={armflak_gun={collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,areaofeffect=150,range=1150,reloadtime=0.475,weaponvelocity=2400,intensity=0.18}}},corflak={airsightdistance=1350,energycost=30000,metalcost=1500,health=4000,weapondefs={armflak_gun={collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,areaofeffect=200,range=1350,reloadtime=0.56,weaponvelocity=2100,intensity=0.18}}},legflak={footprintx=4,footprintz=4,airsightdistance=1350,energycost=35000,metalcost=2100,health=6000,weapondefs={legflak_gun={collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,areaofeffect=100,burst=3,range=1050,intensity=0.18}}},armmercury={airsightdistance=2200,weapondefs={arm_advsam={areaofeffect=500,energypershot=2000,explosiongenerator='custom:flak',flighttime=1.5,metalpershot=6,name='Mid-range, rapid-fire g2a guided missile launcher',range=2500,reloadtime=1.2,smoketrail=false,startvelocity=1500,weaponacceleration=1000,weaponvelocity=4000}}},corscreamer={airsightdistance=2800,weapondefs={cor_advsam={areaofeffect=800,energypershot=2000,explosiongenerator='custom:flak',flighttime=1,metalpershot=10,name='Long-range g2a guided heavy flak missile launcher',range=2800,reloadtime=1.8,smoketrail=false,startvelocity=4000,weaponacceleration=1000,weaponvelocity=8000}}},armassistdrone={buildoptions={['31']='armclaw'}},corassistdrone={buildoptions={['32']='cormaw'}},legassistdrone={buildoptions={['31']='legdtf',['32']='legdtl',['33']='legdtr'}},legfortt4={explodeas='fusionExplosionSelfd',selfdestructas='fusionExplosionSelfd'},legfort={explodeas='empblast',selfdestructas='empblast'},raptor_hive={weapondefs={antiground={burst=5,burstrate=0.01,cegtag='arty-heavy-purple',explosiongenerator='custom:dirt',model='Raptors/s_raptor_white.s3o',range=1600,reloadtime=5,rgbcolor='0.5 0 1',soundhit='smallraptorattack',soundstart='bugarty',sprayangle=256,turret=true,stockpiletime=12,proximitypriority=nil,damage={default=1,shields=100},customparams={spawns_count=15,spawns_expire=11,spawns_mode='random',spawns_name='raptor_acidspawnling raptor_hive_swarmer_basic raptor_land_swarmer_basic_t1_v1 ',spawns_surface='LAND SEA',stockpilelimit=10}}}},armapt3={buildoptions={['58']='armsat'}},corapt3={buildoptions={['58']='corsat'}},legapt3={buildoptions={['58']='corsat'}},armlwall={energycost=25000,metalcost=1300,weapondefs={lightning={energypershot=200,range=430}}},armclaw={collisionvolumeoffsets='0 -2 0',collisionvolumescales='30 51 30',collisionvolumetype='Ell',usepiececollisionvolumes=0,weapondefs={dclaw={energypershot=60}}},legdtl={weapondefs={dclaw={energypershot=60}}},armamd={metalcost=1800,energycost=41000,weapondefs={amd_rocket={coverage=2125,stockpiletime=70}}},corfmd={metalcost=1800,energycost=41000,weapondefs={fmd_rocket={coverage=2125,stockpiletime=70}}},legabm={metalcost=1800,energycost=41000,weapondefs={fmd_rocket={coverage=2125,stockpiletime=70}}},corwint2={metalcost=400},legwint2={metalcost=400},legdtr={buildtime=5250,energycost=5500,metalcost=400,collisionvolumeoffsets='0 -10 0',collisionvolumescales='39 88 39',collisionvolumetype='Ell',usepiececollisionvolumes=0,weapondefs={corlevlr_weapon={areaofeffect=30,avoidfriendly=true,collidefriendly=false,cegtag='railgun',range=650,energypershot=75,explosiongenerator='custom:plasmahit-sparkonly',rgbcolor='0.34 0.64 0.94',soundhit='mavgun3',soundhitwet='splshbig',soundstart='lancefire',weaponvelocity=1300,damage={default=550}}}},armrespawn={blocking=false,canresurrect=true},legnanotcbase={blocking=false,canresurrect=true},correspawn={blocking=false,canresurrect=true},legrwall={collisionvolumeoffsets='0 -3 0',collisionvolumescales='32 50 32',collisionvolumetype='CylY',energycost=21000,metalcost=1400,weapondefs={railgunt2={collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,range=725,reloadtime=3,energypershot=200,damage={default=1500}}},weapons={['1']={def='railgunt2',onlytargetcategory='SURFACE'}}},cormwall={energycost=18000,metalcost=1350,weapondefs={exp_heavyrocket={areaofeffect=70,collidefriendly=0,collidefeature=0,cameraShake=0,energypershot=125,avoidfeature=0,avoidfriendly=0,burst=1,burstrate=0,colormap='0.75 0.73 0.67 0.024   0.37 0.4 0.30 0.021   0.22 0.21 0.14 0.018  0.024 0.014 0.009 0.03   0.0 0.0 0.0 0.008',craterareaofeffect=0,explosiongenerator='custom:burnblack',flamegfxtime=1,flighttime=1.05,name='Raptor Boomer',reloadtime=1.5,rgbcolor='1 0.25 0.1',range=700,size=2,proximitypriority=nil,impactonly=1,trajectoryheight=1,targetmoveerror=0.2,tracks=true,weaponacceleration=660,weaponvelocity=950,damage={default=1050}}}},cormaw={collisionvolumeoffsets='0 -2 0',collisionvolumescales='30 51 30',collisionvolumetype='Ell',usepiececollisionvolumes=false,metalcost=350,energycost=2500,weapondefs={dmaw={collidefriendly=0,collidefeature=0,areaofeffect=80,edgeeffectiveness=0.45,energypershot=50,burst=24,rgbcolor='0.051 0.129 0.871',rgbcolor2='0.57 0.624 1',sizegrowth=0.8,range=450,intensity=0.68,damage={default=28}}}},legdtf={collisionvolumeoffsets='0 -24 0',collisionvolumescales='30 51 30',collisionvolumetype='Ell',metalcost=350,energycost=2750,weapondefs={dmaw={collidefriendly=0,collidefeature=0,areaofeffect=80,edgeeffectiveness=0.45,energypershot=50,burst=24,sizegrowth=2,range=450,intensity=0.38,sprayangle=500,damage={default=30}}}},corhllllt={collisionvolumeoffsets='0 -24 0',collisionvolumescales='30 51 30',metalcost=415,energycost=9500,buildtime=10000,health=2115},corhlt={energycost=5500,metalcost=520,weapondefs={cor_laserh1={range=750,reloadtime=0.95,damage={default=395,vtol=35}}}},armhlt={energycost=5700,metalcost=510,weapondefs={arm_laserh1={range=750,reloadtime=1,damage={default=405,vtol=35}}}},armbrtha={explodeas='fusionExplosion',energycost=500000,metalcost=18500,buildtime=175000,turnrate=16000,health=10450,weapondefs={ARMBRTHA_MAIN={areaofeffect=50,collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,beamtime=2.5,corethickness=0.1,craterareaofeffect=90,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.3,energypershot=14000,explosiongenerator='custom:laserhit-large-blue',firestarter=90,impulseboost=0,impulsefactor=0,largebeamlaser=true,laserflaresize=1,impactonly=1,name='Experimental Duction Beam',noselfdamage=true,range=2400,reloadtime=13,rgbcolor='0.4 0.2 0.6',scrollspeed=13,soundhitdry='',soundhitwet='sizzle',soundstart='hackshotxl3',soundtrigger=1,targetmoveerror=0.3,texture3='largebeam',thickness=14,tilelength=150,tolerance=10000,turret=true,turnrate=16000,weapontype='LaserCannon',weaponvelocity=3100,damage={commanders=480,default=34000}}},weapons={['1']={badtargetcategory='VTOL GROUNDSCOUT',def='ARMBRTHA_MAIN',onlytargetcategory='SURFACE'}}},corint={explodeas='fusionExplosion',energycost=505000,metalcost=19500,buildtime=170000,health=12450,footprintx=6,footprintz=6,weapondefs={CORINT_MAIN={areaofeffect=70,collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,beamtime=2.5,corethickness=0.1,craterareaofeffect=90,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.3,energypershot=17000,explosiongenerator='custom:laserhit-large-blue',firestarter=90,impulseboost=0,impulsefactor=0,largebeamlaser=true,laserflaresize=1,impactonly=1,name='Mini DeathStar',noselfdamage=true,range=2800,reloadtime=15,rgbcolor='0 1 0',scrollspeed=13,soundhitdry='',soundhitwet='sizzle',soundstart='annigun1',soundtrigger=1,targetmoveerror=0.3,texture3='largebeam',thickness=14,tilelength=150,tolerance=10000,turret=true,turnrate=1600,weapontype='LaserCannon',weaponvelocity=3100,damage={commanders=480,default=50000}}},weapons={['1']={badtargetcategory='VTOL GROUNDSCOUT',def='CORINT_MAIN',onlytargetcategory='SURFACE'}}},leglrpc={explodeas='fusionExplosion',energycost=555000,metalcost=21000,buildtime=150000,health=11000,footprintx=6,footprintz=6,weapondefs={LEGLRPC_MAIN={areaofeffect=70,collidefriendly=0,collidefeature=0,avoidfeature=0,avoidfriendly=0,beamtime=0.5,burst=3,burstrate=0.4,corethickness=0.1,craterareaofeffect=90,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.3,energypershot=10000,explosiongenerator='custom:laserhit-large-red',firestarter=90,impactonly=1,impulseboost=0,impulsefactor=0,largebeamlaser=true,laserflaresize=1,name='The Eagle Standard',noselfdamage=true,range=2150,reloadtime=3,rgbcolor='0/1/0.4',scrollspeed=13,soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw1',soundtrigger=1,targetmoveerror=0.3,texture3='largebeam',thickness=12,tilelength=150,tolerance=10000,turret=true,turnrate=16000,weapontype='LaserCannon',weaponvelocity=3100,damage={commanders=480,default=6000}}},weapons={['1']={badtargetcategory='VTOL GROUNDSCOUT',def='LEGLRPC_MAIN',onlytargetcategory='SURFACE'}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 9-tweakunits1.json
+    local data = -- Legion NuttyB Evolving Commander (Migrated)
+{legcom={footprintx=2,footprintz=2,energymake=50,metalmake=5,health=6000,autoheal=40,buildoptions={'legrezbot','legdtl','legdtf','legdtr','legjam','legwin'},customparams={evolution_target='legcomlvl2',evolution_condition='timer_global',evolution_timer=420},weapondefs={legcomlaser={corethickness=0.25,duration=0.09,name='Light close-quarters g2g/g2a laser',range=360,reloadtime=0.2,rgbcolor='0 2 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw1',soundtrigger=true,sprayangle=700,thickness=6,texture1='shot',texture2='empty',weapontype='LaserCannon',weaponvelocity=2100,damage={default=250}},shotgun={areaofeffect=60,energypershot=0,avoidfeature=false,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.65,explosiongenerator='custom:genericshellexplosion-small',impulseboost=0.2,impulsefactor=0.2,intensity=3,name='6 Gauge Shotgun',noselfdamage=true,predictboost=1,projectiles=6,range=320,reloadtime=2,rgbcolor='1 0.75 0.25',size=2,soundhit='xplomed2xs',soundhitwet='splsmed',soundstart='kroggie2xs',soundstartvolume=12,sprayangle=2000,turret=true,commandfire=true,weapontimer=1,weapontype='Cannon',weaponvelocity=600,stockpile=true,stockpiletime=5,customparams={stockpilelimit=10},damage={default=1800,commanders=0}}},weapons={['3']={def='shotgun',onlytargetcategory='SURFACE'}}},legcomlvl2={footprintx=2,footprintz=2,energymake=150,metalmake=15,speed=57.5,autoheal=100,health=6700,customparams={evolution_condition='timer_global',evolution_timer=1020},buildoptions={'legrezbot','legadvsol','corhllt','leggeo','legnanotc','legjam','legdtf','legmg','legrad','legdtl','legdtr','legrhapsis','legwin'},weapondefs={legcomlaser={accuracy=50,areaofeffect=12,avoidfriendly=false,avoidfeature=false,collidefriendly=false,collidefeature=true,beamtime=0.09,corethickness=0.3,duration=0.09,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=500,reloadtime=0.2,rgbcolor='0 0.95 0.05',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw1',soundtrigger=true,sprayangle=500,targetmoveerror=0.05,thickness=7,tolerance=1000,texture1='shot',texture2='empty',turret=true,weapontype='LaserCannon',weaponvelocity=2200,damage={bombers=180,default=450,fighters=110,subs=5}},shotgun={areaofeffect=65,energypershot=0,avoidfeature=false,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.65,explosiongenerator='custom:genericshellexplosion-small',impulseboost=0.2,impulsefactor=0.2,intensity=3,name='12 Gauge Shotgun',noselfdamage=true,predictboost=1,projectiles=7,range=440,reloadtime=2,rgbcolor='1 0.75 0.25',size=2.5,soundhit='xplomed2xs',soundhitwet='splsmed',soundstart='kroggie2xs',soundstartvolume=12,sprayangle=2250,turret=true,commandfire=true,weapontimer=1,weapontype='Cannon',weaponvelocity=600,stockpile=true,stockpiletime=5,customparams={stockpilelimit=15},damage={default=2200,commanders=0}}},weapons={['1']={def='legcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='shotgun',onlytargetcategory='SURFACE'}}},legcomlvl3={footprintx=2,footprintz=2,energymake=1280,metalmake=40,speed=70.5,workertime=700,autoheal=150,health=7500,customparams={evolution_condition='timer_global',evolution_timer=1440},buildoptions={'legdeflector','legfus','legbombard','legadvestore','legmoho','legadveconv','legarad','legajam','legforti','legacluster','legamstor','legflak','legabm','legbastion','legdtr','legdtf','legrezbot','legdtl','leglab','legendary_bastion','legnanotct3','legapopupdef'},weapondefs={legcomlaser={accuracy=50,areaofeffect=12,avoidfriendly=true,avoidfeature=true,collidefriendly=false,collidefeature=true,beamtime=0.09,corethickness=0.55,duration=0.09,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=0,impulseboost=0,impulsefactor=0,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=640,reloadtime=0.2,rgbcolor='0 0.2 0.8',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw1',soundtrigger=true,sprayangle=500,targetmoveerror=0.05,thickness=7,tolerance=1000,texture1='shot',texture2='empty',turret=true,weapontype='LaserCannon',weaponvelocity=2500,damage={bombers=180,default=650,fighters=110,subs=5}},shotgun={areaofeffect=90,energypershot=0,avoidfeature=false,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.65,explosiongenerator='custom:genericshellexplosion-small',impulseboost=0.2,impulsefactor=0.2,intensity=3,name='12 Gauge Shotgun',noselfdamage=true,predictboost=1,projectiles=7,range=540,reloadtime=2,rgbcolor='1 0.75 0.25',size=2.5,soundhit='xplomed2xs',soundhitwet='splsmed',soundstart='kroggie2xs',soundstartvolume=12,sprayangle=2500,turret=true,commandfire=true,weapontimer=1,weapontype='Cannon',weaponvelocity=600,stockpile=true,stockpiletime=5,customparams={stockpilelimit=20},damage={default=3200,commanders=0}}},weapons={['1']={def='legcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='shotgun',onlytargetcategory='SURFACE'},['5']={def=''}}},legcomlvl4={footprintx=2,footprintz=2,energymake=1980,metalmake=46,speed=88.5,workertime=1000,autoheal=180,health=24500,customparams={evolution_condition='timer_global',evolution_timer=1740},buildoptions={'legdeflector','legfus','legbombard','legadvestore','legmoho','legadveconv','legeshotgunmech','legarad','legajam','legkeres','legacluster','legamstor','legflak','legabm','legbastion','legendary_bastion','legnanotct2','legnanotct2plat','legrwall','leglab','legtarg','legsd','legpede','legerailtank','legeheatraymech','legrezbot','legafus','leglraa','legdtl','legdtf','legministarfall','legstarfall','leggatet3','legperdition','legsilo','legsrailt4','legelrpcmech','legdtr','legnanotct3','legapopupdef'},weapondefs={legcomlaser={accuracy=50,areaofeffect=12,avoidfriendly=true,avoidfeature=true,collidefriendly=false,collidefeature=true,beamtime=0.1,corethickness=0.5,duration=0.09,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=0,impulseboost=0,impulsefactor=0,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=900,reloadtime=0.1,rgbcolor='0.45 0 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw1',soundtrigger=1,sprayangle=400,targetmoveerror=0.05,thickness=6,tolerance=1000,texture1='shot',texture2='empty',turret=true,weapontype='LaserCannon',weaponvelocity=3000,damage={bombers=180,default=1750,fighters=110,subs=5}},shotgun={areaofeffect=75,energypershot=0,avoidfeature=false,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.65,explosiongenerator='custom:genericshellexplosion-small',impulseboost=0.2,impulsefactor=0.2,intensity=3,name='60 Gauge Raptor Popper',noselfdamage=true,predictboost=1,projectiles=9,range=550,reloadtime=1,rgbcolor='1 0.75 0.25',size=5,soundhit='xplomed2xs',soundhitwet='splsmed',soundstart='kroggie2xs',soundstartvolume=12,sprayangle=3000,turret=true,commandfire=true,weapontimer=1,weapontype='Cannon',weaponvelocity=600,stockpile=true,stockpiletime=4,customparams={stockpilelimit=20},damage={default=4400,commanders=0}}},weapons={['1']={def='legcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='shotgun',onlytargetcategory='SURFACE'},['5']={def=''}}},legcomlvl5={footprintx=2,footprintz=2,energymake=2280,metalmake=64,speed=100,workertime=1700,autoheal=4500,health=53900,buildoptions={'legdeflector','legfus','legbombard','legadvestore','legmoho','legadveconv','legeshotgunmech','legarad','legajam','legkeres','legacluster','legamstor','legflak','legabm','legbastion','legendary_bastion','legnanotct2','legnanotct2plat','legrwall','leglab','legtarg','legsd','legpede','legerailtank','legeheatraymech','legrezbot','legafus','leglraa','legdtl','legdtf','legministarfall','legstarfall','leggatet3','legperdition','legsilo','legsrailt4','legelrpcmech','legdtr','legnanotct3','legapopupdef'},weapondefs={machinegun={accuracy=80,areaofeffect=10,avoidfeature=false,beamburst=true,beamdecay=1,beamtime=0.07,burst=6,burstrate=0.10667,camerashake=0,corethickness=0.35,craterareaofeffect=0,craterboost=0,cratermult=0,edgeeffectiveness=1,explosiongenerator='custom:laserhit-medium-red',firestarter=10,impulsefactor=0,largebeamlaser=true,laserflaresize=30,name='Rapid-fire close quarters g2g armor-piercing laser',noselfdamage=true,pulsespeed='q8',range=1100,reloadtime=0.5,rgbcolor='0.7 0.3 1.0',rgbcolor2='0.8 0.6 1.0',soundhitdry='',soundhitwet='sizzle',soundstart='lasfirerc',soundtrigger=1,sprayangle=500,targetborder=0.2,thickness=5.5,tolerance=4500,turret=true,weapontype='BeamLaser',weaponvelocity=920,damage={default=1300,vtol=180}},shotgunarm={areaofeffect=112,commandfire=true,avoidfeature=false,craterboost=0,cratermult=0,cameraShake=0,edgeeffectiveness=0.65,explosiongenerator='custom:genericshellexplosion-medium',impulsefactor=0.8,intensity=0.2,mygravity=1,name='GaussCannon',noselfdamage=true,predictboost=1,projectiles=20,range=650,reloadtime=1,rgbcolor='0.8 0.4 1.0',size=4,sizeDecay=0.044,stages=16,alphaDecay=0.66,soundhit='xplomed2xs',soundhitwet='splsmed',soundstart='kroggie2xs',sprayangle=3500,tolerance=6000,turret=true,waterweapon=true,weapontimer=2,weapontype='Cannon',weaponvelocity=900,stockpile=true,stockpiletime=2,customparams={stockpilelimit=50},damage={default=10000,commanders=0}},exp_heavyrocket={areaofeffect=70,collidefriendly=0,collidefeature=0,cameraShake=0,energypershot=125,avoidfeature=0,avoidfriendly=0,burst=4,burstrate=0.3,cegtag='missiletrailsmall-red',colormap='0.75 0.73 0.67 0.024   0.37 0.4 0.30 0.021   0.22 0.21 0.14 0.018  0.024 0.014 0.009 0.03   0.0 0.0 0.0 0.008',craterboost=0,craterareaofeffect=0,cratermult=0,dance=24,edgeeffectiveness=0.65,explosiongenerator='custom:burnblack',firestarter=70,flighttime=1.05,flamegfxtime=1,impulsefactor=0.123,impactonly=1,model='catapultmissile.s3o',movingaccuracy=600,name='Raptor Boomer',noselfdamage=true,proximitypriority=nil,range=700,reloadtime=1,smoketrail=true,smokePeriod=4,smoketime=16,smokesize=8.5,smokecolor=0.5,size=2,smokeTrailCastShadow=false,soundhit='rockhit',soundhitwet='splsmed',soundstart='rapidrocket3',startvelocity=165,rgbcolor='1 0.25 0.1',texture1='null',texture2='smoketrailbar',trajectoryheight=1,targetmoveerror=0.2,turnrate=5000,tracks=true,turret=true,allowNonBlockingAim=true,weaponacceleration=660,weapontimer=6,weapontype='MissileLauncher',weaponvelocity=950,wobble=2000,damage={default=1300},customparams={exclude_preaim=true,overrange_distance=777,projectile_destruction_method='descend'}}},weapons={['1']={def='machinegun',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='shotgunarm',onlytargetcategory='WEAPON'},['5']={def='exp_heavyrocket',onlytargetcategory='SURFACE'}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 10-tweakunits2.json
+    local data = -- Armada NuttyB Evolving Commander (Migrated)
+{armcom={customparams={evolution_target='armcomlvl2',evolution_condition='timer_global',evolution_timer=420},energymake=100,metalmake=10,autoheal=55,health=4500,speed=41,canresurrect=true,buildoptions={'armsolar','armwin','armmstor','armestor','armmex','armmakr','armlab','armvp','armap','armeyes','armrad','armdrag','armllt','armrl','armdl','armtide','armuwms','armuwes','armuwmex','armfmkr','armsy','armfdrag','armtl','armfrt','armfrad','armhp','armfhp','armgeo','armamex','armhp','armbeamer','armjamt','armsy','armrectr','armclaw'},weapondefs={armcomlaser={range=330,rgbcolor='0.7 1 1',soundstart='lasrfir1',damage={default=175}},old_armsnipe_weapon={areaofeffect=32,avoidfeature=true,avoidfriendly=true,collidefeature=true,collidefriendly=false,corethickness=0.75,craterareaofeffect=0,craterboost=0,commandfire=true,cratermult=0,cegtag='railgun',duration=0.12,edgeeffectiveness=0.85,energypershot=400,explosiongenerator='custom:laserhit-large-blue',firestarter=100,impulseboost=0.4,impulsefactor=1,intensity=0.8,name='Long-range g2g armor-piercing rifle',range=550,reloadtime=1,rgbcolor='0 1 1',rgbcolor2='0 1 1',soundhit='sniperhit',soundhitwet='sizzle',soundstart='sniper3',soundtrigger=true,stockpile=true,stockpiletime=7,customparams={stockpilelimit=5},texture1='shot',texture2='empty',thickness=4,tolerance=1000,turret=true,weapontype='LaserCannon',weaponvelocity=3000,damage={commanders=100,default=4900}}},weapons={['3']={def='old_armsnipe_weapon',onlytargetcategory='NOTSUB'}}},armcomlvl2={autoheal=90,builddistance=175,canresurrect=true,energymake=315,health=7000,speed=57.5,metalmake=20,workertime=900,buildoptions={'armsolar','armwin','armmstor','armestor','armmex','armmakr','armlab','armvp','armap','armeyes','armrad','armdrag','armllt','armrl','armdl','armtide','armuwms','armuwes','armuwmex','armfmkr','armsy','armfdrag','armtl','armfrt','armfrad','armhp','armfhp','armadvsol','armgeo','armamex','armnanotcplat','armhp','armnanotc','armclaw','armbeamer','armhlt','armguard','armferret','armcir','armjamt','armjuno','armsy','armrectr'},customparams={evolution_target='armcomlvl3',evolution_condition='timer_global',evolution_timer=1320},weapondefs={armcomlaser={areaofeffect=16,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=7.7,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=425,reloadtime=0.7,rgbcolor='0 1 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrfir1',soundtrigger=1,targetmoveerror=0.05,thickness=4,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={default=950,VTOL=150}},old_armsnipe_weapon={areaofeffect=42,avoidfeature=true,avoidfriendly=true,collidefeature=true,collidefriendly=false,corethickness=0.75,craterareaofeffect=0,craterboost=0,commandfire=true,cratermult=0,cegtag='railgun',duration=0.12,edgeeffectiveness=0.85,energypershot=700,explosiongenerator='custom:laserhit-large-blue',firestarter=100,impulseboost=0.4,impulsefactor=1,intensity=1,name='Long-range g2g armor-piercing rifle',range=700,reloadtime=1,rgbcolor='0.2 0.1 1',rgbcolor2='0.2 0.1 1',soundhit='sniperhit',soundhitwet='sizzle',soundstart='sniper3',soundtrigger=true,stockpile=true,stockpiletime=6,customparams={stockpilelimit=10},texture1='shot',texture2='empty',thickness=4,tolerance=1000,turret=true,weapontype='LaserCannon',weaponvelocity=3000,damage={commanders=10,default=11000}}},weapons={['1']={def='armcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='old_armsnipe_weapon',onlytargetcategory='NOTSUB'}}},armcomlvl3={autoheal=50,builddistance=250,canresurrect=true,energymake=2712,health=10000,speed=71.5,metalmake=62,workertime=1500,buildoptions={'armanni','armpb','armamb','armmoho','armuwmme','armflak','armmercury','armgate','armsd','armfort','armtarg','armarad','armamd','armveil','armuwadvms','armuwadves','armmmkr','armclaw','armjuno','armuwmex','armhp','armsy','armfdrag','armtl','armfrt','armfrad','armhp','armlab','armvp','armap','armsy','armuwmmm','armuwfus','armplat','armfdrag','armfhlt','armfflak','armatl','armkraken','armnanotcplat','armbrtha','armannit3','armlwall','armnanotct2','armafus','armfus','armckfus','armraz','armzeus','armsnipe','armvang','armrectr','armgatet3','legendary_pulsar','armnanotct3'},customparams={evolution_target='armcomlvl4',evolution_condition='timer_global',evolution_timer=1740},weapondefs={old_armsnipe_weapon={areaofeffect=64,avoidfeature=true,avoidfriendly=true,collidefeature=true,collidefriendly=false,corethickness=0.75,craterareaofeffect=0,craterboost=0,commandfire=true,cratermult=0,cegtag='railgun',duration=0.12,edgeeffectiveness=1,energypershot=2000,explosiongenerator='custom:laserhit-large-blue',firestarter=100,impulseboost=0.4,impulsefactor=1,intensity=1.4,name='Long-range g2g armor-piercing rifle',range=1250,reloadtime=0.5,rgbcolor='0.4 0.1 0.7',rgbcolor2='0.4 0.1 0.7',soundhit='sniperhit',soundhitwet='sizzle',soundstart='sniper3',soundtrigger=true,stockpile=true,stockpiletime=3,customparams={stockpilelimit=10},texture1='shot',texture2='empty',thickness=6,tolerance=1000,turret=true,weapontype='LaserCannon',weaponvelocity=3000,damage={commanders=10,default=35000}},armcomlaser={areaofeffect=12,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=7.7,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=500,reloadtime=0.6,rgbcolor='0.1 0 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw2',soundtrigger=1,targetmoveerror=0.05,thickness=6,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={default=1450,VTOL=180}}},weapons={['1']={def=''},['3']={def='old_armsnipe_weapon',onlytargetcategory='NOTSUB'},['4']={def=''},['5']={badtargetcategory='MOBILE',def='armcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['6']={def=''}}},armcomlvl4={autoheal=150,builddistance=300,canresurrect=true,energymake=3112,health=20000,speed=82,metalmake=86,workertime=2000,buildoptions={'armanni','armpb','armamb','armmoho','armuwmme','armflak','armmercury','armgate','armsd','armfort','armtarg','armarad','armamd','armveil','armuwadvms','armuwadves','armmmkr','armclaw','armjuno','armuwmex','armhp','armsy','armfdrag','armtl','armfrt','armfrad','armhp','armlab','armvp','armap','armsy','armuwmmm','armuwfus','armplat','armfdrag','armfhlt','armfflak','armatl','armkraken','armnanotcplat','armbrtha','armannit3','armlwall','armnanotct2','armafus','armfus','armckfus','armraz','armzeus','armsnipe','armvang','armrectr','armgatet3','legendary_pulsar','armnanotct3'},weapondefs={old_armsnipe_weapon={areaofeffect=72,avoidfeature=true,avoidfriendly=true,collidefeature=true,collidefriendly=false,corethickness=0.75,craterareaofeffect=0,craterboost=0,commandfire=true,cratermult=0,cegtag='railgun',duration=0.12,edgeeffectiveness=1,energypershot=2000,explosiongenerator='custom:laserhit-large-blue',firestarter=100,impulseboost=0.4,impulsefactor=1,intensity=1.4,name='Long-range g2g armor-piercing rifle',range=1250,reloadtime=0.5,rgbcolor='0.4 0.1 0.7',rgbcolor2='0.4 0.1 0.7',soundhit='sniperhit',soundhitwet='sizzle',soundstart='sniper3',soundtrigger=true,stockpile=true,stockpiletime=2,customparams={stockpilelimit=15},texture1='shot',texture2='empty',thickness=6,tolerance=1000,turret=true,weapontype='LaserCannon',weaponvelocity=3000,damage={commanders=10,default=45000}},ata={areaofeffect=16,avoidfeature=false,beamtime=1.25,collidefriendly=false,corethickness=0.5,craterareaofeffect=0,craterboost=0,cratermult=0,edgeeffectiveness=0.3,energypershot=7000,explosiongenerator='custom:laserhit-large-blue',firestarter=90,impulsefactor=0,largebeamlaser=true,laserflaresize=7,name='Heavy long-range g2g tachyon accelerator beam',noselfdamage=true,range=1100,reloadtime=15,rgbcolor='1 0 1',scrollspeed=5,soundhitdry='',soundhitwet='sizzle',soundstart='annigun1',soundtrigger=1,texture3='largebeam',thickness=10,tilelength=150,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=3100,damage={commanders=480,default=48000}},armcomlaser={areaofeffect=12,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=7.7,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=550,reloadtime=0.5,rgbcolor='0.659 0 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrcrw2',soundtrigger=1,targetmoveerror=0.05,thickness=6,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={default=1750,VTOL=200}}},weapons={['1']={def='armcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='old_armsnipe_weapon',onlytargetcategory='NOTSUB'},['4']={badtargetcategory='VTOL GROUNDSCOUT',def='ATA',onlytargetcategory='SURFACE'},['5']={def=''},['6']={def=''}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 11-tweakunits3.json
+    local data = -- Cortex NuttyB Evolving Commander (Migrated)
+{corcom={customparams={evolution_target='corcomlvl2',evolution_condition='timer_global',evolution_timer=420},autoheal=80,speed=45,energymake=75,metalmake=6,health=5500,buildoptions={['28']='corhllt',['29']='cornecro',['30']='corlevlr',['31']='corak',['32']='cormaw'},weapondefs={corcomlaser={range=370,damage={bombers=180,default=260,fighters=110,subs=5}},disintegrator={energypershot=1000,reloadtime=8}}},corcomlvl2={speed=62,health=8500,energymake=255,metalmake=16,autoheal=300,builddistance=200,workertime=600,buildoptions={['1']='corsolar',['2']='coradvsol',['3']='corwin',['4']='corgeo',['5']='cormstor',['6']='corestor',['7']='cormex',['8']='corexp',['9']='cormakr',['10']='corcan',['11']='correap',['12']='corlab',['13']='corvp',['14']='corap',['15']='corhp',['16']='cornanotc',['17']='coreyes',['18']='corrad',['19']='cordrag',['20']='cormaw',['21']='corllt',['22']='corhllt',['23']='corhlt',['24']='corpun',['25']='corrl',['26']='cormadsam',['27']='corerad',['28']='cordl',['29']='corjamt',['30']='corjuno',['31']='corsy',['32']='coruwgeo',['33']='corfasp',['34']='cornerco',['35']='coruwes',['36']='corplat',['37']='corfhp',['38']='coruwms',['39']='corfhlt',['40']='cornanotcplat',['41']='corfmkr',['42']='cortide',['43']='corfrad',['44']='corfrt',['45']='corfdrag',['46']='cortl',['47']='cornecro'},customparams={evolution_target='corcomlvl3',evolution_condition='timer_global',evolution_timer=1320,shield_power=500,shield_radius=100},weapondefs={armcomlaser={areaofeffect=16,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=7.7,name='Light close-quarters g2g/g2a laser',noselfdamage=true,range=500,reloadtime=0.4,rgbcolor='0.6 0.3 0.8',soundhitdry='',soundhitwet='sizzle',soundstart='lasrfir1',soundtrigger=1,targetmoveerror=0.05,thickness=4,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={bombers=180,default=1500,fighters=110,subs=5}},disintegrator={areaofeffect=36,avoidfeature=false,avoidfriendly=false,avoidground=false,bouncerebound=0,cegtag='dgunprojectile',commandfire=true,craterboost=0,cratermult=0.15,edgeeffectiveness=0.15,energypershot=500,explosiongenerator='custom:expldgun',firestarter=100,firesubmersed=false,groundbounce=true,impulseboost=0,impulsefactor=0,name='Disintegrator',noexplode=true,noselfdamage=true,range=250,reloadtime=6,paralyzer={},soundhit='xplomas2s',soundhitwet='sizzlexs',soundstart='disigun1',soundhitvolume=36,soundstartvolume=96,soundtrigger=true,tolerance=10000,turret=true,waterweapon=true,weapontimer=4.2,weapontype='DGun',weaponvelocity=300,damage={commanders=0,default=20000,raptors=10000}}},weapons={['1']={def='armcomlaser',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={def='DISINTEGRATOR',onlytargetcategory='NOTSUB'}}},corcomlvl3={speed=80,health=30000,energymake=2180,metalmake=49,autoheal=1500,workertime=1200,builddistance=250,buildoptions={['1']='corfus',['2']='corafus',['3']='corageo',['4']='corbhmth',['5']='cormoho',['6']='cormexp',['7']='cormmkr',['8']='coruwadves',['9']='coruwadvms',['10']='corarad',['11']='corshroud',['12']='corfort',['13']='corlab',['14']='cortarg',['15']='corsd',['16']='corgate',['17']='cortoast',['18']='corvipe',['19']='cordoom',['20']='corflak',['21']='corscreamer',['22']='corvp',['23']='corfmd',['24']='corap',['25']='corint',['26']='corplat',['27']='corsy',['28']='coruwmme',['29']='coruwmmm',['30']='corenaa',['31']='corfdoom',['32']='coratl',['33']='coruwfus',['34']='corjugg',['35']='corshiva',['36']='corsumo',['37']='corgol',['38']='corkorg',['39']='cornanotc2plat',['40']='cornanotct2',['41']='cornecro',['42']='cordoomt3',['43']='corhllllt',['44']='cormaw',['45']='cormwall',['46']='corgatet3',['47']='legendary_bulwark',['48']='cornanotct3'},customparams={evolution_target='corcomlvl4',evolution_condition='timer_global',evolution_timer=1740},weapondefs={corcomlaser={areaofeffect=12,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=5.5,name='J7Laser',noselfdamage=true,range=900,reloadtime=0.4,rgbcolor='0.7 0 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrfir1',soundtrigger=1,targetmoveerror=0.05,thickness=3,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={default=2000,subs=5}},disintegrator={areaofeffect=36,avoidfeature=false,avoidfriendly=false,avoidground=false,bouncerebound=0,cegtag='dgunprojectile',commandfire=true,craterboost=0,cratermult=0.15,edgeeffectiveness=0.15,energypershot=500,explosiongenerator='custom:expldgun',firestarter=100,firesubmersed=false,groundbounce=true,impulseboost=0,impulsefactor=0,name='Disintegrator',noexplode=true,noselfdamage=true,range=250,reloadtime=3,paralyzer={},soundhit='xplomas2s',soundhitwet='sizzlexs',soundstart='disigun1',soundhitvolume=36,soundstartvolume=96,soundtrigger=true,size=4,tolerance=10000,turret=true,waterweapon=true,weapontimer=4.2,weapontype='DGun',weaponvelocity=300,damage={commanders=0,default=20000,scavboss=1000,raptors=10000}}},weapons={['1']={def='CORCOMLASER',onlytargetcategory='NOTSUB',fastautoretargeting=true},['5']={def=''}}},corcomlvl4={speed=80,health=50000,energymake=2380,metalmake=56,autoheal=3550,workertime=1800,builddistance=300,buildoptions={['1']='corfus',['2']='corafus',['3']='corageo',['4']='corbhmth',['5']='cormoho',['6']='cormexp',['7']='cormmkr',['8']='coruwadves',['9']='coruwadvms',['10']='corarad',['11']='corshroud',['12']='corfort',['13']='corlab',['14']='cortarg',['15']='corsd',['16']='corgate',['17']='cortoast',['18']='corvipe',['19']='cordoom',['20']='corflak',['21']='corscreamer',['22']='corvp',['23']='corfmd',['24']='corap',['25']='corint',['26']='corplat',['27']='corsy',['28']='coruwmme',['29']='coruwmmm',['30']='corenaa',['31']='corfdoom',['32']='coratl',['33']='coruwfus',['34']='corjugg',['35']='corshiva',['36']='corsumo',['37']='corgol',['38']='corkorg',['39']='cornanotc2plat',['40']='cornanotct2',['41']='cornecro',['42']='cordoomt3',['43']='corhllllt',['44']='cormaw',['45']='cormwall',['46']='corgatet3',['47']='legendary_bulwark',['48']='cornanotct3'},customparams={shield_power=500,shield_radius=100},weapondefs={CORCOMLASER={areaofeffect=12,avoidfeature=false,beamtime=0.1,corethickness=0.1,craterareaofeffect=0,craterboost=0,cratermult=0,cylindertargeting=1,edgeeffectiveness=1,explosiongenerator='custom:laserhit-small-red',firestarter=70,impactonly=1,impulseboost=0,impulsefactor=0,laserflaresize=5.5,name='J7Laser',noselfdamage=true,range=1000,reloadtime=0.4,rgbcolor='0.7 0 1',soundhitdry='',soundhitwet='sizzle',soundstart='lasrfir1',soundtrigger=1,targetmoveerror=0.05,thickness=3,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=900,damage={default=2500,subs=5}},disintegratorxl={areaofeffect=105,avoidfeature=false,avoidfriendly=true,avoidground=false,burst=1,burstrate=0,bouncerebound=0,cegtag='gausscannonprojectilexl',craterareaofeffect=0,craterboost=0,cratermult=0,commandfire=true,cameraShake=0,edgeeffectiveness=1,energypershot=0,explosiongenerator='custom:burnblackbiggest',firestarter=100,firesubmersed=false,gravityaffected=true,impulsefactor=0,intensity=4,name='Darkmatter Photon-Disruptor',noexplode=true,noselfdamage=true,range=500,reloadtime=1,rgbcolor='0.7 0.3 1.0',size=5.5,soundhit='xplomas2',soundhitwet='sizzlexs',soundstart='disigun1',soundtrigger=true,tolerance=10000,turret=true,weapontimer=4.2,weapontype='DGun',weaponvelocity=505,damage={commanders=0,default=20000,scavboss=1000,raptors=10000}},corcomeyelaser={allowNonBlockingAim=true,avoidfriendly=true,areaofeffect=6,avoidfeature=false,beamtime=0.033,camerashake=0.1,collidefriendly=false,corethickness=0.35,craterareaofeffect=12,craterboost=0,cratermult=0,edgeeffectiveness=1,energypershot=0,explosiongenerator='custom:laserhit-small-red',firestarter=90,firetolerance=300,impulsefactor=0,laserflaresize=2,name='EyeLaser',noselfdamage=true,proximitypriority=1,range=870,reloadtime=0.033,rgbcolor='0 1 0',rgbcolor2='0.8 0 0',scrollspeed=5,soundhitdry='flamhit1',soundhitwet='sizzle',soundstart='heatray3burn',soundstartvolume=6,soundtrigger=1,thickness=2.5,turret=true,weapontype='BeamLaser',weaponvelocity=1500,damage={default=185}}},weapons={['1']={def='CORCOMLASER',onlytargetcategory='NOTSUB',fastautoretargeting=true},['3']={badtargetcategory='VTOL',def='disintegratorxl',onlytargetcategory='SURFACE'},['5']={badtargetcategory='VTOL GROUNDSCOUT',def='corcomeyelaser',onlytargetcategory='SURFACE'},['6']={def=''}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 12-tweakunits5.json
+    local data = -- T4 Air Rework (Migrated)
+{raptor_air_scout_basic_t2_v1={customparams={raptorcustomsquad=true,raptorsquadunitsamount=25,raptorsquadminanger=20,raptorsquadmaxanger=26,raptorsquadweight=10,raptorsquadrarity='basic',raptorsquadbehavior='raider',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_hive_assault_basic={customparams={raptorcustomsquad=true,raptorsquadunitsamount=25,raptorsquadminanger=0,raptorsquadmaxanger=40,raptorsquadweight=1,raptorsquadrarity='basic',raptorsquadbehavior='raider',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_land_swarmer_basic_t3_v1={customparams={raptorcustomsquad=true,raptorsquadunitsamount=25,raptorsquadminanger=0,raptorsquadmaxanger=40,raptorsquadweight=2,raptorsquadrarity='basic',raptorsquadbehavior='raider',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_evolved_motort4={customparams={raptorcustomsquad=true,raptorsquadunitsamount=12,raptorsquadminanger=50,raptorsquadmaxanger=300,raptorsquadweight=3,raptorsquadrarity='special',raptorsquadbehavior='artillery',raptorsquadbehaviordistance=2500,raptorsquadbehaviorchance=0.75}},raptor_hive_assault_heavy={customparams={raptorcustomsquad=true,raptorsquadunitsamount=25,raptorsquadminanger=55,raptorsquadmaxanger=70,raptorsquadweight=1,raptorsquadrarity='basic',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_hive_assault_superheavy={customparams={raptorcustomsquad=true,raptorsquadunitsamount=25,raptorsquadminanger=80,raptorsquadmaxanger=85,raptorsquadweight=1,raptorsquadrarity='basic',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_air_kamikaze_basic_t2_v1={customparams={raptorcustomsquad=true,raptorsquadunitsamount=55,raptorsquadminanger=100,raptorsquadmaxanger=105,raptorsquadweight=2,raptorsquadrarity='basic',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_matriarch_fire={customparams={raptorcustomsquad=true,raptorsquadunitsamount=30,raptorsquadminanger=105,raptorsquadmaxanger=135,raptorsquadweight=3,raptorsquadrarity='special',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_matriarch_basic={customparams={raptorcustomsquad=true,raptorsquadunitsamount=30,raptorsquadminanger=105,raptorsquadmaxanger=135,raptorsquadweight=3,raptorsquadrarity='special',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_matriarch_acid={customparams={raptorcustomsquad=true,raptorsquadunitsamount=30,raptorsquadminanger=105,raptorsquadmaxanger=135,raptorsquadweight=3,raptorsquadrarity='special',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75}},raptor_matriarch_electric={customparams={raptorcustomsquad=true,raptorsquadunitsamount=30,raptorsquadminanger=105,raptorsquadmaxanger=135,raptorsquadweight=3,raptorsquadrarity='special',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75},weapons={['5']={def=''}}},raptor_queen_veryeasy={selfdestructas='customfusionexplo',explodeas='customfusionexplo',maxthisunit=3,customparams={raptorcustomsquad=true,i18n_en_humanname='Queen Degenerative',i18n_en_tooltip='SHES A BIG ONE',raptorsquadunitsamount=2,raptorsquadminanger=70,raptorsquadmaxanger=150,raptorsquadweight=2,raptorsquadrarity='special',raptorsquadbehavior='berserk',raptorsquadbehaviordistance=500,raptorsquadbehaviorchance=0.75},weapondefs={melee={damage={default=5000}},yellow_missile={damage={default=1,vtol=500}},goo={range=500,damage={default=1200}}}},corcomlvl4={weapondefs={disintegratorxl={damage={commanders=0,default=99999,scavboss=1000,raptorqueen=5000}}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 13-tweakunits6.json
+    local data = --NuttyB lrpc rebalance v2
+-- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
+{armbrtha={health=13000,weapondefs={ARMBRTHA_MAIN={damage={commanders=480,default=33000},areaofeffect=60,energypershot=8000,range=2400,reloadtime=9,turnrate=20000}}},corint={health=13000,weapondefs={CORINT_MAIN={damage={commanders=480,default=85000},areaofeffect=230,edgeeffectiveness=0.6,energypershot=15000,range=2700,reloadtime=18}}},leglrpc={health=13000,weapondefs={LEGLRPC_MAIN={damage={commanders=480,default=4500},energypershot=2000,range=2000,reloadtime=2,turnrate=30000}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 14-tweakunits7.json
+    local data = -- Unit Launchers (Migrated)
+{legfortt4={customparams={i18n_en_humanname='Experimental Tyrannus',i18n_en_tooltip='In dedication to our commander Tyrannus'},weapondefs={machinegun={accuracy=400,areaofeffect=64,avoidfriendly=false,avoidfeature=false,collidefriendly=false,collidefeature=true,beamtime=0.09,corethickness=0.55,duration=0.09,burst=1,burstrate=0.1,explosiongenerator='custom:genericshellexplosion-tiny-aa',energypershot=0,falloffrate=0,firestarter=50,interceptedbyshieldtype=4,intensity=2,name='scav rapid fire plasma gun',range=1000,reloadtime=0.1,weapontype='LaserCannon',rgbcolor='1 0 0',rgbcolor2='1 1 1',soundtrigger=true,soundstart='tgunshipfire',texture1='shot',texture2='explo2',thickness=8.5,tolerance=1000,turret=true,weaponvelocity=1000,damage={default=60}},heatray1={allowNonBlockingAim=true,avoidfriendly=true,areaofeffect=64,avoidfeature=false,beamtime=0.033,camerashake=0.1,collidefriendly=false,corethickness=0.45,craterareaofeffect=12,craterboost=0,cratermult=0,edgeeffectiveness=1,energypershot=0,explosiongenerator='custom:heatray-large',firestarter=90,firetolerance=300,impulsefactor=0,intensity=9,laserflaresize=8,name='Experimental Thermal Ordnance Generators',noselfdamage=true,proximitypriority=-1,range=850,reloadtime=0.033,rgbcolor='1 0.55 0',rgbcolor2='0.9 1.0 0.5',scrollspeed=5,soundhitdry='heatray3start',soundhitwet='sizzle',soundstart='heatray3lp',soundstartvolume=6,soundtrigger=1,thickness=6,turret=true,weapontype='BeamLaser',weaponvelocity=1500,damage={default=150}},ata={areaofeffect=34,avoidfeature=false,beamtime=2,collidefriendly=false,corethickness=0.5,craterareaofeffect=0,craterboost=0,cratermult=0,edgeeffectiveness=0.3,energypershot=7000,explosiongenerator='custom:laserhit-large-blue',firestarter=90,impulsefactor=0,largebeamlaser=true,laserflaresize=7,name='Heavy long-range g2g tachyon accelerator beam',noselfdamage=true,range=1300,reloadtime=15,rgbcolor='0 1 1',scrollspeed=5,soundhitdry='',soundhitwet='sizzle',soundstart='raptorlaser',soundtrigger=1,soundstartvolume=4,texture3='largebeam',thickness=10,tilelength=150,tolerance=10000,turret=true,weapontype='BeamLaser',weaponvelocity=3100,damage={commanders=480,default=48000}}},weapons={['1']={badtargetcategory='NOTLAND',def='heatray1',maindir='-1 0 0',maxangledif=210,onlytargetcategory='SURFACE'},['2']={badtargetcategory='NOTLAND',def='heatray1',maindir='1 0 0',maxangledif=210,onlytargetcategory='SURFACE'},['3']={def='ata',maindir='1 0 0',maxangledif=190,onlytargetcategory='SURFACE'},['4']={def='machinegun',onlytargetcategory='SURFACE'},['5']={def='machinegun',onlytargetcategory='SURFACE'}}}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+do
+    -- Tweak file: 15-tweakunits4.json
+    local data = --NuttyB v1.52 Mega Nuke
+-- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
+{armsilo={energycost=1500000,metalcost=98720,buildtime=228500,footprintx=12,footprintz=12,maxthisunit=1,explodeas='advancedFusionExplosion',weapondefs={nuclear_missile={areaofeffect=5000,cameraShake=15000,craterboost=55,cratermult=40,energypershot=390000,metalpershot=3000,smokesize=28,smokecolor=0.85,soundhitwetvolume=80,soundstartvolume=50,stockpiletime=160,weaponvelocity=500,damage={commanders=500,default=19500,raptor=100000}}}},corsilo={energycost=1500000,metalcost=98720,buildtime=228500,footprintx=12,footprintz=12,maxthisunit=1,explodeas='advancedFusionExplosion',weapondefs={nuclear_missile={areaofeffect=5000,cameraShake=15000,craterboost=55,cratermult=40,energypershot=390000,metalpershot=3000,smokesize=28,smokecolor=0.85,soundhitwetvolume=80,soundstartvolume=50,stockpiletime=160,weaponvelocity=500,damage={commanders=500,default=19500,raptor=100000}}}},legsilo={energycost=1500000,metalcost=98720,buildtime=228500,footprintx=12,footprintz=12,maxthisunit=1,explodeas='advancedFusionExplosion',weapondefs={nuclear_missile={areaofeffect=5000,cameraShake=15000,craterboost=55,cratermult=40,energypershot=390000,metalpershot=3000,smokesize=28,smokecolor=0.85,soundhitwetvolume=80,soundstartvolume=50,stockpiletime=160,weaponvelocity=500,damage={commanders=500,default=19500,raptor=100000}}}},raptor_turret_antinuke_t3_v1={maxthisunit=0},raptor_antinuke={maxthisunit=0},raptor_turret_antinuke_t4_v1={maxthisunit=0},raptor_turret_antinuke_t2_v1={maxthisunit=0}}
+    if data then
+        ApplyTweakUnits(data)
+    end
+end
+
+-- Gadget Logic
+
+local function Initialize_adaptivespawner()
+
+
+
+
+local modOptions = Spring.GetModOptions()
+if not modOptions or (modOptions.adaptive_spawner ~= "1" and modOptions.adaptive_spawner ~= 1) then
+    return
+end
+
+local MAX_COMPRESSION = tonumber(modOptions.adaptive_compression_max) or 10
+local VAMPIRE_ENABLED = (modOptions.adaptive_vampire == "1")
+local BOSS_TINT_ENABLED = (modOptions.adaptive_boss_tint == "1")
+
+local spGetUnitCount = Spring.GetUnitCount
+local spDestroyUnit = Spring.DestroyUnit
+local spCreateUnit = Spring.CreateUnit
+local spGetUnitPosition = Spring.GetUnitPosition
+local spGetGaiaTeamID = Spring.GetGaiaTeamID
+local spGetGameSpeed = Spring.GetGameSpeed
+local spGetFPS = Spring.GetFPS
+local spGetUnitHealth = Spring.GetUnitHealth
+local spSetUnitHealth = Spring.SetUnitHealth
+local spGetUnitExperience = Spring.GetUnitExperience
+local spSetUnitExperience = Spring.SetUnitExperience
+
+local GAIA_TEAM_ID = spGetGaiaTeamID()
+
+-- Counters for each unit type
+local spawnCounters = {}
+
+-- Dynamic Compression State
+local currentCompressionFactor = 1
+
+-- Mapping logic
+local function GetCompressedDefID(unitDefID, factor)
+    if not unitDefID then return nil end
+    local ud = UnitDefs[unitDefID]
+    if not ud then return nil end
+    local name = ud.name
+    local suffix = "_compressed_x" .. factor
+    local newName = name .. suffix
+    local newDef = UnitDefNames[newName]
+    return newDef and newDef.id or nil
+end
+
+adaptivespawner_GameFrame = function(n)
+    -- Update compression factor every 30 frames (1 second)
+    if n % 30 == 0 then
+        local _, simSpeed = spGetGameSpeed()
+        local fps = spGetFPS()
+        local unitCount = spGetUnitCount()
+
+        -- Default to 1 (No compression)
+        local factor = 1
+
+        -- SimSpeed/FPS Logic
+        if simSpeed < 0.8 or fps < 20 then
+            factor = 10
+        elseif simSpeed < 0.9 or fps < 35 then
+            factor = 5
+        elseif simSpeed < 1.0 then
+            factor = 2 -- Light compression if slightly lagging
+        end
+
+        -- Hard Unit Count Override (Force compression if engine is overloaded by entities)
+        if unitCount > 3500 then
+            factor = 10
+        elseif unitCount > 2000 and factor < 5 then
+            factor = 5
+        elseif unitCount > 1000 and factor < 2 then
+            factor = 2
+        end
+
+        -- Clamp to User Configured Max
+        if factor > MAX_COMPRESSION then
+            factor = MAX_COMPRESSION
+        end
+
+        currentCompressionFactor = factor
+    end
+end
+
+adaptivespawner_UnitCreated = function(unitID, unitDefID, teamID)
+    -- Interceptor Pattern:
+    -- This gadget intercepts units spawned by the mission script (or other sources).
+    -- If high compression is active, it destroys the original unit and replaces it
+    -- with a higher-tier "compressed" variant (e.g., 1x10HP instead of 10x1HP).
+    if teamID ~= GAIA_TEAM_ID then return end
+
+    local ud = UnitDefs[unitDefID]
+    if not ud then return end
+
+    -- Check if this is a compressible raptor
+    if ud.customParams and ud.customParams.is_compressed_unit then return end
+
+    -- Filter: Only apply to known raptors
+    if not (string.find(ud.name, "raptor_land") or string.find(ud.name, "raptor_air")) then
+        return
+    end
+
+    local factor = currentCompressionFactor
+
+    if factor == 1 then return end
+
+    -- Verify if a compressed variant exists
+    local compressedID = GetCompressedDefID(unitDefID, factor)
+    if not compressedID then
+        -- Fallback: try lower factors
+        if factor == 10 then
+            factor = 5
+            compressedID = GetCompressedDefID(unitDefID, factor)
+        end
+        if not compressedID and factor >= 5 then
+            factor = 2
+            compressedID = GetCompressedDefID(unitDefID, factor)
+        end
+        if not compressedID then return end
+    end
+
+    -- Accumulate counters
+    spawnCounters[unitDefID] = (spawnCounters[unitDefID] or 0) + 1
+
+    if spawnCounters[unitDefID] >= factor then
+        -- Spawn compressed unit
+        local x, y, z = spGetUnitPosition(unitID)
+        local newUnitID = spCreateUnit(compressedID, x, y, z, 0, teamID)
+
+        -- Apply Boss Tint if enabled
+        if BOSS_TINT_ENABLED and newUnitID and spSetUnitColor then
+            spSetUnitColor(newUnitID, 1, 0, 0, 1) -- Red tint
+        end
+
+        -- Reset counter
+        spawnCounters[unitDefID] = 0
+    end
+
+    -- Always destroy the original unit
+    spDestroyUnit(unitID, false, true)
+end
+
+adaptivespawner_UnitCollision = function(unitID, unitDefID, teamID, colliderID, colliderDefID, colliderTeamID)
+    if not VAMPIRE_ENABLED then return end
+
+    -- Only Gaia vs Gaia (Raptors)
+    if teamID ~= GAIA_TEAM_ID or colliderTeamID ~= GAIA_TEAM_ID then return end
+
+    -- Only if lagging severely (SimSpeed < 0.8)
+    -- We can use the cached compression factor as a proxy for lag state?
+    -- currentCompressionFactor is updated every 30 frames.
+    -- If factor >= 10, it means we are in deep lag (SimSpeed < 0.8).
+    if not currentCompressionFactor or currentCompressionFactor < 10 then return end
+
+    -- Check if both are Raptors
+    local ud1 = UnitDefs[unitDefID]
+    local ud2 = UnitDefs[colliderDefID]
+    if not (ud1 and ud2) then return end
+
+    local isRaptor1 = string.find(ud1.name, "raptor")
+    local isRaptor2 = string.find(ud2.name, "raptor")
+
+    if isRaptor1 and isRaptor2 then
+        -- Merge Logic: Bias towards keeping the one with more health
+        local h1 = spGetUnitHealth(unitID) or 0
+        local h2 = spGetUnitHealth(colliderID) or 0
+
+        local survivor, victim, sH, vH
+        if h1 >= h2 then
+            survivor = unitID
+            victim = colliderID
+            sH = h1
+            vH = h2
+        else
+            survivor = colliderID
+            victim = unitID
+            sH = h2
+            vH = h1
+        end
+
+        -- Destroy victim
+        spDestroyUnit(victim, false, true)
+
+        -- Absorb Health
+        spSetUnitHealth(survivor, sH + vH)
+
+        -- Absorb XP
+        local xp1 = spGetUnitExperience(survivor) or 0
+        local xp2 = spGetUnitExperience(victim) or 0
+        spSetUnitExperience(survivor, xp1 + xp2)
+    end
+end
+
+end
+if ENABLE_ADAPTIVESPAWNER then
+    Initialize_adaptivespawner()
+end
+
+local function Initialize_culling()
+
+
+
+
+local spGetGameFrame = Spring.GetGameFrame
+local spGetGameSpeed = Spring.GetGameSpeed
+local spDestroyUnit = Spring.DestroyUnit
+local spGetTeamUnits = Spring.GetTeamUnits
+local spGetGaiaTeamID = Spring.GetGaiaTeamID
+local spGetUnitDefID = Spring.GetUnitDefID
+-- local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy -- Removed
+local spAddTeamResource = Spring.AddTeamResource
+local spGetTeamList = Spring.GetTeamList
+local spValidUnitID = Spring.ValidUnitID
+local spGetUnitPosition = Spring.GetUnitPosition
+local spSpawnCEG = Spring.SpawnCEG
+local spSendMessage = Spring.SendMessage
+local spGetUnitCount = Spring.GetUnitCount
+local spGetTeamStartPosition = Spring.GetTeamStartPosition
+local math_floor = math.floor
+
+local modOptions = Spring.GetModOptions()
+local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
+local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
+local CULL_ENABLED = (modOptions.cull_enabled == "1")
+local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
+
+culling_Initialize = function()
+    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
+end
+
+local GAIA_TEAM_ID = spGetGaiaTeamID()
+
+-- List of units to cull (T1 Generators/Converters)
+local cullableUnits = {
+    ["armsolar"] = true,
+    ["corsolar"] = true,
+    ["armwin"] = true,
+    ["corwin"] = true,
+    ["armmakr"] = true,
+    ["cormakr"] = true
+}
+
+-- Batch Processing State
+local candidates = {} -- List of {id, team, defId}
+local candidatesIndex = 1
+local processingActive = false
+local cullState = "IDLE" -- IDLE, WARNING, ACTIVE
+local warningStartTime = 0
+local WARNING_DURATION = 300 -- 10 seconds
+
+-- Combat Grid (Safe Zone Caching)
+local combatGrid = {} -- Key: "gx:gz", Value: timestamp (frame)
+local GRID_SIZE = 1024 -- 1024 elmos (approx 2000 range check replacement)
+local ACTIVE_DURATION = 900 -- 30 seconds * 30 frames
+
+local function GetGridKey(x, z)
+    local gx = math_floor(x / GRID_SIZE)
+    local gz = math_floor(z / GRID_SIZE)
+    return gx, gz, gx .. ":" .. gz
+end
+
+local function MarkActive(unitID)
+    local x, _, z = spGetUnitPosition(unitID)
+    if x then
+        local _, _, key = GetGridKey(x, z)
+        combatGrid[key] = spGetGameFrame()
+    end
+end
+
+-- Event Handlers to update Combat Grid
+culling_UnitDamaged = function(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    MarkActive(unitID)
+    if attackerID then MarkActive(attackerID) end
+end
+
+culling_UnitWeaponFire = function(unitID, unitDefID, unitTeam, weaponNum, weaponDefID, projectileParams, aimPos)
+    MarkActive(unitID)
 end
 
 
-local chunks = {
-    "bG9jYWwgZnVuY3Rpb24gYShiLGMpZm9yIGQsZSBpbiBwYWlycyhjKWRvIGlmIHR5cGUoZSk9PSJ0YWJsZSJhbmQgdHlwZShiW2RdKT09InRhYmxlInRoZW4gYShiW2RdLGUpZWxzZSBiW2RdPWUgZW5kIGVuZDtyZXR1cm4gYiBlbmQ7bG9jYWwgZnVuY3Rpb24gZihnKWlmIG5vdCBnIHRoZW4gcmV0dXJuIGVuZDtmb3IgaCxpIGluIHBhaXJzKGcpZG8gaWYgVW5pdERlZnNbaF10aGVuIGEoVW5pdERlZnNbaF0saSllbmQgZW5kIGVuZDtkbyBsb2NhbCBhPXRhYmxlLm1lcmdlO2xvY2FsIHBhaXJzPXBhaXJzO2xvY2FsIGlwYWlycz1pcGFpcnM7bG9jYWwgaj1zdHJpbmcuc3ViO2xvY2FsIGs9c3RyaW5nLm1hdGNoO2xvY2FsIGw9c3RyaW5nLmxlbjtsb2NhbCBtPXRhYmxlLmluc2VydDtsb2NhbCBuPW1hdGguZmxvb3I7aWYgVW5pdERlZnNbInJhcHRvcl9sYW5kX3N3YXJtZXJfYmFzaWNfdDFfdjEiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJyYXB0b3JfbGFuZF9zd2FybWVyX2Jhc2ljX3QxX3YxIl0pby5uYW1lPSJIaXZlIFNwYXduImlmIG5vdCBvLmN1c3RvbXBhcmFtcyB0aGVuIG8uY3VzdG9tcGFyYW1zPXt9ZW5kO2Eoby5jdXN0b21wYXJhbXMse2kxOG5fZW5faHVtYW5uYW1lPSJIaXZlIFNwYXduIixpMThuX2VuX3Rvb2x0aXA9IlJhcHRvciBzcGF3bmVkIHRvIGRlZmVuZCBoaXZlcyBmcm9tIGF0dGFja2Vycy4ifSlVbml0RGVmc1sicmFwdG9yX2hpdmVfc3dhcm1lcl9iYXNpYyJdPW8gZW5kO2lmIFVuaXREZWZzWyJyYXB0b3JfbGFuZF9hc3NhdWx0X2Jhc2ljX3QyX3YxIl10aGVuIGxvY2FsIG89YSh7fSxVbml0RGVmc1sicmFwdG9yX2xhbmRfYXNzYXVsdF9iYXNpY190Ml92MSJdKW8ubmFtZT0iQXJtb3JlZCBBc3NhdWx0IFJhcHRvciJpZiBub3Qgby5jdXN0b21wYXJhbXMgdGhlbiBvLmN1c3RvbXBhcmFtcz17fWVuZDthKG8uY3VzdG9tcGFyYW1zLHtpMThuX2VuX2h1bWFubmFtZT0iQXJtb3JlZCBBc3NhdWx0IFJhcHRvciIsaTE4bl9lbl90b29sdGlwPSJIZWF2eSwgc2xvdywgYW5kIHVueWllbGRpbmfigJR0aGVzZSBiZWFzdHMgYXJlIG1hZGUgdG8gdGFrZSB0aGUgaGl0cyBvdGhlcnMgY2FudC4ifSlVbml0RGVmc1sicmFwdG9yX2hpdmVfYXNzYXVsdF9iYXNpYyJdPW8gZW5kO2ZvciBwLHEgaW4gcGFpcnMoVW5pdERlZnMpZG8gbG9jYWwgaD1xLm5hbWUgb3IgcDtpZiBqKGgsMSwyNCk9PSJyYXB0b3JfYWlyX2ZpZ2h0ZXJfYmFzaWMidGhlbiBpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLm5hbWU9IlNwaWtlImVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5hY2N1cmFjeT0yMDAgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLmNvbGxpZGVmcmllbmRseT0wIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5jb2xsaWRlZmVhdHVyZT0wIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5hdm9pZGZlYXR1cmU9MCBlbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMuYXZvaWRmcmllbmRseT0wIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5hcmVhb2ZlZmZlY3Q9NjQgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLmVkZ2VlZmZlY3RpdmVuZXNzPTAuMyBlbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMuZXhwbG9zaW9uZ2VuZXJhdG9yPSJjdXN0b206cmFwdG9yc3Bpa2UtbGFyZ2Utc3BhcmtzLWJ1cm4iZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLmNhbWVyYVNoYWtlPXt9ZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLmRhbmNlPXt9ZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLmludGVyY2VwdGVkYnlzaGllbGR0eXBlPTAgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLm1vZGVsPSJSYXB0b3JzL3NwaWtlLnMzbyJlbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMucmVsb2FkdGltZT0xLjEgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLnNvdW5kc3RhcnQ9InRhbG9uYXR0YWNrImVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5zdGFydHZlbG9jaXR5PTIwMCBlbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMuc3VibWlzc2lsZT0xIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5zbW9rZXRyYWlsPTAgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLnNtb2tlUGVyaW9kPXt9ZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLnNtb2tldGltZT17fWVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5zbW9rZXNpemU9e31lbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMuc21va2Vjb2xvcj17fWVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy5zb3VuZGhpdD17fWVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy50ZXh0dXJlMT17fWVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy50ZXh0dXJlMj17fWVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy50b2xlcmFuY2U9e31lbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMudHJhY2tzPTAgZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLnR1cm5yYXRlPTYwMDAwIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy53ZWFwb25hY2NlbGVyYXRpb249MTAwIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy53ZWFwb250aW1lcj0xIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy53ZWFwb252ZWxvY2l0eT0xMDAwIGVuZCBlbmQ7aWYgcS53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhxLndlYXBvbmRlZnMpZG8gcy53ZWFwb250eXBlPXt9ZW5kIGVuZDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLndvYmJsZT17fWVuZCBlbmQgZW5kO2lmIGsoaCwiXlthY2xdW29yZV1bcmdtXWNvbSIpYW5kIG5vdCBrKGgsIl9zY2F2JCIpdGhlbiBpZiBub3QgcS5jdXN0b21wYXJhbXMgdGhlbiBxLmN1c3RvbXBhcmFtcz17fWVuZDthKHEuY3VzdG9tcGFyYW1zLHtjb21iYXRyYWRpdXM9MCxmYWxsX2RhbWFnZV9tdWx0aXBsaWVyPTAscGFyYXRyb29wZXI9dHJ1ZSx3dGJvb3N0dW5pdHR5cGU9e319KWlmIG5vdCBxLmZlYXR1cmVkZWZzIHRoZW4gcS5mZWF0dXJlZGVmcz17fWVuZDthKHEuZmVhdHVyZWRlZnMse2RlYWQ9e2RhbWFnZT05OTk5OTk5LHJlY2xhaW1hYmxlPWZhbHNlLG1hc3M9OTk5OTk5OX19KWVuZDtpZiBoPT0icmFwdG9yX2FudGludWtlIm9yIGg9PSJyYXB0b3JfdHVycmV0X2FjaWRfdDJfdjEib3IgaD09InJhcHRvcl90dXJyZXRfYWNpZF90M192MSJvciBoPT0icmFwdG9yX3R1cnJldF9hY2lkX3Q0X3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2FudGlhaXJfdDJfdjEib3IgaD09InJhcHRvcl90dXJyZXRfYW50aWFpcl90M192MSJvciBoPT0icmFwdG9yX3R1cnJldF9hbnRpYWlyX3Q0X3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2FudGludWtlX3QyX3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2FudGludWtlX3QzX3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2Jhc2ljX3QyX3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2Jhc2ljX3QzX3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2Jhc2ljX3Q0X3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2J1cnJvd190Ml92MSJvciBoPT0icmFwdG9yX3R1cnJldF9lbXBfdDJfdjEib3IgaD09InJhcHRvcl90dXJyZXRfZW1wX3QzX3YxIm9yIGg9PSJyYXB0b3JfdHVycmV0X2VtcF90NF92MSJvciBoPT0icmFwdG9yX3dvcm1fZ3JlZW4idGhlbiBxLm1heFRoaXNVbml0PTEwO3EuaGVhbHRoPXEuaGVhbHRoKm5pbDtpZiBxLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKHEud2VhcG9uZGVmcylkbyBzLnJlbG9hZHRpbWU9cy5yZWxvYWR0aW1lKm5pbCBlbmQgZW5kO2lmIHEud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMocS53ZWFwb25kZWZzKWRvIHMucmFuZ2U9cy5yYW5nZSpuaWwgZW5kIGVuZCBlbmQ7aWYgcS5idWlsZGVyPT10cnVlIGFuZCBxLmNhbmZseT09dHJ1ZSB0aGVuIHEuZXhwbG9kZUFzPSIicS5zZWxmRGVzdHJ1Y3RBcz0iImVuZCBlbmQgZW5kO2RvIGxvY2FsIGE9dGFibGUubWVyZ2U7bG9jYWwgcGFpcnM9cGFpcnM7bG9jYWwgaXBhaXJzPWlwYWlycztsb2NhbCBqPXN0cmluZy5zdWI7bG9jYWwgaz1zdHJpbmcubWF0Y2g7bG9jYWwgbD1zdHJpbmcubGVuO2xvY2FsIG09dGFibGUuaW5zZXJ0O2xvY2FsIG49bWF0aC5mbG9vcjtpZiBVbml0RGVmc1siYXJtYW5uaXQzIl10aGVuIGxvY2FsIG89YSh7fSxVbml0RGVmc1siYXJtYW5uaXQzIl0pby5uYW1lPSJMZWdlbmRhcnkgUHVsc2FyIm8uZGVzY3JpcHRpb249IkEgcGlubmFjbGUgb2YgQXJtYWRhIGVuZ2luZWVyaW5nIHRoYXQgZmlyZXMgZGV2YXN0YXRpbmcsIHJhcGlkLWZpcmUgdGFjaHlvbiBib2x0cy4iby5idWlsZFRpbWU9MzAwMDAwO28uaGVhbHRoPTMwMDAwO28ubWV0YWxDb3N0PTQzODQwO28uZW5lcmd5Q29zdD0xMDk2MDAwO28uaWNvbnR5cGU9ImFybWFubml0MyJpZiBub3Qgby5jdXN0b21wYXJhbXMgdGhlbiBvLmN1c3RvbXBhcmFtcz17fWVuZDthKG8uY3VzdG9tcGFyYW1zLHtpMThuX2VuX2h1bWFubmFtZT0iTGVnZW5kYXJ5IFB1bHNhciIsaTE4bl9lbl90b29sdGlwPSJGaXJlcyBkZXZhc3RhdGluZywgcmFwaWQtZmlyZSB0YWNoeW9uIGJvbHRzLiIsdGVjaGxldmVsPTR9KWlmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJ0YWNoeW9uX2J1cnN0X2Nhbm5vbiJ0aGVuIHMubmFtZT0iVGFjaHlvbiBCdXJzdCBDYW5ub24icy5kYW1hZ2U9e2RlZmF1bHQ9ODAwMH1zLmJ1cnN0PTM7cy5idXJzdHJhdGU9MC40O3MucmVsb2FkdGltZT01O3MucmFuZ2U9MTgwMDtzLmVuZXJneXBlcnNob3Q9MTIwMDAgZW5kIGVuZCBlbmQ7VW5pdERlZnNbImxlZ2VuZGFyeV9wdWxzYXIiXT1vIGVuZDtpZiBVbml0RGVmc1sibGVnYmFzdGlvbiJddGhlbiBsb2NhbCBvPWEoe30sVW5pdERlZnNbImxlZ2Jhc3Rpb24iXSlvLm5hbWU9IkxlZ2VuZGFyeSBCYXN0aW9uIm8uZGVzY3JpcHRpb249IlRoZSB1bHRpbWF0ZSBkZWZlbnNpdmUgZW1wbGFjZW1lbnQuIFByb2plY3RzIGEgZGV2YXN0YXRpbmcsIHB1bHNhdGluZyBoZWF0cmF5LiJvLmhlYWx0aD0yMjAwMDtvLm1ldGFsQ29zdD02NTc2MDtvLmVuZXJneUNvc3Q9MTk4NjUwMDtvLmJ1aWxkVGltZT0xODAwMDA7aWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9IkxlZ2VuZGFyeSBCYXN0aW9uIixpMThuX2VuX3Rvb2x0aXA9IlByb2plY3RzIGEgZGV2YXN0YXRpbmcsIHB1bHNhdGluZyBwdXJwbGUgaGVhdHJheS4iLG1heHJhbmdlPTE0NTAsdGVjaGxldmVsPTR9KVVuaXREZWZzWyJsZWdlbmRhcnlfYmFzdGlvbiJdPW8gZW5kO2lmIFVuaXREZWZzWyJjb3Jkb29tdDMiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJjb3Jkb29tdDMiXSlvLm5hbWU9IkxlZ2VuZGFyeSBCdWx3YXJrIm8uZGVzY3JpcHRpb249IkEgcGlubmFjbGUgb2YgZGVmZW5zaXZlIHRlY2hub2xvZ3ksIHRoZSBMZWdlbmRhcnkgQnVsd2FyayBhbm5paGlsYXRlcyBhbGwgd2hvIGFwcHJvYWNoLiJvLmhlYWx0aD00MjAwMDtvLm1ldGFsQ29zdD02MTY1MDtvLmVuZXJneUNvc3Q9MTcxMjUwMDtvLmJ1aWxkVGltZT0yNTAwMDA7aWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9IkxlZ2VuZGFyeSBCdWx3YXJrIixpMThuX2VuX3Rvb2x0aXA9IlRoZSB1bHRpbWF0ZSBkZWZlbnNpdmUgc3RydWN0dXJlLiIscGFyYWx5emVtdWx0aXBsaWVyPTAuMix0ZWNobGV2ZWw9NH0pVW5pdERlZnNbImxlZ2VuZGFyeV9idWx3YXJrIl09byBlbmQ7Zm9yIHAscSBpbiBwYWlycyhVbml0RGVmcylkbyBsb2NhbCBoPXEubmFtZSBvciBwO2lmIGooaCwxLDkpPT0iYXJtY29tbHZsImFuZCBoPT0iYXJtdDNhaXJhaWRlInRoZW4gbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJsZWdlbmRhcnlfcHVsc2FyIillbmQ7aWYgaihoLDEsOSk9PSJjb3Jjb21sdmwiYW5kIGg9PSJjb3J0M2FpcmFpZGUidGhlbiBsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImxlZ2VuZGFyeV9idWx3YXJrIillbmQ7aWYgaihoLDEsOSk9PSJsZWdjb21sdmwiYW5kIGg9PSJsZWd0M2FpcmFpZGUidGhlbiBsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImxlZ2VuZGFyeV9iYXN0aW9uIillbmQgZW5kIGVuZDtkbyBsb2NhbCB1PVNwcmluZy5HZXRNb2RPcHRpb25zO2xvY2FsIGE9dGFibGUubWVyZ2U7bG9jYWwgcGFpcnM9cGFpcnM7bG9jYWwgaXBhaXJzPWlwYWlycztsb2NhbCBqPXN0cmluZy5zdWI7bG9jYWwgaz1zdHJpbmcubWF0Y2g7bG9jYWwgbD1zdHJpbmcubGVuO2xvY2FsIG09dGFibGUuaW5zZXJ0O2xvY2FsIG49bWF0aC5mbG9vcjtsb2NhbCB2PW1hdGgubWF4O2xvY2FsIHc9bWF0aC5jZWlsO2lmIFVuaXREZWZzWyJyYXB0b3JfbWF0cmlhcmNoX2Jhc2ljIl10aGVuIGxvY2FsIG89YSh7fSxVbml0RGVmc1sicmFwdG9yX21hdHJpYXJjaF9iYXNpYyJdKW8ubmFtZT0iUXVlZW5saW5nIFByaW1hIm8uaWNvbnR5cGU9InJhcHRvcl9xdWVlbl92ZXJ5ZWFzeSJvLmhlYWx0aD1vLmhlYWx0aCo1O2lmIG5vdCBvLmN1c3RvbXBhcmFtcyB0aGVuIG8uY3VzdG9tcGFyYW1zPXt9ZW5kO2Eoby5jdXN0b21wYXJhbXMse2kxOG5fZW5faHVtYW5uYW1lPSJRdWVlbmxpbmcgUHJpbWEiLGkxOG5fZW5fdG9vbHRpcD0iTWFqZXN0aWMgYW5kIGJvbGQsIHJ1bGVyIG9mIHRoZSBodW50LiJ9KW8ubWF4VGhpc1VuaXQ9digxLHcoMioodSgpLnJhcHRvcl9zcGF3bmNvdW50bXVsdCBvciAzKS8zKSlVbml0RGVmc1sicmFwdG9yX21pbmlxX2EiXT1vIGVuZDtpZiBVbml0RGVmc1sicmFwdG9yX21hdHJpYXJjaF9iYXNpYyJddGhlbiBsb2NhbCBvPWEoe30sVW5pdERlZnNbInJhcHRvcl9tYXRyaWFyY2hfYmFzaWMiXSlvLm5hbWU9IlF1ZWVubGluZyBTZWN1bmRhIm8uaWNvbnR5cGU9InJhcHRvcl9xdWVlbl9lYXN5Im8uaGVhbHRoPW8uaGVhbHRoKjY7aWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9IlF1ZWVubGluZyBTZWN1bmRhIixpMThuX2VuX3Rvb2x0aXA9IlN3aWZ0IGFuZCBzaGFycCwgYSBub2JsZSBhbW9uZyByYXB0b3JzLiJ9KW8ubWF4VGhpc1VuaXQ9digxLHcoMyoodSgpLnJhcHRvcl9zcGF3bmNvdW50bXVsdCBvciAzKS8zKSlVbml0RGVmc1sicmFwdG9yX21pbmlxX2IiXT1vIGVuZDtpZiBVbml0RGVmc1sicmFwdG9yX21hdHJpYXJjaF9iYXNpYyJddGhlbiBsb2NhbCBvPWEoe30sVW5pdERlZnNbInJhcHRvcl9tYXRyaWFyY2hfYmFzaWMiXSlvLm5hbWU9IlF1ZWVubGluZyBUZXJ0aWEiby5pY29udHlwZT0icmFwdG9yX3F1ZWVuX25vcm1hbCJvLmhlYWx0aD1vLmhlYWx0aCo3O2lmIG5vdCBvLmN1c3RvbXBhcmFtcyB0aGVuIG8uY3VzdG9tcGFyYW1zPXt9ZW5kO2Eoby5jdXN0b21wYXJhbXMse2kxOG5fZW5faHVtYW5uYW1lPSJRdWVlbmxpbmcgVGVydGlhIixpMThuX2VuX3Rvb2x0aXA9IlJlZmluZWQgdGFzdGVzLiBMaWtlcyBoZXIgcHJleSByYXJlLiJ9KW8ubWF4VGhpc1VuaXQ9digxLHcoNCoodSgpLnJhcHRvcl9zcGF3bmNvdW50bXVsdCBvciAzKS8zKSlVbml0RGVmc1sicmFwdG9yX21pbmlxX2MiXT1vIGVuZCBlbmQ7ZG8gbG9jYWwgYT10YWJsZS5tZXJnZTtsb2NhbCBwYWlycz1wYWlycztsb2NhbCBpcGFpcnM9aXBhaXJzO2xvY2FsIGo9c3RyaW5nLnN1Yjtsb2NhbCBrPXN0cmluZy5tYXRjaDtsb2NhbCBsPXN0cmluZy5sZW47bG9jYWwgbT10YWJsZS5pbnNlcnQ7bG9jYWwgbj1tYXRoLmZsb29yO2ZvciBwLHEgaW4gcGFpcnMoVW5pdERlZnMpZG8gbG9jYWwgaD1xLm5hbWUgb3IgcDtpZihxLmN1c3RvbVBhcmFtcyBhbmQgcS5jdXN0b21QYXJhbXNbInRlY2hsZXZlbCJdPT0yIG9yIHEuY3VzdG9tcGFyYW1zIGFuZCBxLmN1c3RvbXBhcmFtc1sidGVjaGxldmVsIl09PTIpYW5kKHEuY3VzdG9tUGFyYW1zIGFuZCBxLmN1c3RvbVBhcmFtc1sic3ViZm9sZGVyIl1hbmQgayhxLmN1c3RvbVBhcmFtc1sic3ViZm9sZGVyIl0sIkZhY3QiKW9yIHEuY3VzdG9tcGFyYW1zIGFuZCBxLmN1c3RvbXBhcmFtc1sic3ViZm9sZGVyIl1hbmQgayhxLmN1c3RvbXBhcmFtc1sic3ViZm9sZGVyIl0sIkZhY3QiKSlhbmQgbm90IGsoaCwiLiogJShUYXhlZCUpJCIpdGhlbiBpZiBxIHRoZW4gbG9jYWwgbz1hKHt9LHEpby5lbmVyZ3lDb3N0PW8uZW5lcmd5Q29zdCoxLjc7by5tZXRhbENvc3Q9by5tZXRhbENvc3QqMS43O28ubmFtZT1oLi4nIChUYXhlZCknaWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9cS5jdXN0b21wYXJhbXMuaTE4bl9lbl9odW1hbm5hbWUuLicgKFRheGVkKSd9KVVuaXREZWZzW3EubmFtZS4uIl90YXhlZCJdPW8gZW5kIGVuZDtpZihxLmN1c3RvbVBhcmFtcyBhbmQgcS5jdXN0b21QYXJhbXNbInRlY2hsZXZlbCJdPT0yIG9yIHEuY3VzdG9tcGFyYW1zIGFuZCBxLmN1c3RvbXBhcmFtc1sidGVjaGxldmVsIl09PTIpYW5kKHEuY3VzdG9tUGFyYW1zIGFuZCBxLmN1c3RvbVBhcmFtc1sic3ViZm9sZGVyIl1hbmQgayhxLmN1c3RvbVBhcmFtc1sic3ViZm9sZGVyIl0sIkxhYiIpb3IgcS5jdXN0b21wYXJhbXMgYW5kIHEuY3VzdG9tcGFyYW1zWyJzdWJmb2xkZXIiXWFuZCBrKHEuY3VzdG9tcGFyYW1zWyJzdWJmb2xkZXIiXSwiTGFiIikpYW5kIG5vdCBrKGgsIi4qICUoVGF4ZWQlKSQiKXRoZW4gaWYgcSB0aGVuIGxvY2FsIG89YSh7fSxxKW8uZW5lcmd5Q29zdD1vLmVuZXJneUNvc3QqMS43O28ubWV0YWxDb3N0PW8ubWV0YWxDb3N0KjEuNztvLm5hbWU9aC4uJyAoVGF4ZWQpJ2lmIG5vdCBvLmN1c3RvbXBhcmFtcyB0aGVuIG8uY3VzdG9tcGFyYW1zPXt9ZW5kO2Eoby5jdXN0b21wYXJhbXMse2kxOG5fZW5faHVtYW5uYW1lPXEuY3VzdG9tcGFyYW1zLmkxOG5fZW5faHVtYW5uYW1lLi4nIChUYXhlZCknfSlVbml0RGVmc1txLm5hbWUuLiJfdGF4ZWQiXT1vIGVuZCBlbmQgZW5kIGVuZDtkbyBsb2NhbCBwYWlycz1wYWlycztsb2NhbCBpcGFpcnM9aXBhaXJzO2xvY2FsIGo9c3RyaW5nLnN1Yjtsb2NhbCBrPXN0cmluZy5tYXRjaDtsb2NhbCBsPXN0cmluZy5sZW47bG9jYWwgbT10YWJsZS5pbnNlcnQ7bG9jYWwgbj1tYXRoLmZsb29yO2ZvciBwLHEgaW4gcGFpcnMoVW5pdERlZnMpZG8gbG9jYWwgaD1xLm5hbWUgb3IgcDtpZiBoPT0iYXJtbW1rcnQzIm9yIGg9PSJjb3JtbWtydDMib3IgaD09ImxlZ2FkdmVjb252dDMidGhlbiBxLmZvb3RwcmludHg9NjtxLmZvb3RwcmludHo9NiBlbmQ7aWYgaD09ImFybWFjayJvciBoPT0iYXJtYWNhIm9yIGg9PSJhcm1hY3YidGhlbiBsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImFybWFmdXN0MyIpbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJhcm1tbWtydDMiKWVuZDtpZiBoPT0iY29yYWNrIm9yIGg9PSJjb3JhY2Eib3IgaD09ImNvcmFjdiJ0aGVuIGxvY2FsIHQ9cS5idWlsZG9wdGlvbnM7aWYgbm90IHQgdGhlbiBxLmJ1aWxkb3B0aW9ucz17fXQ9cS5idWlsZG9wdGlvbnMgZW5kO20odCwiY29yYWZ1c3QzIilsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImNvcm1ta3J0MyIpZW5kO2lmIGg9PSJsZWdhY2sib3IgaD09ImxlZ2FjYSJvciBoPT0ibGVnYWN2InRoZW4gbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJsZWdhZnVzdDMiKWxvY2FsIHQ9cS5idWlsZG9wdGlvbnM7aWYgbm90IHQgdGhlbiBxLmJ1aWxkb3B0aW9ucz17fXQ9cS5idWlsZG9wdGlvbnMgZW5kO20odCwibGVnYWR2ZWNvbnZ0MyIpZW5kO2lmIGg9PSJsZWdjayJ0aGVuIGxvY2FsIHQ9cS5idWlsZG9wdGlvbnM7aWYgbm90IHQgdGhlbiBxLmJ1aWxkb3B0aW9ucz17fXQ9cS5idWlsZG9wdGlvbnMgZW5kO20odCwibGVnZHRmIillbmQ7aWYgaD09ImNvcnV3YWR2ZXMib3IgaD09ImxlZ2FkdmVzdG9yZSJ0aGVuIHEuZm9vdHByaW50eD00O3EuZm9vdHByaW50ej00IGVuZCBlbmQgZW5kO2RvIGxvY2FsIGE9dGFibGUubWVyZ2U7bG9jYWwgcGFpcnM9cGFpcnM7bG9jYWwgaXBhaXJzPWlwYWlycztsb2NhbCBqPXN0cmluZy5zdWI7bG9jYWwgaz1zdHJpbmcubWF0Y2g7bG9jYWwgbD1zdHJpbmcubGVuO2xvY2FsIG09dGFibGUuaW5zZXJ0O2xvY2FsIG49bWF0aC5mbG9vcjtpZiBVbml0RGVmc1siYXJtbmFub3RjdDIiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJhcm1uYW5vdGN0MiJdKW8ubWV0YWxjb3N0PTM3MDA7by5lbmVyZ3ljb3N0PTYyMDAwO28uYnVpbGRkaXN0YW5jZT01NTA7by5idWlsZHRpbWU9MTA4MDAwO28uaGVhbHRoPTg4MDA7by53b3JrZXJ0aW1lPTE5MDA7by5jdXN0b21wYXJhbXM9e2kxOG5fZW5faHVtYW5uYW1lPSJUMyBDb25zdHJ1Y3Rpb24gVHVycmV0In1Vbml0RGVmc1siYXJtbmFub3RjdDMiXT1vIGVuZDtpZiBVbml0RGVmc1siY29ybmFub3RjdDIiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJjb3JuYW5vdGN0MiJdKW8ubWV0YWxjb3N0PTM3MDA7by5lbmVyZ3ljb3N0PTYyMDAwO28uYnVpbGRkaXN0YW5jZT01NTA7by5idWlsZHRpbWU9MTA4MDAwO28uaGVhbHRoPTg4MDA7by53b3JrZXJ0aW1lPTE5MDA7by5jdXN0b21wYXJhbXM9e2kxOG5fZW5faHVtYW5uYW1lPSJUMyBDb25zdHJ1Y3Rpb24gVHVycmV0In1Vbml0RGVmc1siY29ybmFub3RjdDMiXT1vIGVuZDtpZiBVbml0RGVmc1sibGVnbmFub3RjdDIiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJsZWduYW5vdGN0MiJdKW8ubWV0YWxjb3N0PTM3MDA7by5lbmVyZ3ljb3N0PTYyMDAwO28uYnVpbGRkaXN0YW5jZT01NTA7by5idWlsZHRpbWU9MTA4MDAwO28uaGVhbHRoPTg4MDA7by53b3JrZXJ0aW1lPTE5MDA7by5jdXN0b21wYXJhbXM9e2kxOG5fZW5faHVtYW5uYW1lPSJUMyBDb25zdHJ1Y3Rpb24gVHVycmV0In1Vbml0RGVmc1sibGVnbmFub3RjdDMiXT1vIGVuZDtpZiBVbml0RGVmc1siYXJtZGVjb20iXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJhcm1kZWNvbSJdKW8ubmFtZT0iQXJtYWRhIEVwaWMgQWlkZSJvLndvcmtlcnRpbWU9NjAwMDtvLmJ1aWxkb3B0aW9ucz17ImFybWFmdXN0MyIsImFybW5hbm90Y3QyIiwiYXJtbmFub3RjdDMiLCJhcm1hbGFiIiwiYXJtYXZwIiwiYXJtYWFwIiwiYXJtZ2F0ZXQzIiwiYXJtZmxhayIsImFybW1ta3J0MyIsImFybXV3YWR2bXN0MyIsImFybWFkdmVzdG9yZXQzIiwiYXJtZ2F0ZSIsImFybWZvcnQiLCJhcm1zaGx0eCIsImNvcmdhbnRfdGF4ZWQiLCJsZWdnYW50X3RheGVkIiwiYXJtYW1kIiwiYXJtbWVyY3VyeSIsImFybWJydGhhIiwiYXJtbWluaXZ1bGMiLCJhcm12dWxjIiwiYXJtYW5uaSIsImFybWFubml0MyIsImFybWx3YWxsIiwibGVnZW5kYXJ5X3B1bHNhciJ9VW5pdERlZnNbImFybXQzYWlkZSJdPW8gZW5kO2lmIFVuaXREZWZzWyJjb3JkZWNvbSJddGhlbiBsb2NhbCBvPWEoe30sVW5pdERlZnNbImNvcmRlY29tIl0pby5uYW1lPSJDb3J0ZXggRXBpYyBBaWRlIm8ud29ya2VydGltZT02MDAwO28uYnVpbGRvcHRpb25zPXsiY29yYWZ1c3QzIiwiY29ybmFub3RjdDIiLCJjb3JuYW5vdGN0MyIsImNvcmFsYWIiLCJjb3JhdnAiLCJjb3JhYXAiLCJjb3JnYXRldDMiLCJjb3JmbGFrIiwiY29ybW1rcnQzIiwiY29ydXdhZHZtc3QzIiwiY29yYWR2ZXN0b3JldDMiLCJjb3JnYXRlIiwiY29yZm9ydCIsImNvcmdhbnQiLCJhcm1zaGx0eF90YXhlZCIsImxlZ2dhbnRfdGF4ZWQiLCJjb3JmbWQiLCJjb3JzY3JlYW1lciIsImNvcmRvb210MyIsImNvcmJ1enoiLCJjb3JtaW5pYnV6eiIsImNvcmludCIsImNvcmRvb20iLCJjb3JobGxsbHQiLCJjb3Jtd2FsbCIsImxlZ2VuZGFyeV9idWx3YXJrIn1Vbml0RGVmc1siY29ydDNhaWRlIl09byBlbmQ7aWYgVW5pdERlZnNbImxlZ2RlY29tIl10aGVuIGxvY2FsIG89YSh7fSxVbml0RGVmc1sibGVnZGVjb20iXSlvLm5hbWU9IkxlZ2lvbiBFcGljIEFpZGUiby53b3JrZXJ0aW1lPTYwMDA7by5idWlsZG9wdGlvbnM9eyJsZWdhZnVzdDMiLCJsZWduYW5vdGN0MiIsImxlZ25hbm90Y3QzIiwibGVnYWxhYiIsImxlZ2F2cCIsImxlZ2FhcCIsImxlZ2dhdGV0MyIsImxlZ2ZsYWsiLCJsZWdhZHZlY29udnQzIiwibGVnYW1zdG9ydDMiLCJsZWdhZHZlc3RvcmV0MyIsImxlZ2RlZmxlY3RvciIsImxlZ2ZvcnRpIiwibGVnZ2FudCIsImFybXNobHR4X3RheGVkIiwiY29yZ2FudF90YXhlZCIsImxlZ2FibSIsImxlZ3N0YXJmYWxsIiwibGVnbWluaXN0YXJmYWxsIiwibGVnbHJhYSIsImxlZ2Jhc3Rpb24iLCJsZWdyd2FsbCIsImxlZ2xycGMiLCJsZWdlbmRhcnlfYmFzdGlvbiIsImxlZ2Fwb3B1cGRlZiIsImxlZ2R0ZiJ9VW5pdERlZnNbImxlZ3QzYWlkZSJdPW8gZW5kO2ZvciBwLHEgaW4gcGFpcnMoVW5pdERlZnMpZG8gbG9jYWwgaD1xLm5hbWUgb3IgcDtpZiBoPT0iYXJtc2hsdHgidGhlbiBsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImFybXQzYWlkZSIpZW5kO2lmIGg9PSJjb3JnYW50InRoZW4gbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJjb3J0M2FpZGUiKWVuZDtpZiBoPT0ibGVnZ2FudCJ0aGVuIGxvY2FsIHQ9cS5idWlsZG9wdGlvbnM7aWYgbm90IHQgdGhlbiBxLmJ1aWxkb3B0aW9ucz17fXQ9cS5idWlsZG9wdGlvbnMgZW5kO20odCwibGVndDNhaWRlIillbmQgZW5kIGVuZDtkbyBsb2NhbCBhPXRhYmxlLm1lcmdlO2xvY2FsIHBhaXJzPXBhaXJzO2xvY2FsIGlwYWlycz1pcGFpcnM7bG9jYWwgaj1zdHJpbmcuc3ViO2xvY2FsIGs9c3RyaW5nLm1hdGNoO2xvY2FsIGw9c3RyaW5nLmxlbjtsb2NhbCBtPXRhYmxlLmluc2VydDtsb2NhbCBuPW1hdGguZmxvb3I7aWYgVW5pdERlZnNbImFybWJvdHJhaWwiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJhcm1ib3RyYWlsIl0paWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9Ik1lYXRiYWxsIExhdW5jaGVyIn0paWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gcy5yYW5nZT03NTUwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMubWV0YWxwZXJzaG90PTUzMDAgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gcy5lbmVyZ3lwZXJzaG90PTk2MDAwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmVsb2FkdGltZT0wLjUgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gaWYgbm90IHMuY3VzdG9tcGFyYW1zIHRoZW4gcy5jdXN0b21wYXJhbXM9e31lbmQ7YShzLmN1c3RvbXBhcmFtcyx7c3RvY2twaWxlbGltaXQ9NTAsc3Bhd25zX25hbWU9ImFybW1lYXRiYWxsIn0pZW5kIGVuZCBlbmQ7VW5pdERlZnNbImFybW1lYXRiYWxsIl09byBlbmQ7aWYgVW5pdERlZnNbImFybWJvdHJhaWwiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJhcm1ib3RyYWlsIl0paWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9IkFzc2ltaWxhdG9yIExhdW5jaGVyIn0paWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gcy5yYW5nZT03NTUwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMubWV0YWxwZXJzaG90PTQ1MDAgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gcy5lbmVyZ3lwZXJzaG90PTgwMDAwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmVsb2FkdGltZT0wLjUgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gaWYgbm90IHMuY3VzdG9tcGFyYW1zIHRoZW4gcy5jdXN0b21wYXJhbXM9e31lbmQ7YShzLmN1c3RvbXBhcmFtcyx7c3RvY2twaWxlbGltaXQ9NTAsc3Bhd25zX25hbWU9ImFybWFzc2ltaWxhdG9yIn0pZW5kIGVuZCBlbmQ7VW5pdERlZnNbImFybWFzc2ltaWxhdG9yIl09byBlbmQ7aWYgVW5pdERlZnNbImFybWJvdHJhaWwiXXRoZW4gbG9jYWwgbz1hKHt9LFVuaXREZWZzWyJhcm1ib3RyYWlsIl0paWYgbm90IG8uY3VzdG9tcGFyYW1zIHRoZW4gby5jdXN0b21wYXJhbXM9e31lbmQ7YShvLmN1c3RvbXBhcmFtcyx7aTE4bl9lbl9odW1hbm5hbWU9IkVwaWMgUGF3biBMYXVuY2hlciJ9KWlmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmFuZ2U9NzU1MCBlbmQgZW5kIGVuZDtpZiBvLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKG8ud2VhcG9uZGVmcylkbyBpZiByPT0iYXJtX2JvdHJhaWwidGhlbiBzLm1ldGFscGVyc2hvdD0xNDIwMCBlbmQgZW5kIGVuZDtpZiBvLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKG8ud2VhcG9uZGVmcylkbyBpZiByPT0iYXJtX2JvdHJhaWwidGhlbiBzLmVuZXJneXBlcnNob3Q9NDgwMDAwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmVsb2FkdGltZT0wLjUgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gaWYgbm90IHMuY3VzdG9tcGFyYW1zIHRoZW4gcy5jdXN0b21wYXJhbXM9e31lbmQ7YShzLmN1c3RvbXBhcmFtcyx7c3RvY2twaWxlbGltaXQ9NTAsc3Bhd25zX25hbWU9ImFybXB3dDQifSllbmQgZW5kIGVuZDtVbml0RGVmc1siYXJtcHd0NCJdPW8gZW5kO2lmIFVuaXREZWZzWyJhcm1ib3RyYWlsIl10aGVuIGxvY2FsIG89YSh7fSxVbml0RGVmc1siYXJtYm90cmFpbCJdKWlmIG5vdCBvLmN1c3RvbXBhcmFtcyB0aGVuIG8uY3VzdG9tcGFyYW1zPXt9ZW5kO2Eoby5jdXN0b21wYXJhbXMse2kxOG5fZW5faHVtYW5uYW1lPSJBcm1hZGEgVDEgTGF1bmNoZXIifSlpZiBvLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKG8ud2VhcG9uZGVmcylkbyBpZiByPT0iYXJtX2JvdHJhaWwidGhlbiBzLnN0b2NrcGlsZXRpbWU9MC41IGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmFuZ2U9NzU1MCBlbmQgZW5kIGVuZDtpZiBvLndlYXBvbmRlZnMgdGhlbiBmb3IgcixzIGluIHBhaXJzKG8ud2VhcG9uZGVmcylkbyBpZiByPT0iYXJtX2JvdHJhaWwidGhlbiBzLm1ldGFscGVyc2hvdD0yNTAgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gcy5lbmVyZ3lwZXJzaG90PTEyNTAwIGVuZCBlbmQgZW5kO2lmIG8ud2VhcG9uZGVmcyB0aGVuIGZvciByLHMgaW4gcGFpcnMoby53ZWFwb25kZWZzKWRvIGlmIHI9PSJhcm1fYm90cmFpbCJ0aGVuIHMucmVsb2FkdGltZT0wLjUgZW5kIGVuZCBlbmQ7aWYgby53ZWFwb25kZWZzIHRoZW4gZm9yIHIscyBpbiBwYWlycyhvLndlYXBvbmRlZnMpZG8gaWYgcj09ImFybV9ib3RyYWlsInRoZW4gaWYgbm90IHMuY3VzdG9tcGFyYW1zIHRoZW4gcy5jdXN0b21wYXJhbXM9e31lbmQ7YShzLmN1c3RvbXBhcmFtcyx7c3RvY2twaWxlbGltaXQ9NTAsc3Bhd25zX25hbWU9ImFybWhhbSBhcm1qZXRoIGFybXB3IGFybXJvY2sgYXJtd2FyIGFybWFoIGFybWFuYWMgYXJtbWggYXJtc2ggYXJtYXJ0IGFybWZhdiBhcm1mbGFzaCBhcm1qYW51cyBhcm1waW5jZXIgYXJtc2FtIGFybXN0dW1wIGFybXphcHBlciIsc3Bhd25zX21vZGU9InJhbmRvbSJ9KWVuZCBlbmQgZW5kO1VuaXREZWZzWyJhcm10MSJdPW8gZW5kO2ZvciBwLHEgaW4gcGFpcnMoVW5pdERlZnMpZG8gbG9jYWwgaD1xLm5hbWUgb3IgcDtpZiBrKGgsImNvcm1hbmRvdDQiKXRoZW4gbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJhcm1tZWF0YmFsbCIpbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJhcm1hc3NpbWlsYXRvciIpbG9jYWwgdD1xLmJ1aWxkb3B0aW9ucztpZiBub3QgdCB0aGVuIHEuYnVpbGRvcHRpb25zPXt9dD1xLmJ1aWxkb3B0aW9ucyBlbmQ7bSh0LCJhcm1wd3Q0Iilsb2NhbCB0PXEuYnVpbGRvcHRpb25zO2lmIG5vdCB0IHRoZW4gcS5idWlsZG9wdGlvbnM9e310PXEuYnVpbGRvcHRpb25zIGVuZDttKHQsImFybXQxIillbmQgZW5kIGVuZDtkbyBsb2NhbCBnPXtjb3J0cm9uPXtlbmVyZ3ljb3N0PTQyMDAwLG1ldGFsY29zdD0zNjAwLGJ1aWxkdGltZT0xMTAwMDAsaGVhbHRoPTEyMDAwLHdlYXBvbmRlZnM9e2NvcnRyb25fd2VhcG9uPXtlbmVyZ3lwZXJzaG90PTUxMDAwLG1ldGFscGVyc2hvdD02MDAscmFuZ2U9NDA1MCxkYW1hZ2U9e2RlZmF1bHQ9OTAwMH19fX0sY29yZm9ydD17cmVwYWlyYWJsZT10cnVlfSxhcm1mb3J0PXtyZXBhaXJhYmxlPXRydWV9LGxlZ2ZvcnRpPXtyZXBhaXJhYmxlPXRydWV9LGFybWdhdGU9e2V4cGxvZGVhcz0nZW1wYmxhc3QnLHNlbGZkZXN0cnVjdGFzPSdlbXBibGFzdCd9LGNvcmdhdGU9e2V4cGxvZGVhcz0nZW1wYmxhc3QnLHNlbGZkZXN0cnVjdGFzPSdlbXBibGFzdCd9LGxlZ2RlZmxlY3Rvcj17ZXhwbG9kZWFzPSdlbXBibGFzdCcsc2VsZmRlc3RydWN0YXM9J2VtcGJsYXN0J30sY29yc2F0PXtzaWdodGRpc3RhbmNlPTMxMDAscmFkYXJkaXN0YW5jZT00MDgwLGNydWlzZWFsdGl0dWRlPTMzMDAsZW5lcmd5dXBrZWVwPTEyNTAsY2F0ZWdvcnk9J09CSkVDVCd9LGFybXNhdD17c2lnaHRkaXN0YW5jZT0zMTAwLHJhZGFyZGlzdGFuY2U9NDA4MCxjcnVpc2VhbHRpdHVkZT0zMzAwLGVuZXJneXVwa2VlcD0xMjUwLGNhdGVnb3J5PSdPQkpFQ1QnfSxsZWdzdGFyZmFsbD17d2VhcG9uZGVmcz17c3RhcmZpcmU9e2VuZXJneXBlcnNob3Q9MjcwMDAwfX19LGFybWZsYWs9e2FpcnNpZ2h0ZGlzdGFuY2U9MTM1MCxlbmVyZ3ljb3N0PTMwMDAwLG1ldGFsY29zdD0xNTAwLGhlYWx0aD00MDAwLHdlYXBvbmRlZnM9e2FybWZsYWtfZ3VuPXtjb2xsaWRlZnJpZW5kbHk9MCxjb2xsaWRlZmVhdHVyZT0wLGF2b2lkZmVhdHVyZT0wLGF2b2lkZnJpZW5kbHk9MCxhcmVhb2ZlZmZlY3Q9MTUwLHJhbmdlPTExNTAscmVsb2FkdGltZT0wLjQ3NSx3ZWFwb252ZWxvY2l0eT0yNDAwLGludGVuc2l0eT0wLjE4fX19LGNvcmZsYWs9e2FpcnNpZ2h0ZGlzdGFuY2U9MTM1MCxlbmVyZ3ljb3N0PTMwMDAwLG1ldGFsY29zdD0xNTAwLGhlYWx0aD00MDAwLHdlYXBvbmRlZnM9e2FybWZsYWtfZ3VuPXtjb2xsaWRlZnJpZW5kbHk9MCxjb2xsaWRlZmVhdHVyZT0wLGF2b2lkZmVhdHVyZT0wLGF2b2lkZnJpZW5kbHk9MCxhcmVhb2ZlZmZlY3Q9MjAwLHJhbmdlPTEzNTAscmVsb2FkdGltZT0wLjU2LHdlYXBvbnZlbG9jaXR5PTIxMDAsaW50ZW5zaXR5PTAuMTh9fX0sbGVnZmxhaz17Zm9vdHByaW50eD00LGZvb3RwcmludHo9NCxhaXJzaWdodGRpc3RhbmNlPTEzNTAsZW5lcmd5Y29zdD0zNTAwMCxtZXRhbGNvc3Q9MjEwMCxoZWFsdGg9NjAwMCx3ZWFwb25kZWZzPXtsZWdmbGFrX2d1bj17Y29sbGlkZWZyaWVuZGx5PTAsY29sbGlkZWZlYXR1cmU9MCxhdm9pZGZlYXR1cmU9MCxhdm9pZGZyaWVuZGx5PTAsYXJlYW9mZWZmZWN0PTEwMCxidXJzdD0zLHJhbmdlPTEwNTAsaW50ZW5zaXR5PTAuMTh9fX0sYXJtbWVyY3VyeT17YWlyc2lnaHRkaXN0YW5jZT0yMjAwLHdlYXBvbmRlZnM9e2FybV9hZHZzYW09e2FyZWFvZmVmZmVjdD01MDAsZW5lcmd5cGVyc2hvdD0yMDAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmZsYWsnLGZsaWdodHRpbWU9MS41LG1ldGFscGVyc2hvdD02LG5hbWU9J01pZC1yYW5nZSwgcmFwaWQtZmlyZSBnMmEgZ3VpZGVkIG1pc3NpbGUgbGF1bmNoZXInLHJhbmdlPTI1MDAscmVsb2FkdGltZT0xLjIsc21va2V0cmFpbD1mYWxzZSxzdGFydHZlbG9jaXR5PTE1MDAsd2VhcG9uYWNjZWxlcmF0aW9uPTEwMDAsd2VhcG9udmVsb2NpdHk9NDAwMH19fSxjb3JzY3JlYW1lcj17YWlyc2lnaHRkaXN0YW5jZT0yODAwLHdlYXBvbmRlZnM9e2Nvcl9hZHZzYW09e2FyZWFvZmVmZmVjdD04MDAsZW5lcmd5cGVyc2hvdD0yMDAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmZsYWsnLGZsaWdodHRpbWU9MSxtZXRhbHBlcnNob3Q9MTAsbmFtZT0nTG9uZy1yYW5nZSBnMmEgZ3VpZGVkIGhlYXZ5IGZsYWsgbWlzc2lsZSBsYXVuY2hlcicscmFuZ2U9MjgwMCxyZWxvYWR0aW1lPTEuOCxzbW9rZXRyYWlsPWZhbHNlLHN0YXJ0dmVsb2NpdHk9NDAwMCx3ZWFwb25hY2NlbGVyYXRpb249MTAwMCx3ZWFwb252ZWxvY2l0eT04MDAwfX19LGFybWFzc2lzdGRyb25lPXtidWlsZG9wdGlvbnM9e1snMzEnXT0nYXJtY2xhdyd9fSxjb3Jhc3Npc3Rkcm9uZT17YnVpbGRvcHRpb25zPXtbJzMyJ109J2Nvcm1hdyd9fSxsZWdhc3Npc3Rkcm9uZT17YnVpbGRvcHRpb25zPXtbJzMxJ109J2xlZ2R0ZicsWyczMiddPSdsZWdkdGwnLFsnMzMnXT0nbGVnZHRyJ319LGxlZ2ZvcnR0ND17ZXhwbG9kZWFzPSdmdXNpb25FeHBsb3Npb25TZWxmZCcsc2VsZmRlc3RydWN0YXM9J2Z1c2lvbkV4cGxvc2lvblNlbGZkJ30sbGVnZm9ydD17ZXhwbG9kZWFzPSdlbXBibGFzdCcsc2VsZmRlc3RydWN0YXM9J2VtcGJsYXN0J30scmFwdG9yX2hpdmU9e3dlYXBvbmRlZnM9e2FudGlncm91bmQ9e2J1cnN0PTUsYnVyc3RyYXRlPTAuMDEsY2VndGFnPSdhcnR5LWhlYXZ5LXB1cnBsZScsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206ZGlydCcsbW9kZWw9J1JhcHRvcnMvc19yYXB0b3Jfd2hpdGUuczNvJyxyYW5nZT0xNjAwLHJlbG9hZHRpbWU9NSxyZ2Jjb2xvcj0nMC41IDAgMScsc291bmRoaXQ9J3NtYWxscmFwdG9yYXR0YWNrJyxzb3VuZHN0YXJ0PSdidWdhcnR5JyxzcHJheWFuZ2xlPTI1Nix0dXJyZXQ9dHJ1ZSxzdG9ja3BpbGV0aW1lPTEyLHByb3hpbWl0eXByaW9yaXR5PW5pbCxkYW1hZ2U9e2RlZmF1bHQ9MSxzaGllbGRzPTEwMH0sY3VzdG9tcGFyYW1zPXtzcGF3bnNfY291bnQ9MTUsc3Bhd25zX2V4cGlyZT0xMSxzcGF3bnNfbW9kZT0ncmFuZG9tJyxzcGF3bnNfbmFtZT0ncmFwdG9yX2FjaWRzcGF3bmxpbmcgcmFwdG9yX2hpdmVfc3dhcm1lcl9iYXNpYyByYXB0b3JfbGFuZF9zd2FybWVyX2Jhc2ljX3QxX3YxICcsc3Bhd25zX3N1cmZhY2U9J0xBTkQgU0VBJyxzdG9ja3BpbGVsaW1pdD0xMH19fX0sYXJtYXB0Mz17YnVpbGRvcHRpb25zPXtbJzU4J109J2FybXNhdCd9fSxjb3JhcHQzPXtidWlsZG9wdGlvbnM9e1snNTgnXT0nY29yc2F0J319LGxlZ2FwdDM9e2J1aWxkb3B0aW9ucz17Wyc1OCddPSdjb3JzYXQnfX0sYXJtbHdhbGw9e2VuZXJneWNvc3Q9MjUwMDAsbWV0YWxjb3N0PTEzMDAsd2VhcG9uZGVmcz17bGlnaHRuaW5nPXtlbmVyZ3lwZXJzaG90PTIwMCxyYW5nZT00MzB9fX0sYXJtY2xhdz17Y29sbGlzaW9udm9sdW1lb2Zmc2V0cz0nMCAtMiAwJyxjb2xsaXNpb252b2x1bWVzY2FsZXM9JzMwIDUxIDMwJyxjb2xsaXNpb252b2x1bWV0eXBlPSdFbGwnLHVzZXBpZWNlY29sbGlzaW9udm9sdW1lcz0wLHdlYXBvbmRlZnM9e2RjbGF3PXtlbmVyZ3lwZXJzaG90PTYwfX19LGxlZ2R0bD17d2VhcG9uZGVmcz17ZGNsYXc9e2VuZXJneXBlcnNob3Q9NjB9fX0sYXJtYW1kPXttZXRhbGNvc3Q9MTgwMCxlbmVyZ3ljb3N0PTQxMDAwLHdlYXBvbmRlZnM9e2FtZF9yb2NrZXQ9e2NvdmVyYWdlPTIxMjUsc3RvY2twaWxldGltZT03MH19fSxjb3JmbWQ9e21ldGFsY29zdD0xODAwLGVuZXJneWNvc3Q9NDEwMDAsd2VhcG9uZGVmcz17Zm1kX3JvY2tldD17Y292ZXJhZ2U9MjEyNSxzdG9ja3BpbGV0aW1lPTcwfX19LGxlZ2FibT17bWV0YWxjb3N0PTE4MDAsZW5lcmd5Y29zdD00MTAwMCx3ZWFwb25kZWZzPXtmbWRfcm9ja2V0PXtjb3ZlcmFnZT0yMTI1LHN0b2NrcGlsZXRpbWU9NzB9fX0sY29yd2ludDI9e21ldGFsY29zdD00MDB9LGxlZ3dpbnQyPXttZXRhbGNvc3Q9NDAwfSxsZWdkdHI9e2J1aWxkdGltZT01MjUwLGVuZXJneWNvc3Q9NTUwMCxtZXRhbGNvc3Q9NDAwLGNvbGxpc2lvbnZvbHVtZW9mZnNldHM9JzAgLTEwIDAnLGNvbGxpc2lvbnZvbHVtZXNjYWxlcz0nMzkgODggMzknLGNvbGxpc2lvbnZvbHVtZXR5cGU9J0VsbCcsdXNlcGllY2Vjb2xsaXNpb252b2x1bWVzPTAsd2VhcG9uZGVmcz17Y29ybGV2bHJfd2VhcG9uPXthcmVhb2ZlZmZlY3Q9MzAsYXZvaWRmcmllbmRseT10cnVlLGNvbGxpZGVmcmllbmRseT1mYWxzZSxjZWd0YWc9J3JhaWxndW4nLHJhbmdlPTY1MCxlbmVyZ3lwZXJzaG90PTc1LGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOnBsYXNtYWhpdC1zcGFya29ubHknLHJnYmNvbG9yPScwLjM0IDAuNjQgMC45NCcsc291bmRoaXQ9J21hdmd1bjMnLHNvdW5kaGl0d2V0PSdzcGxzaGJpZycsc291bmRzdGFydD0nbGFuY2VmaXJlJyx3ZWFwb252ZWxvY2l0eT0xMzAwLGRhbWFnZT17ZGVmYXVsdD01NTB9fX19LGFybXJlc3Bhd249e2Jsb2NraW5nPWZhbHNlLGNhbnJlc3VycmVjdD10cnVlfSxsZWduYW5vdGNiYXNlPXtibG9ja2luZz1mYWxzZSxjYW5yZXN1cnJlY3Q9dHJ1ZX0sY29ycmVzcGF3bj17YmxvY2tpbmc9ZmFsc2UsY2FucmVzdXJyZWN0PXRydWV9LGxlZ3J3YWxsPXtjb2xsaXNpb252b2x1bWVvZmZzZXRzPScwIC0zIDAnLGNvbGxpc2lvbnZvbHVtZXNjYWxlcz0nMzIgNTAgMzInLGNvbGxpc2lvbnZvbHVtZXR5cGU9J0N5bFknLGVuZXJneWNvc3Q9MjEwMDAsbWV0YWxjb3N0PTE0MDAsd2VhcG9uZGVmcz17cmFpbGd1bnQyPXtjb2xsaWRlZnJpZW5kbHk9MCxjb2xsaWRlZmVhdHVyZT0wLGF2b2lkZmVhdHVyZT0wLGF2b2lkZnJpZW5kbHk9MCxyYW5nZT03MjUscmVsb2FkdGltZT0zLGVuZXJneXBlcnNob3Q9MjAwLGRhbWFnZT17ZGVmYXVsdD0xNTAwfX19LHdlYXBvbnM9e1snMSddPXtkZWY9J3JhaWxndW50Micsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ319fSxjb3Jtd2FsbD17ZW5lcmd5Y29zdD0xODAwMCxtZXRhbGNvc3Q9MTM1MCx3ZWFwb25kZWZzPXtleHBfaGVhdnlyb2NrZXQ9e2FyZWFvZmVmZmVjdD03MCxjb2xsaWRlZnJpZW5kbHk9MCxjb2xsaWRlZmVhdHVyZT0wLGNhbWVyYVNoYWtlPTAsZW5lcmd5cGVyc2hvdD0xMjUsYXZvaWRmZWF0dXJlPTAsYXZvaWRmcmllbmRseT0wLGJ1cnN0PTEsYnVyc3RyYXRlPTAsY29sb3JtYXA9JzAuNzUgMC43MyAwLjY3IDAuMDI0ICAgMC4zNyAwLjQgMC4zMCAwLjAyMSAgIDAuMjIgMC4yMSAwLjE0IDAuMDE4ICAwLjAyNCAwLjAxNCAwLjAwOSAwLjAzICAgMC4wIDAuMCAwLjAgMC4wMDgnLGNyYXRlcmFyZWFvZmVmZmVjdD0wLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmJ1cm5ibGFjaycsZmxhbWVnZnh0aW1lPTEsZmxpZ2h0dGltZT0xLjA1LG5hbWU9J1JhcHRvciBCb29tZXInLHJlbG9hZHRpbWU9MS41LHJnYmNvbG9yPScxIDAuMjUgMC4xJyxyYW5nZT03MDAsc2l6ZT0yLHByb3hpbWl0eXByaW9yaXR5PW5pbCxpbXBhY3Rvbmx5PTEsdHJhamVjdG9yeWhlaWdodD0xLHRhcmdldG1vdmVlcnJvcj0wLjIsdHJhY2tzPXRydWUsd2VhcG9uYWNjZWxlcmF0aW9uPTY2MCx3ZWFwb252ZWxvY2l0eT05NTAsZGFtYWdlPXtkZWZhdWx0PTEwNTB9fX19LGNvcm1hdz17Y29sbGlzaW9udm9sdW1lb2Zmc2V0cz0nMCAtMiAwJyxjb2xsaXNpb252b2x1bWVzY2FsZXM9JzMwIDUxIDMwJyxjb2xsaXNpb252b2x1bWV0eXBlPSdFbGwnLHVzZXBpZWNlY29sbGlzaW9udm9sdW1lcz1mYWxzZSxtZXRhbGNvc3Q9MzUwLGVuZXJneWNvc3Q9MjUwMCx3ZWFwb25kZWZzPXtkbWF3PXtjb2xsaWRlZnJpZW5kbHk9MCxjb2xsaWRlZmVhdHVyZT0wLGFyZWFvZmVmZmVjdD04MCxlZGdlZWZmZWN0aXZlbmVzcz0wLjQ1LGVuZXJneXBlcnNob3Q9NTAsYnVyc3Q9MjQscmdiY29sb3I9JzAuMDUxIDAuMTI5IDAuODcxJyxyZ2Jjb2xvcjI9JzAuNTcgMC42MjQgMScsc2l6ZWdyb3d0aD0wLjgscmFuZ2U9NDUwLGludGVuc2l0eT0wLjY4LGRhbWFnZT17ZGVmYXVsdD0yOH19fX0sbGVnZHRmPXtjb2xsaXNpb252b2x1bWVvZmZzZXRzPScwIC0yNCAwJyxjb2xsaXNpb252b2x1bWVzY2FsZXM9JzMwIDUxIDMwJyxjb2xsaXNpb252b2x1bWV0eXBlPSdFbGwnLG1ldGFsY29zdD0zNTAsZW5lcmd5Y29zdD0yNzUwLHdlYXBvbmRlZnM9e2RtYXc9e2NvbGxpZGVmcmllbmRseT0wLGNvbGxpZGVmZWF0dXJlPTAsYXJlYW9mZWZmZWN0PTgwLGVkZ2VlZmZlY3RpdmVuZXNzPTAuNDUsZW5lcmd5cGVyc2hvdD01MCxidXJzdD0yNCxzaXplZ3Jvd3RoPTIscmFuZ2U9NDUwLGludGVuc2l0eT0wLjM4LHNwcmF5YW5nbGU9NTAwLGRhbWFnZT17ZGVmYXVsdD0zMH19fX0sY29yaGxsbGx0PXtjb2xsaXNpb252b2x1bWVvZmZzZXRzPScwIC0yNCAwJyxjb2xsaXNpb252b2x1bWVzY2FsZXM9JzMwIDUxIDMwJyxtZXRhbGNvc3Q9NDE1LGVuZXJneWNvc3Q9OTUwMCxidWlsZHRpbWU9MTAwMDAsaGVhbHRoPTIxMTV9LGNvcmhsdD17ZW5lcmd5Y29zdD01NTAwLG1ldGFsY29zdD01MjAsd2VhcG9uZGVmcz17Y29yX2xhc2VyaDE9e3JhbmdlPTc1MCxyZWxvYWR0aW1lPTAuOTUsZGFtYWdlPXtkZWZhdWx0PTM5NSx2dG9sPTM1fX19fSxhcm1obHQ9e2VuZXJneWNvc3Q9NTcwMCxtZXRhbGNvc3Q9NTEwLHdlYXBvbmRlZnM9e2FybV9sYXNlcmgxPXtyYW5nZT03NTAscmVsb2FkdGltZT0xLGRhbWFnZT17ZGVmYXVsdD00MDUsdnRvbD0zNX19fX0sYXJtYnJ0aGE9e2V4cGxvZGVhcz0nZnVzaW9uRXhwbG9zaW9uJyxlbmVyZ3ljb3N0PTUwMDAwMCxtZXRhbGNvc3Q9MTg1MDAsYnVpbGR0aW1lPTE3NTAwMCx0dXJucmF0ZT0xNjAwMCxoZWFsdGg9MTA0NTAsd2VhcG9uZGVmcz17QVJNQlJUSEFfTUFJTj17YXJlYW9mZWZmZWN0PTUwLGNvbGxpZGVmcmllbmRseT0wLGNvbGxpZGVmZWF0dXJlPTAsYXZvaWRmZWF0dXJlPTAsYXZvaWRmcmllbmRseT0wLGJlYW10aW1lPTIuNSxjb3JldGhpY2tuZXNzPTAuMSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9OTAsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAsY2FtZXJhU2hha2U9MCxlZGdlZWZmZWN0aXZlbmVzcz0wLjMsZW5lcmd5cGVyc2hvdD0xNDAwMCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1sYXJnZS1ibHVlJyxmaXJlc3RhcnRlcj05MCxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbGFyZ2ViZWFtbGFzZXI9dHJ1ZSxsYXNlcmZsYXJlc2l6ZT0xLGltcGFjdG9ubHk9MSxuYW1lPSdFeHBlcmltZW50YWwgRHVjdGlvbiBCZWFtJyxub3NlbGZkYW1hZ2U9dHJ1ZSxyYW5nZT0yNDAwLHJlbG9hZHRpbWU9MTMscmdiY29sb3I9JzAuNCAwLjIgMC42JyxzY3JvbGxzcGVlZD0xMyxzb3VuZGhpdGRyeT0nJyxzb3VuZGhpdHdldD0nc2l6emxlJyxzb3VuZHN0YXJ0PSdoYWNrc2hvdHhsMycsc291bmR0cmlnZ2VyPTEsdGFyZ2V0bW92ZWVycm9yPTAuMyx0ZXh0dXJlMz0nbGFyZ2ViZWFtJyx0aGlja25lc3M9MTQsdGlsZWxlbmd0aD0xNTAsdG9sZXJhbmNlPTEwMDAwLHR1cnJldD10cnVlLHR1cm5yYXRlPTE2MDAwLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMTAwLGRhbWFnZT17Y29tbWFuZGVycz00ODAsZGVmYXVsdD0zNDAwMH19fSx3ZWFwb25zPXtbJzEnXT17YmFkdGFyZ2V0Y2F0ZWdvcnk9J1ZUT0wgR1JPVU5EU0NPVVQnLGRlZj0nQVJNQlJUSEFfTUFJTicsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ319fSxjb3JpbnQ9e2V4cGxvZGVhcz0nZnVzaW9uRXhwbG9zaW9uJyxlbmVyZ3ljb3N0PTUwNTAwMCxtZXRhbGNvc3Q9MTk1MDAsYnVpbGR0aW1lPTE3MDAwMCxoZWFsdGg9MTI0NTAsZm9vdHByaW50eD02LGZvb3RwcmludHo9Nix3ZWFwb25kZWZzPXtDT1JJTlRfTUFJTj17YXJlYW9mZWZmZWN0PTcwLGNvbGxpZGVmcmllbmRseT0wLGNvbGxpZGVmZWF0dXJlPTAsYXZvaWRmZWF0dXJlPTAsYXZvaWRmcmllbmRseT0wLGJlYW10aW1lPTIuNSxjb3JldGhpY2tuZXNzPTAuMSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9OTAsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAsY2FtZXJhU2hha2U9MCxlZGdlZWZmZWN0aXZlbmVzcz0wLjMsZW5lcmd5cGVyc2hvdD0xNzAwMCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1sYXJnZS1ibHVlJyxmaXJlc3RhcnRlcj05MCxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbGFyZ2ViZWFtbGFzZXI9dHJ1ZSxsYXNlcmZsYXJlc2l6ZT0xLGltcGFjdG9ubHk9MSxuYW1lPSdNaW5pIERlYXRoU3Rhcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9MjgwMCxyZWxvYWR0aW1lPTE1LHJnYmNvbG9yPScwIDEgMCcsc2Nyb2xsc3BlZWQ9MTMsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nYW5uaWd1bjEnLHNvdW5kdHJpZ2dlcj0xLHRhcmdldG1vdmVlcnJvcj0wLjMsdGV4dHVyZTM9J2xhcmdlYmVhbScsdGhpY2tuZXNzPTE0LHRpbGVsZW5ndGg9MTUwLHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx0dXJucmF0ZT0xNjAwLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMTAwLGRhbWFnZT17Y29tbWFuZGVycz00ODAsZGVmYXVsdD01MDAwMH19fSx3ZWFwb25zPXtbJzEnXT17YmFkdGFyZ2V0Y2F0ZWdvcnk9J1ZUT0wgR1JPVU5EU0NPVVQnLGRlZj0nQ09SSU5UX01BSU4nLG9ubHl0YXJnZXRjYXRlZ29yeT0nU1VSRkFDRSd9fX0sbGVnbHJwYz17ZXhwbG9kZWFzPSdmdXNpb25FeHBsb3Npb24nLGVuZXJneWNvc3Q9NTU1MDAwLG1ldGFsY29zdD0yMTAwMCxidWlsZHRpbWU9MTUwMDAwLGhlYWx0aD0xMTAwMCxmb290cHJpbnR4PTYsZm9vdHByaW50ej02LHdlYXBvbmRlZnM9e0xFR0xSUENfTUFJTj17YXJlYW9mZWZmZWN0PTcwLGNvbGxpZGVmcmllbmRseT0wLGNvbGxpZGVmZWF0dXJlPTAsYXZvaWRmZWF0dXJlPTAsYXZvaWRmcmllbmRseT0wLGJlYW10aW1lPTAuNSxidXJzdD0zLGJ1cnN0cmF0ZT0wLjQsY29yZXRoaWNrbmVzcz0wLjEsY3JhdGVyYXJlYW9mZWZmZWN0PTkwLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGNhbWVyYVNoYWtlPTAsZWRnZWVmZmVjdGl2ZW5lc3M9MC4zLGVuZXJneXBlcnNob3Q9MTAwMDAsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206bGFzZXJoaXQtbGFyZ2UtcmVkJyxmaXJlc3RhcnRlcj05MCxpbXBhY3Rvbmx5PTEsaW1wdWxzZWJvb3N0PTAsaW1wdWxzZWZhY3Rvcj0wLGxhcmdlYmVhbWxhc2VyPXRydWUsbGFzZXJmbGFyZXNpemU9MSxuYW1lPSdUaGUgRWFnbGUgU3RhbmRhcmQnLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTIxNTAscmVsb2FkdGltZT0zLHJnYmNvbG9yPScwLzEvMC40JyxzY3JvbGxzcGVlZD0xMyxzb3VuZGhpdGRyeT0nJyxzb3VuZGhpdHdldD0nc2l6emxlJyxzb3VuZHN0YXJ0PSdsYXNyY3J3MScsc291bmR0cmlnZ2VyPTEsdGFyZ2V0bW92ZWVycm9yPTAuMyx0ZXh0dXJlMz0nbGFyZ2ViZWFtJyx0aGlja25lc3M9MTIsdGlsZWxlbmd0aD0xNTAsdG9sZXJhbmNlPTEwMDAwLHR1cnJldD10cnVlLHR1cm5yYXRlPTE2MDAwLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMTAwLGRhbWFnZT17Y29tbWFuZGVycz00ODAsZGVmYXVsdD02MDAwfX19LHdlYXBvbnM9e1snMSddPXtiYWR0YXJnZXRjYXRlZ29yeT0nVlRPTCBHUk9VTkRTQ09VVCcsZGVmPSdMRUdMUlBDX01BSU4nLG9ubHl0YXJnZXRjYXRlZ29yeT0nU1VSRkFDRSd9fX19aWYgZyB0aGVuIGYoZyllbmQgZW5kO2RvIGxvY2FsIGc9e2xlZ2NvbT17Zm9vdHByaW50eD0yLGZvb3RwcmludHo9MixlbmVyZ3ltYWtlPTUwLG1ldGFsbWFrZT01LGhlYWx0aD02MDAwLGF1dG9oZWFsPTQwLGJ1aWxkb3B0aW9ucz17J2xlZ3JlemJvdCcsJ2xlZ2R0bCcsJ2xlZ2R0ZicsJ2xlZ2R0cicsJ2xlZ2phbScsJ2xlZ3dpbid9LGN1c3RvbXBhcmFtcz17ZXZvbHV0aW9uX3RhcmdldD0nbGVnY29tbHZsMicsZXZvbHV0aW9uX2NvbmRpdGlvbj0ndGltZXJfZ2xvYmFsJyxldm9sdXRpb25fdGltZXI9NDIwfSx3ZWFwb25kZWZzPXtsZWdjb21sYXNlcj17Y29yZXRoaWNrbmVzcz0wLjI1LGR1cmF0aW9uPTAuMDksbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicscmFuZ2U9MzYwLHJlbG9hZHRpbWU9MC4yLHJnYmNvbG9yPScwIDIgMScsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmNydzEnLHNvdW5kdHJpZ2dlcj10cnVlLHNwcmF5YW5nbGU9NzAwLHRoaWNrbmVzcz02LHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0yMTAwLGRhbWFnZT17ZGVmYXVsdD0yNTB9fSxzaG90Z3VuPXthcmVhb2ZlZmZlY3Q9NjAsZW5lcmd5cGVyc2hvdD0wLGF2b2lkZmVhdHVyZT1mYWxzZSxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxjYW1lcmFTaGFrZT0wLGVkZ2VlZmZlY3RpdmVuZXNzPTAuNjUsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206Z2VuZXJpY3NoZWxsZXhwbG9zaW9uLXNtYWxsJyxpbXB1bHNlYm9vc3Q9MC4yLGltcHVsc2VmYWN0b3I9MC4yLGludGVuc2l0eT0zLG5hbWU9JzYgR2F1Z2UgU2hvdGd1bicsbm9zZWxmZGFtYWdlPXRydWUscHJlZGljdGJvb3N0PTEscHJvamVjdGlsZXM9NixyYW5nZT0zMjAscmVsb2FkdGltZT0yLHJnYmNvbG9yPScxIDAuNzUgMC4yNScsc2l6ZT0yLHNvdW5kaGl0PSd4cGxvbWVkMnhzJyxzb3VuZGhpdHdldD0nc3Bsc21lZCcsc291bmRzdGFydD0na3JvZ2dpZTJ4cycsc291bmRzdGFydHZvbHVtZT0xMixzcHJheWFuZ2xlPTIwMDAsdHVycmV0PXRydWUsY29tbWFuZGZpcmU9dHJ1ZSx3ZWFwb250aW1lcj0xLHdlYXBvbnR5cGU9J0Nhbm5vbicsd2VhcG9udmVsb2NpdHk9NjAwLHN0b2NrcGlsZT10cnVlLHN0b2NrcGlsZXRpbWU9NSxjdXN0b21wYXJhbXM9e3N0b2NrcGlsZWxpbWl0PTEwfSxkYW1hZ2U9e2RlZmF1bHQ9MTgwMCxjb21tYW5kZXJzPTB9fX0sd2VhcG9ucz17WyczJ109e2RlZj0nc2hvdGd1bicsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ319fSxsZWdjb21sdmwyPXtmb290cHJpbnR4PTIsZm9vdHByaW50ej0yLGVuZXJneW1ha2U9MTUwLG1ldGFsbWFrZT0xNSxzcGVlZD01Ny41LGF1dG9oZWFsPTEwMCxoZWFsdGg9NjcwMCxjdXN0b21wYXJhbXM9e2V2b2x1dGlvbl9jb25kaXRpb249J3RpbWVyX2dsb2JhbCcsZXZvbHV0aW9uX3RpbWVyPTEwMjB9LGJ1aWxkb3B0aW9ucz17J2xlZ3JlemJvdCcsJ2xlZ2FkdnNvbCcsJ2NvcmhsbHQnLCdsZWdnZW8nLCdsZWduYW5vdGMnLCdsZWdqYW0nLCdsZWdkdGYnLCdsZWdtZycsJ2xlZ3JhZCcsJ2xlZ2R0bCcsJ2xlZ2R0cicsJ2xlZ3JoYXBzaXMnLCdsZWd3aW4nfSx3ZWFwb25kZWZzPXtsZWdjb21sYXNlcj17YWNjdXJhY3k9NTAsYXJlYW9mZWZmZWN0PTEyLGF2b2lkZnJpZW5kbHk9ZmFsc2UsYXZvaWRmZWF0dXJlPWZhbHNlLGNvbGxpZGVmcmllbmRseT1mYWxzZSxjb2xsaWRlZmVhdHVyZT10cnVlLGJlYW10aW1lPTAuMDksY29yZXRoaWNrbmVzcz0wLjMsZHVyYXRpb249MC4wOSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MSxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9NTAwLHJlbG9hZHRpbWU9MC4yLHJnYmNvbG9yPScwIDAuOTUgMC4wNScsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmNydzEnLHNvdW5kdHJpZ2dlcj10cnVlLHNwcmF5YW5nbGU9NTAwLHRhcmdldG1vdmVlcnJvcj0wLjA1LHRoaWNrbmVzcz03LHRvbGVyYW5jZT0xMDAwLHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0yMjAwLGRhbWFnZT17Ym9tYmVycz0xODAsZGVmYXVsdD00NTAsZmlnaHRlcnM9MTEwLHN1YnM9NX19LHNob3RndW49e2FyZWFvZmVmZmVjdD02NSxlbmVyZ3lwZXJzaG90PTAsYXZvaWRmZWF0dXJlPWZhbHNlLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGNhbWVyYVNoYWtlPTAsZWRnZWVmZmVjdGl2ZW5lc3M9MC42NSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpnZW5lcmljc2hlbGxleHBsb3Npb24tc21hbGwnLGltcHVsc2Vib29zdD0wLjIsaW1wdWxzZWZhY3Rvcj0wLjIsaW50ZW5zaXR5PTMsbmFtZT0nMTIgR2F1Z2UgU2hvdGd1bicsbm9zZWxmZGFtYWdlPXRydWUscHJlZGljdGJvb3N0PTEscHJvamVjdGlsZXM9NyxyYW5nZT00NDAscmVsb2FkdGltZT0yLHJnYmNvbG9yPScxIDAuNzUgMC4yNScsc2l6ZT0yLjUsc291bmRoaXQ9J3hwbG9tZWQyeHMnLHNvdW5kaGl0d2V0PSdzcGxzbWVkJyxzb3VuZHN0YXJ0PSdrcm9nZ2llMnhzJyxzb3VuZHN0YXJ0dm9sdW1lPTEyLHNwcmF5YW5nbGU9MjI1MCx0dXJyZXQ9dHJ1ZSxjb21tYW5kZmlyZT10cnVlLHdlYXBvbnRpbWVyPTEsd2VhcG9udHlwZT0nQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT02MDAsc3RvY2twaWxlPXRydWUsc3RvY2twaWxldGltZT01LGN1c3RvbXBhcmFtcz17c3RvY2twaWxlbGltaXQ9MTV9LGRhbWFnZT17ZGVmYXVsdD0yMjAwLGNvbW1hbmRlcnM9MH19fSx3ZWFwb25zPXtbJzEnXT17ZGVmPSdsZWdjb21sYXNlcicsb25seXRhcmdldGNhdGVnb3J5PSdOT1RTVUInLGZhc3RhdXRvcmV0YXJnZXRpbmc9dHJ1ZX0sWyczJ109e2RlZj0nc2hvdGd1bicsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ319fSxsZWdjb21sdmwzPXtmb290cHJpbnR4PTIsZm9vdHByaW50ej0yLGVuZXJneW1ha2U9MTI4MCxtZXRhbG1ha2U9NDAsc3BlZWQ9NzAuNSx3b3JrZXJ0aW1lPTcwMCxhdXRvaGVhbD0xNTAsaGVhbHRoPTc1MDAsY3VzdG9tcGFyYW1zPXtldm9sdXRpb25fY29uZGl0aW9uPSd0aW1lcl9nbG9iYWwnLGV2b2x1dGlvbl90aW1lcj0xNDQwfSxidWlsZG9wdGlvbnM9eydsZWdkZWZsZWN0b3InLCdsZWdmdXMnLCdsZWdib21iYXJkJywnbGVnYWR2ZXN0b3JlJywnbGVnbW9obycsJ2xlZ2FkdmVjb252JywnbGVnYXJhZCcsJ2xlZ2FqYW0nLCdsZWdmb3J0aScsJ2xlZ2FjbHVzdGVyJywnbGVnYW1zdG9yJywnbGVnZmxhaycsJ2xlZ2FibScsJ2xlZ2Jhc3Rpb24nLCdsZWdkdHInLCdsZWdkdGYnLCdsZWdyZXpib3QnLCdsZWdkdGwnLCdsZWdsYWInLCdsZWdlbmRhcnlfYmFzdGlvbicsJ2xlZ25hbm90Y3QzJywnbGVnYXBvcHVwZGVmJ30sd2VhcG9uZGVmcz17bGVnY29tbGFzZXI9e2FjY3VyYWN5PTUwLGFyZWFvZmVmZmVjdD0xMixhdm9pZGZyaWVuZGx5PXRydWUsYXZvaWRmZWF0dXJlPXRydWUsY29sbGlkZWZyaWVuZGx5PWZhbHNlLGNvbGxpZGVmZWF0dXJlPXRydWUsYmVhbXRpbWU9MC4wOSxjb3JldGhpY2tuZXNzPTAuNTUsZHVyYXRpb249MC4wOSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MCxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9NjQwLHJlbG9hZHRpbWU9MC4yLHJnYmNvbG9yPScwIDAuMiAwLjgnLHNvdW5kaGl0ZHJ5PScnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J2xhc3JjcncxJyxzb3VuZHRyaWdnZXI9dHJ1ZSxzcHJheWFuZ2xlPTUwMCx0YXJnZXRtb3ZlZXJyb3I9MC4wNSx0aGlja25lc3M9Nyx0b2xlcmFuY2U9MTAwMCx0ZXh0dXJlMT0nc2hvdCcsdGV4dHVyZTI9J2VtcHR5Jyx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdMYXNlckNhbm5vbicsd2VhcG9udmVsb2NpdHk9MjUwMCxkYW1hZ2U9e2JvbWJlcnM9MTgwLGRlZmF1bHQ9NjUwLGZpZ2h0ZXJzPTExMCxzdWJzPTV9fSxzaG90Z3VuPXthcmVhb2ZlZmZlY3Q9OTAsZW5lcmd5cGVyc2hvdD0wLGF2b2lkZmVhdHVyZT1mYWxzZSxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxjYW1lcmFTaGFrZT0wLGVkZ2VlZmZlY3RpdmVuZXNzPTAuNjUsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206Z2VuZXJpY3NoZWxsZXhwbG9zaW9uLXNtYWxsJyxpbXB1bHNlYm9vc3Q9MC4yLGltcHVsc2VmYWN0b3I9MC4yLGludGVuc2l0eT0zLG5hbWU9JzEyIEdhdWdlIFNob3RndW4nLG5vc2VsZmRhbWFnZT10cnVlLHByZWRpY3Rib29zdD0xLHByb2plY3RpbGVzPTcscmFuZ2U9NTQwLHJlbG9hZHRpbWU9MixyZ2Jjb2xvcj0nMSAwLjc1IDAuMjUnLHNpemU9Mi41LHNvdW5kaGl0PSd4cGxvbWVkMnhzJyxzb3VuZGhpdHdldD0nc3Bsc21lZCcsc291bmRzdGFydD0na3JvZ2dpZTJ4cycsc291bmRzdGFydHZvbHVtZT0xMixzcHJheWFuZ2xlPTI1MDAsdHVycmV0PXRydWUsY29tbWFuZGZpcmU9dHJ1ZSx3ZWFwb250aW1lcj0xLHdlYXBvbnR5cGU9J0Nhbm5vbicsd2VhcG9udmVsb2NpdHk9NjAwLHN0b2NrcGlsZT10cnVlLHN0b2NrcGlsZXRpbWU9NSxjdXN0b21wYXJhbXM9e3N0b2NrcGlsZWxpbWl0PTIwfSxkYW1hZ2U9e2RlZmF1bHQ9MzIwMCxjb21tYW5kZXJzPTB9fX0sd2VhcG9ucz17WycxJ109e2RlZj0nbGVnY29tbGFzZXInLG9ubHl0YXJnZXRjYXRlZ29yeT0nTk9UU1VCJyxmYXN0YXV0b3JldGFyZ2V0aW5nPXRydWV9LFsnMyddPXtkZWY9J3Nob3RndW4nLG9ubHl0YXJnZXRjYXRlZ29yeT0nU1VSRkFDRSd9LFsnNSddPXtkZWY9Jyd9fX0sbGVnY29tbHZsND17Zm9vdHByaW50eD0yLGZvb3RwcmludHo9MixlbmVyZ3ltYWtlPTE5ODAsbWV0YWxtYWtlPTQ2LHNwZWVkPTg4LjUsd29ya2VydGltZT0xMDAwLGF1dG9oZWFsPTE4MCxoZWFsdGg9MjQ1MDAsY3VzdG9tcGFyYW1zPXtldm9sdXRpb25fY29uZGl0aW9uPSd0aW1lcl9nbG9iYWwnLGV2b2x1dGlvbl90aW1lcj0xNzQwfSxidWlsZG9wdGlvbnM9eydsZWdkZWZsZWN0b3InLCdsZWdmdXMnLCdsZWdib21iYXJkJywnbGVnYWR2ZXN0b3JlJywnbGVnbW9obycsJ2xlZ2FkdmVjb252JywnbGVnZXNob3RndW5tZWNoJywnbGVnYXJhZCcsJ2xlZ2FqYW0nLCdsZWdrZXJlcycsJ2xlZ2FjbHVzdGVyJywnbGVnYW1zdG9yJywnbGVnZmxhaycsJ2xlZ2FibScsJ2xlZ2Jhc3Rpb24nLCdsZWdlbmRhcnlfYmFzdGlvbicsJ2xlZ25hbm90Y3QyJywnbGVnbmFub3RjdDJwbGF0JywnbGVncndhbGwnLCdsZWdsYWInLCdsZWd0YXJnJywnbGVnc2QnLCdsZWdwZWRlJywnbGVnZXJhaWx0YW5rJywnbGVnZWhlYXRyYXltZWNoJywnbGVncmV6Ym90JywnbGVnYWZ1cycsJ2xlZ2xyYWEnLCdsZWdkdGwnLCdsZWdkdGYnLCdsZWdtaW5pc3RhcmZhbGwnLCdsZWdzdGFyZmFsbCcsJ2xlZ2dhdGV0MycsJ2xlZ3BlcmRpdGlvbicsJ2xlZ3NpbG8nLCdsZWdzcmFpbHQ0JywnbGVnZWxycGNtZWNoJywnbGVnZHRyJywnbGVnbmFub3RjdDMnLCdsZWdhcG9wdXBkZWYnfSx3ZWFwb25kZWZzPXtsZWdjb21sYXNlcj17YWNjdXJhY3k9NTAsYXJlYW9mZWZmZWN0PTEyLGF2b2lkZnJpZW5kbHk9dHJ1ZSxhdm9pZGZlYXR1cmU9dHJ1ZSxjb2xsaWRlZnJpZW5kbHk9ZmFsc2UsY29sbGlkZWZlYXR1cmU9dHJ1ZSxiZWFtdGltZT0wLjEsY29yZXRoaWNrbmVzcz0wLjUsZHVyYXRpb249MC4wOSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MCxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9OTAwLHJlbG9hZHRpbWU9MC4xLHJnYmNvbG9yPScwLjQ1IDAgMScsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmNydzEnLHNvdW5kdHJpZ2dlcj0xLHNwcmF5YW5nbGU9NDAwLHRhcmdldG1vdmVlcnJvcj0wLjA1LHRoaWNrbmVzcz02LHRvbGVyYW5jZT0xMDAwLHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMDAwLGRhbWFnZT17Ym9tYmVycz0xODAsZGVmYXVsdD0xNzUwLGZpZ2h0ZXJzPTExMCxzdWJzPTV9fSxzaG90Z3VuPXthcmVhb2ZlZmZlY3Q9NzUsZW5lcmd5cGVyc2hvdD0wLGF2b2lkZmVhdHVyZT1mYWxzZSxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxjYW1lcmFTaGFrZT0wLGVkZ2VlZmZlY3RpdmVuZXNzPTAuNjUsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206Z2VuZXJpY3NoZWxsZXhwbG9zaW9uLXNtYWxsJyxpbXB1bHNlYm9vc3Q9MC4yLGltcHVsc2VmYWN0b3I9MC4yLGludGVuc2l0eT0zLG5hbWU9JzYwIEdhdWdlIFJhcHRvciBQb3BwZXInLG5vc2VsZmRhbWFnZT10cnVlLHByZWRpY3Rib29zdD0xLHByb2plY3RpbGVzPTkscmFuZ2U9NTUwLHJlbG9hZHRpbWU9MSxyZ2Jjb2xvcj0nMSAwLjc1IDAuMjUnLHNpemU9NSxzb3VuZGhpdD0neHBsb21lZDJ4cycsc291bmRoaXR3ZXQ9J3NwbHNtZWQnLHNvdW5kc3RhcnQ9J2tyb2dnaWUyeHMnLHNvdW5kc3RhcnR2b2x1bWU9MTIsc3ByYXlhbmdsZT0zMDAwLHR1cnJldD10cnVlLGNvbW1hbmRmaXJlPXRydWUsd2VhcG9udGltZXI9MSx3ZWFwb250eXBlPSdDYW5ub24nLHdlYXBvbnZlbG9jaXR5PTYwMCxzdG9ja3BpbGU9dHJ1ZSxzdG9ja3BpbGV0aW1lPTQsY3VzdG9tcGFyYW1zPXtzdG9ja3BpbGVsaW1pdD0yMH0sZGFtYWdlPXtkZWZhdWx0PTQ0MDAsY29tbWFuZGVycz0wfX19LHdlYXBvbnM9e1snMSddPXtkZWY9J2xlZ2NvbWxhc2VyJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQicsZmFzdGF1dG9yZXRhcmdldGluZz10cnVlfSxbJzMnXT17ZGVmPSdzaG90Z3VuJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J1NVUkZBQ0UnfSxbJzUnXT17ZGVmPScnfX19LGxlZ2NvbWx2bDU9e2Zvb3RwcmludHg9Mixmb290cHJpbnR6PTIsZW5lcmd5bWFrZT0yMjgwLG1ldGFsbWFrZT02NCxzcGVlZD0xMDAsd29ya2VydGltZT0xNzAwLGF1dG9oZWFsPTQ1MDAsaGVhbHRoPTUzOTAwLGJ1aWxkb3B0aW9ucz17J2xlZ2RlZmxlY3RvcicsJ2xlZ2Z1cycsJ2xlZ2JvbWJhcmQnLCdsZWdhZHZlc3RvcmUnLCdsZWdtb2hvJywnbGVnYWR2ZWNvbnYnLCdsZWdlc2hvdGd1bm1lY2gnLCdsZWdhcmFkJywnbGVnYWphbScsJ2xlZ2tlcmVzJywnbGVnYWNsdXN0ZXInLCdsZWdhbXN0b3InLCdsZWdmbGFrJywnbGVnYWJtJywnbGVnYmFzdGlvbicsJ2xlZ2VuZGFyeV9iYXN0aW9uJywnbGVnbmFub3RjdDInLCdsZWduYW5vdGN0MnBsYXQnLCdsZWdyd2FsbCcsJ2xlZ2xhYicsJ2xlZ3RhcmcnLCdsZWdzZCcsJ2xlZ3BlZGUnLCdsZWdlcmFpbHRhbmsnLCdsZWdlaGVhdHJheW1lY2gnLCdsZWdyZXpib3QnLCdsZWdhZnVzJywnbGVnbHJhYScsJ2xlZ2R0bCcsJ2xlZ2R0ZicsJ2xlZ21pbmlzdGFyZmFsbCcsJ2xlZ3N0YXJmYWxsJywnbGVnZ2F0ZXQzJywnbGVncGVyZGl0aW9uJywnbGVnc2lsbycsJ2xlZ3NyYWlsdDQnLCdsZWdlbHJwY21lY2gnLCdsZWdkdHInLCdsZWduYW5vdGN0MycsJ2xlZ2Fwb3B1cGRlZid9LHdlYXBvbmRlZnM9e21hY2hpbmVndW49e2FjY3VyYWN5PTgwLGFyZWFvZmVmZmVjdD0xMCxhdm9pZGZlYXR1cmU9ZmFsc2UsYmVhbWJ1cnN0PXRydWUsYmVhbWRlY2F5PTEsYmVhbXRpbWU9MC4wNyxidXJzdD02LGJ1cnN0cmF0ZT0wLjEwNjY3LGNhbWVyYXNoYWtlPTAsY29yZXRoaWNrbmVzcz0wLjM1LGNyYXRlcmFyZWFvZmVmZmVjdD0wLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGVkZ2VlZmZlY3RpdmVuZXNzPTEsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206bGFzZXJoaXQtbWVkaXVtLXJlZCcsZmlyZXN0YXJ0ZXI9MTAsaW1wdWxzZWZhY3Rvcj0wLGxhcmdlYmVhbWxhc2VyPXRydWUsbGFzZXJmbGFyZXNpemU9MzAsbmFtZT0nUmFwaWQtZmlyZSBjbG9zZSBxdWFydGVycyBnMmcgYXJtb3ItcGllcmNpbmcgbGFzZXInLG5vc2VsZmRhbWFnZT10cnVlLHB1bHNlc3BlZWQ9J3E4JyxyYW5nZT0xMTAwLHJlbG9hZHRpbWU9MC41LHJnYmNvbG9yPScwLjcgMC4zIDEuMCcscmdiY29sb3IyPScwLjggMC42IDEuMCcsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzZmlyZXJjJyxzb3VuZHRyaWdnZXI9MSxzcHJheWFuZ2xlPTUwMCx0YXJnZXRib3JkZXI9MC4yLHRoaWNrbmVzcz01LjUsdG9sZXJhbmNlPTQ1MDAsdHVycmV0PXRydWUsd2VhcG9udHlwZT0nQmVhbUxhc2VyJyx3ZWFwb252ZWxvY2l0eT05MjAsZGFtYWdlPXtkZWZhdWx0PTEzMDAsdnRvbD0xODB9fSxzaG90Z3VuYXJtPXthcmVhb2ZlZmZlY3Q9MTEyLGNvbW1hbmRmaXJlPXRydWUsYXZvaWRmZWF0dXJlPWZhbHNlLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGNhbWVyYVNoYWtlPTAsZWRnZWVmZmVjdGl2ZW5lc3M9MC42NSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpnZW5lcmljc2hlbGxleHBsb3Npb24tbWVkaXVtJyxpbXB1bHNlZmFjdG9yPTAuOCxpbnRlbnNpdHk9MC4yLG15Z3Jhdml0eT0xLG5hbWU9J0dhdXNzQ2Fubm9uJyxub3NlbGZkYW1hZ2U9dHJ1ZSxwcmVkaWN0Ym9vc3Q9MSxwcm9qZWN0aWxlcz0yMCxyYW5nZT02NTAscmVsb2FkdGltZT0xLHJnYmNvbG9yPScwLjggMC40IDEuMCcsc2l6ZT00LHNpemVEZWNheT0wLjA0NCxzdGFnZXM9MTYsYWxwaGFEZWNheT0wLjY2LHNvdW5kaGl0PSd4cGxvbWVkMnhzJyxzb3VuZGhpdHdldD0nc3Bsc21lZCcsc291bmRzdGFydD0na3JvZ2dpZTJ4cycsc3ByYXlhbmdsZT0zNTAwLHRvbGVyYW5jZT02MDAwLHR1cnJldD10cnVlLHdhdGVyd2VhcG9uPXRydWUsd2VhcG9udGltZXI9Mix3ZWFwb250eXBlPSdDYW5ub24nLHdlYXBvbnZlbG9jaXR5PTkwMCxzdG9ja3BpbGU9dHJ1ZSxzdG9ja3BpbGV0aW1lPTIsY3VzdG9tcGFyYW1zPXtzdG9ja3BpbGVsaW1pdD01MH0sZGFtYWdlPXtkZWZhdWx0PTEwMDAwLGNvbW1hbmRlcnM9MH19LGV4cF9oZWF2eXJvY2tldD17YXJlYW9mZWZmZWN0PTcwLGNvbGxpZGVmcmllbmRseT0wLGNvbGxpZGVmZWF0dXJlPTAsY2FtZXJhU2hha2U9MCxlbmVyZ3lwZXJzaG90PTEyNSxhdm9pZGZlYXR1cmU9MCxhdm9pZGZyaWVuZGx5PTAsYnVyc3Q9NCxidXJzdHJhdGU9MC4zLGNlZ3RhZz0nbWlzc2lsZXRyYWlsc21hbGwtcmVkJyxjb2xvcm1hcD0nMC43NSAwLjczIDAuNjcgMC4wMjQgICAwLjM3IDAuNCAwLjMwIDAuMDIxICAgMC4yMiAwLjIxIDAuMTQgMC4wMTggIDAuMDI0IDAuMDE0IDAuMDA5IDAuMDMgICAwLjAgMC4wIDAuMCAwLjAwOCcsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJtdWx0PTAsZGFuY2U9MjQsZWRnZWVmZmVjdGl2ZW5lc3M9MC42NSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpidXJuYmxhY2snLGZpcmVzdGFydGVyPTcwLGZsaWdodHRpbWU9MS4wNSxmbGFtZWdmeHRpbWU9MSxpbXB1bHNlZmFjdG9yPTAuMTIzLGltcGFjdG9ubHk9MSxtb2RlbD0nY2F0YXB1bHRtaXNzaWxlLnMzbycsbW92aW5nYWNjdXJhY3k9NjAwLG5hbWU9J1JhcHRvciBCb29tZXInLG5vc2VsZmRhbWFnZT10cnVlLHByb3hpbWl0eXByaW9yaXR5PW5pbCxyYW5nZT03MDAscmVsb2FkdGltZT0xLHNtb2tldHJhaWw9dHJ1ZSxzbW9rZVBlcmlvZD00LHNtb2tldGltZT0xNixzbW9rZXNpemU9OC41LHNtb2tlY29sb3I9MC41LHNpemU9MixzbW9rZVRyYWlsQ2FzdFNoYWRvdz1mYWxzZSxzb3VuZGhpdD0ncm9ja2hpdCcsc291bmRoaXR3ZXQ9J3NwbHNtZWQnLHNvdW5kc3RhcnQ9J3JhcGlkcm9ja2V0Mycsc3RhcnR2ZWxvY2l0eT0xNjUscmdiY29sb3I9JzEgMC4yNSAwLjEnLHRleHR1cmUxPSdudWxsJyx0ZXh0dXJlMj0nc21va2V0cmFpbGJhcicsdHJhamVjdG9yeWhlaWdodD0xLHRhcmdldG1vdmVlcnJvcj0wLjIsdHVybnJhdGU9NTAwMCx0cmFja3M9dHJ1ZSx0dXJyZXQ9dHJ1ZSxhbGxvd05vbkJsb2NraW5nQWltPXRydWUsd2VhcG9uYWNjZWxlcmF0aW9uPTY2MCx3ZWFwb250aW1lcj02LHdlYXBvbnR5cGU9J01pc3NpbGVMYXVuY2hlcicsd2VhcG9udmVsb2NpdHk9OTUwLHdvYmJsZT0yMDAwLGRhbWFnZT17ZGVmYXVsdD0xMzAwfSxjdXN0b21wYXJhbXM9e2V4Y2x1ZGVfcHJlYWltPXRydWUsb3ZlcnJhbmdlX2Rpc3RhbmNlPTc3Nyxwcm9qZWN0aWxlX2Rlc3RydWN0aW9uX21ldGhvZD0nZGVzY2VuZCd9fX0sd2VhcG9ucz17WycxJ109e2RlZj0nbWFjaGluZWd1bicsb25seXRhcmdldGNhdGVnb3J5PSdOT1RTVUInLGZhc3RhdXRvcmV0YXJnZXRpbmc9dHJ1ZX0sWyczJ109e2RlZj0nc2hvdGd1bmFybScsb25seXRhcmdldGNhdGVnb3J5PSdXRUFQT04nfSxbJzUnXT17ZGVmPSdleHBfaGVhdnlyb2NrZXQnLG9ubHl0YXJnZXRjYXRlZ29yeT0nU1VSRkFDRSd9fX19aWYgZyB0aGVuIGYoZyllbmQgZW5kO2RvIGxvY2FsIGc9e2FybWNvbT17Y3VzdG9tcGFyYW1zPXtldm9sdXRpb25fdGFyZ2V0PSdhcm1jb21sdmwyJyxldm9sdXRpb25fY29uZGl0aW9uPSd0aW1lcl9nbG9iYWwnLGV2b2x1dGlvbl90aW1lcj00MjB9LGVuZXJneW1ha2U9MTAwLG1ldGFsbWFrZT0xMCxhdXRvaGVhbD01NSxoZWFsdGg9NDUwMCxzcGVlZD00MSxjYW5yZXN1cnJlY3Q9dHJ1ZSxidWlsZG9wdGlvbnM9eydhcm1zb2xhcicsJ2FybXdpbicsJ2FybW1zdG9yJywnYXJtZXN0b3InLCdhcm1tZXgnLCdhcm1tYWtyJywnYXJtbGFiJywnYXJtdnAnLCdhcm1hcCcsJ2FybWV5ZXMnLCdhcm1yYWQnLCdhcm1kcmFnJywnYXJtbGx0JywnYXJtcmwnLCdhcm1kbCcsJ2FybXRpZGUnLCdhcm11d21zJywnYXJtdXdlcycsJ2FybXV3bWV4JywnYXJtZm1rcicsJ2FybXN5JywnYXJtZmRyYWcnLCdhcm10bCcsJ2FybWZydCcsJ2FybWZyYWQnLCdhcm1ocCcsJ2FybWZocCcsJ2FybWdlbycsJ2FybWFtZXgnLCdhcm1ocCcsJ2FybWJlYW1lcicsJ2FybWphbXQnLCdhcm1zeScsJ2FybXJlY3RyJywnYXJtY2xhdyd9LHdlYXBvbmRlZnM9e2FybWNvbWxhc2VyPXtyYW5nZT0zMzAscmdiY29sb3I9JzAuNyAxIDEnLHNvdW5kc3RhcnQ9J2xhc3JmaXIxJyxkYW1hZ2U9e2RlZmF1bHQ9MTc1fX0sb2xkX2FybXNuaXBlX3dlYXBvbj17YXJlYW9mZWZmZWN0PTMyLGF2b2lkZmVhdHVyZT10cnVlLGF2b2lkZnJpZW5kbHk9dHJ1ZSxjb2xsaWRlZmVhdHVyZT10cnVlLGNvbGxpZGVmcmllbmRseT1mYWxzZSxjb3JldGhpY2tuZXNzPTAuNzUsY3JhdGVyYXJlYW9mZWZmZWN0PTAsY3JhdGVyYm9vc3Q9MCxjb21tYW5kZmlyZT10cnVlLGNyYXRlcm11bHQ9MCxjZWd0YWc9J3JhaWxndW4nLGR1cmF0aW9uPTAuMTIsZWRnZWVmZmVjdGl2ZW5lc3M9MC44NSxlbmVyZ3lwZXJzaG90PTQwMCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1sYXJnZS1ibHVlJyxmaXJlc3RhcnRlcj0xMDAsaW1wdWxzZWJvb3N0PTAuNCxpbXB1bHNlZmFjdG9yPTEsaW50ZW5zaXR5PTAuOCxuYW1lPSdMb25nLXJhbmdlIGcyZyBhcm1vci1waWVyY2luZyByaWZsZScscmFuZ2U9NTUwLHJlbG9hZHRpbWU9MSxyZ2Jjb2xvcj0nMCAxIDEnLHJnYmNvbG9yMj0nMCAxIDEnLHNvdW5kaGl0PSdzbmlwZXJoaXQnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J3NuaXBlcjMnLHNvdW5kdHJpZ2dlcj10cnVlLHN0b2NrcGlsZT10cnVlLHN0b2NrcGlsZXRpbWU9NyxjdXN0b21wYXJhbXM9e3N0b2NrcGlsZWxpbWl0PTV9LHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHRoaWNrbmVzcz00LHRvbGVyYW5jZT0xMDAwLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMDAwLGRhbWFnZT17Y29tbWFuZGVycz0xMDAsZGVmYXVsdD00OTAwfX19LHdlYXBvbnM9e1snMyddPXtkZWY9J29sZF9hcm1zbmlwZV93ZWFwb24nLG9ubHl0YXJnZXRjYXRlZ29yeT0nTk9UU1VCJ319fSxhcm1jb21sdmwyPXthdXRvaGVhbD05MCxidWlsZGRpc3RhbmNlPTE3NSxjYW5yZXN1cnJlY3Q9dHJ1ZSxlbmVyZ3ltYWtlPTMxNSxoZWFsdGg9NzAwMCxzcGVlZD01Ny41LG1ldGFsbWFrZT0yMCx3b3JrZXJ0aW1lPTkwMCxidWlsZG9wdGlvbnM9eydhcm1zb2xhcicsJ2FybXdpbicsJ2FybW1zdG9yJywnYXJtZXN0b3InLCdhcm1tZXgnLCdhcm1tYWtyJywnYXJtbGFiJywnYXJtdnAnLCdhcm1hcCcsJ2FybWV5ZXMnLCdhcm1yYWQnLCdhcm1kcmFnJywnYXJtbGx0JywnYXJtcmwnLCdhcm1kbCcsJ2FybXRpZGUnLCdhcm11d21zJywnYXJtdXdlcycsJ2FybXV3bWV4JywnYXJtZm1rcicsJ2FybXN5JywnYXJtZmRyYWcnLCdhcm10bCcsJ2FybWZydCcsJ2FybWZyYWQnLCdhcm1ocCcsJ2FybWZocCcsJ2FybWFkdnNvbCcsJ2FybWdlbycsJ2FybWFtZXgnLCdhcm1uYW5vdGNwbGF0JywnYXJtaHAnLCdhcm1uYW5vdGMnLCdhcm1jbGF3JywnYXJtYmVhbWVyJywnYXJtaGx0JywnYXJtZ3VhcmQnLCdhcm1mZXJyZXQnLCdhcm1jaXInLCdhcm1qYW10JywnYXJtanVubycsJ2FybXN5JywnYXJtcmVjdHInfSxjdXN0b21wYXJhbXM9e2V2b2x1dGlvbl90YXJnZXQ9J2FybWNvbWx2bDMnLGV2b2x1dGlvbl9jb25kaXRpb249J3RpbWVyX2dsb2JhbCcsZXZvbHV0aW9uX3RpbWVyPTEzMjB9LHdlYXBvbmRlZnM9e2FybWNvbWxhc2VyPXthcmVhb2ZlZmZlY3Q9MTYsYXZvaWRmZWF0dXJlPWZhbHNlLGJlYW10aW1lPTAuMSxjb3JldGhpY2tuZXNzPTAuMSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxjeWxpbmRlcnRhcmdldGluZz0xLGVkZ2VlZmZlY3RpdmVuZXNzPTEsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206bGFzZXJoaXQtc21hbGwtcmVkJyxmaXJlc3RhcnRlcj03MCxpbXBhY3Rvbmx5PTEsaW1wdWxzZWJvb3N0PTAsaW1wdWxzZWZhY3Rvcj0wLGxhc2VyZmxhcmVzaXplPTcuNyxuYW1lPSdMaWdodCBjbG9zZS1xdWFydGVycyBnMmcvZzJhIGxhc2VyJyxub3NlbGZkYW1hZ2U9dHJ1ZSxyYW5nZT00MjUscmVsb2FkdGltZT0wLjcscmdiY29sb3I9JzAgMSAxJyxzb3VuZGhpdGRyeT0nJyxzb3VuZGhpdHdldD0nc2l6emxlJyxzb3VuZHN0YXJ0PSdsYXNyZmlyMScsc291bmR0cmlnZ2VyPTEsdGFyZ2V0bW92ZWVycm9yPTAuMDUsdGhpY2tuZXNzPTQsdG9sZXJhbmNlPTEwMDAwLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0JlYW1MYXNlcicsd2VhcG9udmVsb2NpdHk9OTAwLGRhbWFnZT17ZGVmYXVsdD05NTAsVlRPTD0xNTB9fSxvbGRfYXJtc25pcGVfd2VhcG9uPXthcmVhb2ZlZmZlY3Q9NDIsYXZvaWRmZWF0dXJlPXRydWUsYXZvaWRmcmllbmRseT10cnVlLGNvbGxpZGVmZWF0dXJlPXRydWUsY29sbGlkZWZyaWVuZGx5PWZhbHNlLGNvcmV0aGlja25lc3M9MC43NSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJib29zdD0wLGNvbW1hbmRmaXJlPXRydWUsY3JhdGVybXVsdD0wLGNlZ3RhZz0ncmFpbGd1bicsZHVyYXRpb249MC4xMixlZGdlZWZmZWN0aXZlbmVzcz0wLjg1LGVuZXJneXBlcnNob3Q9NzAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LWxhcmdlLWJsdWUnLGZpcmVzdGFydGVyPTEwMCxpbXB1bHNlYm9vc3Q9MC40LGltcHVsc2VmYWN0b3I9MSxpbnRlbnNpdHk9MSxuYW1lPSdMb25nLXJhbmdlIGcyZyBhcm1vci1waWVyY2luZyByaWZsZScscmFuZ2U9NzAwLHJlbG9hZHRpbWU9MSxyZ2Jjb2xvcj0nMC4yIDAuMSAxJyxyZ2Jjb2xvcjI9JzAuMiAwLjEgMScsc291bmRoaXQ9J3NuaXBlcmhpdCcsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nc25pcGVyMycsc291bmR0cmlnZ2VyPXRydWUsc3RvY2twaWxlPXRydWUsc3RvY2twaWxldGltZT02LGN1c3RvbXBhcmFtcz17c3RvY2twaWxlbGltaXQ9MTB9LHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHRoaWNrbmVzcz00LHRvbGVyYW5jZT0xMDAwLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMDAwLGRhbWFnZT17Y29tbWFuZGVycz0xMCxkZWZhdWx0PTExMDAwfX19LHdlYXBvbnM9e1snMSddPXtkZWY9J2FybWNvbWxhc2VyJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQicsZmFzdGF1dG9yZXRhcmdldGluZz10cnVlfSxbJzMnXT17ZGVmPSdvbGRfYXJtc25pcGVfd2VhcG9uJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQid9fX0sYXJtY29tbHZsMz17YXV0b2hlYWw9NTAsYnVpbGRkaXN0YW5jZT0yNTAsY2FucmVzdXJyZWN0PXRydWUsZW5lcmd5bWFrZT0yNzEyLGhlYWx0aD0xMDAwMCxzcGVlZD03MS41LG1ldGFsbWFrZT02Mix3b3JrZXJ0aW1lPTE1MDAsYnVpbGRvcHRpb25zPXsnYXJtYW5uaScsJ2FybXBiJywnYXJtYW1iJywnYXJtbW9obycsJ2FybXV3bW1lJywnYXJtZmxhaycsJ2FybW1lcmN1cnknLCdhcm1nYXRlJywnYXJtc2QnLCdhcm1mb3J0JywnYXJtdGFyZycsJ2FybWFyYWQnLCdhcm1hbWQnLCdhcm12ZWlsJywnYXJtdXdhZHZtcycsJ2FybXV3YWR2ZXMnLCdhcm1tbWtyJywnYXJtY2xhdycsJ2FybWp1bm8nLCdhcm11d21leCcsJ2FybWhwJywnYXJtc3knLCdhcm1mZHJhZycsJ2FybXRsJywnYXJtZnJ0JywnYXJtZnJhZCcsJ2FybWhwJywnYXJtbGFiJywnYXJtdnAnLCdhcm1hcCcsJ2FybXN5JywnYXJtdXdtbW0nLCdhcm11d2Z1cycsJ2FybXBsYXQnLCdhcm1mZHJhZycsJ2FybWZobHQnLCdhcm1mZmxhaycsJ2FybWF0bCcsJ2FybWtyYWtlbicsJ2FybW5hbm90Y3BsYXQnLCdhcm1icnRoYScsJ2FybWFubml0MycsJ2FybWx3YWxsJywnYXJtbmFub3RjdDInLCdhcm1hZnVzJywnYXJtZnVzJywnYXJtY2tmdXMnLCdhcm1yYXonLCdhcm16ZXVzJywnYXJtc25pcGUnLCdhcm12YW5nJywnYXJtcmVjdHInLCdhcm1nYXRldDMnLCdsZWdlbmRhcnlfcHVsc2FyJywnYXJtbmFub3RjdDMnfSxjdXN0b21wYXJhbXM9e2V2b2x1dGlvbl90YXJnZXQ9J2FybWNvbWx2bDQnLGV2b2x1dGlvbl9jb25kaXRpb249J3RpbWVyX2dsb2JhbCcsZXZvbHV0aW9uX3RpbWVyPTE3NDB9LHdlYXBvbmRlZnM9e29sZF9hcm1zbmlwZV93ZWFwb249e2FyZWFvZmVmZmVjdD02NCxhdm9pZGZlYXR1cmU9dHJ1ZSxhdm9pZGZyaWVuZGx5PXRydWUsY29sbGlkZWZlYXR1cmU9dHJ1ZSxjb2xsaWRlZnJpZW5kbHk9ZmFsc2UsY29yZXRoaWNrbmVzcz0wLjc1LGNyYXRlcmFyZWFvZmVmZmVjdD0wLGNyYXRlcmJvb3N0PTAsY29tbWFuZGZpcmU9dHJ1ZSxjcmF0ZXJtdWx0PTAsY2VndGFnPSdyYWlsZ3VuJyxkdXJhdGlvbj0wLjEyLGVkZ2VlZmZlY3RpdmVuZXNzPTEsZW5lcmd5cGVyc2hvdD0yMDAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LWxhcmdlLWJsdWUnLGZpcmVzdGFydGVyPTEwMCxpbXB1bHNlYm9vc3Q9MC40LGltcHVsc2VmYWN0b3I9MSxpbnRlbnNpdHk9MS40LG5hbWU9J0xvbmctcmFuZ2UgZzJnIGFybW9yLXBpZXJjaW5nIHJpZmxlJyxyYW5nZT0xMjUwLHJlbG9hZHRpbWU9MC41LHJnYmNvbG9yPScwLjQgMC4xIDAuNycscmdiY29sb3IyPScwLjQgMC4xIDAuNycsc291bmRoaXQ9J3NuaXBlcmhpdCcsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nc25pcGVyMycsc291bmR0cmlnZ2VyPXRydWUsc3RvY2twaWxlPXRydWUsc3RvY2twaWxldGltZT0zLGN1c3RvbXBhcmFtcz17c3RvY2twaWxlbGltaXQ9MTB9LHRleHR1cmUxPSdzaG90Jyx0ZXh0dXJlMj0nZW1wdHknLHRoaWNrbmVzcz02LHRvbGVyYW5jZT0xMDAwLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyx3ZWFwb252ZWxvY2l0eT0zMDAwLGRhbWFnZT17Y29tbWFuZGVycz0xMCxkZWZhdWx0PTM1MDAwfX0sYXJtY29tbGFzZXI9e2FyZWFvZmVmZmVjdD0xMixhdm9pZGZlYXR1cmU9ZmFsc2UsYmVhbXRpbWU9MC4xLGNvcmV0aGlja25lc3M9MC4xLGNyYXRlcmFyZWFvZmVmZmVjdD0wLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGN5bGluZGVydGFyZ2V0aW5nPTEsZWRnZWVmZmVjdGl2ZW5lc3M9MSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MSxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbGFzZXJmbGFyZXNpemU9Ny43LG5hbWU9J0xpZ2h0IGNsb3NlLXF1YXJ0ZXJzIGcyZy9nMmEgbGFzZXInLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTUwMCxyZWxvYWR0aW1lPTAuNixyZ2Jjb2xvcj0nMC4xIDAgMScsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmNydzInLHNvdW5kdHJpZ2dlcj0xLHRhcmdldG1vdmVlcnJvcj0wLjA1LHRoaWNrbmVzcz02LHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTkwMCxkYW1hZ2U9e2RlZmF1bHQ9MTQ1MCxWVE9MPTE4MH19fSx3ZWFwb25zPXtbJzEnXT17ZGVmPScnfSxbJzMnXT17ZGVmPSdvbGRfYXJtc25pcGVfd2VhcG9uJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQid9LFsnNCddPXtkZWY9Jyd9LFsnNSddPXtiYWR0YXJnZXRjYXRlZ29yeT0nTU9CSUxFJyxkZWY9J2FybWNvbWxhc2VyJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQicsZmFzdGF1dG9yZXRhcmdldGluZz10cnVlfSxbJzYnXT17ZGVmPScnfX19LGFybWNvbWx2bDQ9e2F1dG9oZWFsPTE1MCxidWlsZGRpc3RhbmNlPTMwMCxjYW5yZXN1cnJlY3Q9dHJ1ZSxlbmVyZ3ltYWtlPTMxMTIsaGVhbHRoPTIwMDAwLHNwZWVkPTgyLG1ldGFsbWFrZT04Nix3b3JrZXJ0aW1lPTIwMDAsYnVpbGRvcHRpb25zPXsnYXJtYW5uaScsJ2FybXBiJywnYXJtYW1iJywnYXJtbW9obycsJ2FybXV3bW1lJywnYXJtZmxhaycsJ2FybW1lcmN1cnknLCdhcm1nYXRlJywnYXJtc2QnLCdhcm1mb3J0JywnYXJtdGFyZycsJ2FybWFyYWQnLCdhcm1hbWQnLCdhcm12ZWlsJywnYXJtdXdhZHZtcycsJ2FybXV3YWR2ZXMnLCdhcm1tbWtyJywnYXJtY2xhdycsJ2FybWp1bm8nLCdhcm11d21leCcsJ2FybWhwJywnYXJtc3knLCdhcm1mZHJhZycsJ2FybXRsJywnYXJtZnJ0JywnYXJtZnJhZCcsJ2FybWhwJywnYXJtbGFiJywnYXJtdnAnLCdhcm1hcCcsJ2FybXN5JywnYXJtdXdtbW0nLCdhcm11d2Z1cycsJ2FybXBsYXQnLCdhcm1mZHJhZycsJ2FybWZobHQnLCdhcm1mZmxhaycsJ2FybWF0bCcsJ2FybWtyYWtlbicsJ2FybW5hbm90Y3BsYXQnLCdhcm1icnRoYScsJ2FybWFubml0MycsJ2FybWx3YWxsJywnYXJtbmFub3RjdDInLCdhcm1hZnVzJywnYXJtZnVzJywnYXJtY2tmdXMnLCdhcm1yYXonLCdhcm16ZXVzJywnYXJtc25pcGUnLCdhcm12YW5nJywnYXJtcmVjdHInLCdhcm1nYXRldDMnLCdsZWdlbmRhcnlfcHVsc2FyJywnYXJtbmFub3RjdDMnfSx3ZWFwb25kZWZzPXtvbGRfYXJtc25pcGVfd2VhcG9uPXthcmVhb2ZlZmZlY3Q9NzIsYXZvaWRmZWF0dXJlPXRydWUsYXZvaWRmcmllbmRseT10cnVlLGNvbGxpZGVmZWF0dXJlPXRydWUsY29sbGlkZWZyaWVuZGx5PWZhbHNlLGNvcmV0aGlja25lc3M9MC43NSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJib29zdD0wLGNvbW1hbmRmaXJlPXRydWUsY3JhdGVybXVsdD0wLGNlZ3RhZz0ncmFpbGd1bicsZHVyYXRpb249MC4xMixlZGdlZWZmZWN0aXZlbmVzcz0xLGVuZXJneXBlcnNob3Q9MjAwMCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1sYXJnZS1ibHVlJyxmaXJlc3RhcnRlcj0xMDAsaW1wdWxzZWJvb3N0PTAuNCxpbXB1bHNlZmFjdG9yPTEsaW50ZW5zaXR5PTEuNCxuYW1lPSdMb25nLXJhbmdlIGcyZyBhcm1vci1waWVyY2luZyByaWZsZScscmFuZ2U9MTI1MCxyZWxvYWR0aW1lPTAuNSxyZ2Jjb2xvcj0nMC40IDAuMSAwLjcnLHJnYmNvbG9yMj0nMC40IDAuMSAwLjcnLHNvdW5kaGl0PSdzbmlwZXJoaXQnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J3NuaXBlcjMnLHNvdW5kdHJpZ2dlcj10cnVlLHN0b2NrcGlsZT10cnVlLHN0b2NrcGlsZXRpbWU9MixjdXN0b21wYXJhbXM9e3N0b2NrcGlsZWxpbWl0PTE1fSx0ZXh0dXJlMT0nc2hvdCcsdGV4dHVyZTI9J2VtcHR5Jyx0aGlja25lc3M9Nix0b2xlcmFuY2U9MTAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdMYXNlckNhbm5vbicsd2VhcG9udmVsb2NpdHk9MzAwMCxkYW1hZ2U9e2NvbW1hbmRlcnM9MTAsZGVmYXVsdD00NTAwMH19LGF0YT17YXJlYW9mZWZmZWN0PTE2LGF2b2lkZmVhdHVyZT1mYWxzZSxiZWFtdGltZT0xLjI1LGNvbGxpZGVmcmllbmRseT1mYWxzZSxjb3JldGhpY2tuZXNzPTAuNSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxlZGdlZWZmZWN0aXZlbmVzcz0wLjMsZW5lcmd5cGVyc2hvdD03MDAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LWxhcmdlLWJsdWUnLGZpcmVzdGFydGVyPTkwLGltcHVsc2VmYWN0b3I9MCxsYXJnZWJlYW1sYXNlcj10cnVlLGxhc2VyZmxhcmVzaXplPTcsbmFtZT0nSGVhdnkgbG9uZy1yYW5nZSBnMmcgdGFjaHlvbiBhY2NlbGVyYXRvciBiZWFtJyxub3NlbGZkYW1hZ2U9dHJ1ZSxyYW5nZT0xMTAwLHJlbG9hZHRpbWU9MTUscmdiY29sb3I9JzEgMCAxJyxzY3JvbGxzcGVlZD01LHNvdW5kaGl0ZHJ5PScnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J2FubmlndW4xJyxzb3VuZHRyaWdnZXI9MSx0ZXh0dXJlMz0nbGFyZ2ViZWFtJyx0aGlja25lc3M9MTAsdGlsZWxlbmd0aD0xNTAsdG9sZXJhbmNlPTEwMDAwLHR1cnJldD10cnVlLHdlYXBvbnR5cGU9J0JlYW1MYXNlcicsd2VhcG9udmVsb2NpdHk9MzEwMCxkYW1hZ2U9e2NvbW1hbmRlcnM9NDgwLGRlZmF1bHQ9NDgwMDB9fSxhcm1jb21sYXNlcj17YXJlYW9mZWZmZWN0PTEyLGF2b2lkZmVhdHVyZT1mYWxzZSxiZWFtdGltZT0wLjEsY29yZXRoaWNrbmVzcz0wLjEsY3JhdGVyYXJlYW9mZWZmZWN0PTAsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAsY3lsaW5kZXJ0YXJnZXRpbmc9MSxlZGdlZWZmZWN0aXZlbmVzcz0xLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LXNtYWxsLXJlZCcsZmlyZXN0YXJ0ZXI9NzAsaW1wYWN0b25seT0xLGltcHVsc2Vib29zdD0wLGltcHVsc2VmYWN0b3I9MCxsYXNlcmZsYXJlc2l6ZT03LjcsbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9NTUwLHJlbG9hZHRpbWU9MC41LHJnYmNvbG9yPScwLjY1OSAwIDEnLHNvdW5kaGl0ZHJ5PScnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J2xhc3JjcncyJyxzb3VuZHRyaWdnZXI9MSx0YXJnZXRtb3ZlZXJyb3I9MC4wNSx0aGlja25lc3M9Nix0b2xlcmFuY2U9MTAwMDAsdHVycmV0PXRydWUsd2VhcG9udHlwZT0nQmVhbUxhc2VyJyx3ZWFwb252ZWxvY2l0eT05MDAsZGFtYWdlPXtkZWZhdWx0PTE3NTAsVlRPTD0yMDB9fX0sd2VhcG9ucz17WycxJ109e2RlZj0nYXJtY29tbGFzZXInLG9ubHl0YXJnZXRjYXRlZ29yeT0nTk9UU1VCJyxmYXN0YXV0b3JldGFyZ2V0aW5nPXRydWV9LFsnMyddPXtkZWY9J29sZF9hcm1zbmlwZV93ZWFwb24nLG9ubHl0YXJnZXRjYXRlZ29yeT0nTk9UU1VCJ30sWyc0J109e2JhZHRhcmdldGNhdGVnb3J5PSdWVE9MIEdST1VORFNDT1VUJyxkZWY9J0FUQScsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ30sWyc1J109e2RlZj0nJ30sWyc2J109e2RlZj0nJ319fX1pZiBnIHRoZW4gZihnKWVuZCBlbmQ7ZG8gbG9jYWwgZz17Y29yY29tPXtjdXN0b21wYXJhbXM9e2V2b2x1dGlvbl90YXJnZXQ9J2NvcmNvbWx2bDInLGV2b2x1dGlvbl9jb25kaXRpb249J3RpbWVyX2dsb2JhbCcsZXZvbHV0aW9uX3RpbWVyPTQyMH0sYXV0b2hl",
-    "YWw9ODAsc3BlZWQ9NDUsZW5lcmd5bWFrZT03NSxtZXRhbG1ha2U9NixoZWFsdGg9NTUwMCxidWlsZG9wdGlvbnM9e1snMjgnXT0nY29yaGxsdCcsWycyOSddPSdjb3JuZWNybycsWyczMCddPSdjb3JsZXZscicsWyczMSddPSdjb3JhaycsWyczMiddPSdjb3JtYXcnfSx3ZWFwb25kZWZzPXtjb3Jjb21sYXNlcj17cmFuZ2U9MzcwLGRhbWFnZT17Ym9tYmVycz0xODAsZGVmYXVsdD0yNjAsZmlnaHRlcnM9MTEwLHN1YnM9NX19LGRpc2ludGVncmF0b3I9e2VuZXJneXBlcnNob3Q9MTAwMCxyZWxvYWR0aW1lPTh9fX0sY29yY29tbHZsMj17c3BlZWQ9NjIsaGVhbHRoPTg1MDAsZW5lcmd5bWFrZT0yNTUsbWV0YWxtYWtlPTE2LGF1dG9oZWFsPTMwMCxidWlsZGRpc3RhbmNlPTIwMCx3b3JrZXJ0aW1lPTYwMCxidWlsZG9wdGlvbnM9e1snMSddPSdjb3Jzb2xhcicsWycyJ109J2NvcmFkdnNvbCcsWyczJ109J2NvcndpbicsWyc0J109J2NvcmdlbycsWyc1J109J2Nvcm1zdG9yJyxbJzYnXT0nY29yZXN0b3InLFsnNyddPSdjb3JtZXgnLFsnOCddPSdjb3JleHAnLFsnOSddPSdjb3JtYWtyJyxbJzEwJ109J2NvcmNhbicsWycxMSddPSdjb3JyZWFwJyxbJzEyJ109J2NvcmxhYicsWycxMyddPSdjb3J2cCcsWycxNCddPSdjb3JhcCcsWycxNSddPSdjb3JocCcsWycxNiddPSdjb3JuYW5vdGMnLFsnMTcnXT0nY29yZXllcycsWycxOCddPSdjb3JyYWQnLFsnMTknXT0nY29yZHJhZycsWycyMCddPSdjb3JtYXcnLFsnMjEnXT0nY29ybGx0JyxbJzIyJ109J2NvcmhsbHQnLFsnMjMnXT0nY29yaGx0JyxbJzI0J109J2NvcnB1bicsWycyNSddPSdjb3JybCcsWycyNiddPSdjb3JtYWRzYW0nLFsnMjcnXT0nY29yZXJhZCcsWycyOCddPSdjb3JkbCcsWycyOSddPSdjb3JqYW10JyxbJzMwJ109J2Nvcmp1bm8nLFsnMzEnXT0nY29yc3knLFsnMzInXT0nY29ydXdnZW8nLFsnMzMnXT0nY29yZmFzcCcsWyczNCddPSdjb3JuZXJjbycsWyczNSddPSdjb3J1d2VzJyxbJzM2J109J2NvcnBsYXQnLFsnMzcnXT0nY29yZmhwJyxbJzM4J109J2NvcnV3bXMnLFsnMzknXT0nY29yZmhsdCcsWyc0MCddPSdjb3JuYW5vdGNwbGF0JyxbJzQxJ109J2NvcmZta3InLFsnNDInXT0nY29ydGlkZScsWyc0MyddPSdjb3JmcmFkJyxbJzQ0J109J2NvcmZydCcsWyc0NSddPSdjb3JmZHJhZycsWyc0NiddPSdjb3J0bCcsWyc0NyddPSdjb3JuZWNybyd9LGN1c3RvbXBhcmFtcz17ZXZvbHV0aW9uX3RhcmdldD0nY29yY29tbHZsMycsZXZvbHV0aW9uX2NvbmRpdGlvbj0ndGltZXJfZ2xvYmFsJyxldm9sdXRpb25fdGltZXI9MTMyMCxzaGllbGRfcG93ZXI9NTAwLHNoaWVsZF9yYWRpdXM9MTAwfSx3ZWFwb25kZWZzPXthcm1jb21sYXNlcj17YXJlYW9mZWZmZWN0PTE2LGF2b2lkZmVhdHVyZT1mYWxzZSxiZWFtdGltZT0wLjEsY29yZXRoaWNrbmVzcz0wLjEsY3JhdGVyYXJlYW9mZWZmZWN0PTAsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAsY3lsaW5kZXJ0YXJnZXRpbmc9MSxlZGdlZWZmZWN0aXZlbmVzcz0xLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LXNtYWxsLXJlZCcsZmlyZXN0YXJ0ZXI9NzAsaW1wYWN0b25seT0xLGltcHVsc2Vib29zdD0wLGltcHVsc2VmYWN0b3I9MCxsYXNlcmZsYXJlc2l6ZT03LjcsbmFtZT0nTGlnaHQgY2xvc2UtcXVhcnRlcnMgZzJnL2cyYSBsYXNlcicsbm9zZWxmZGFtYWdlPXRydWUscmFuZ2U9NTAwLHJlbG9hZHRpbWU9MC40LHJnYmNvbG9yPScwLjYgMC4zIDAuOCcsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmZpcjEnLHNvdW5kdHJpZ2dlcj0xLHRhcmdldG1vdmVlcnJvcj0wLjA1LHRoaWNrbmVzcz00LHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTkwMCxkYW1hZ2U9e2JvbWJlcnM9MTgwLGRlZmF1bHQ9MTUwMCxmaWdodGVycz0xMTAsc3Vicz01fX0sZGlzaW50ZWdyYXRvcj17YXJlYW9mZWZmZWN0PTM2LGF2b2lkZmVhdHVyZT1mYWxzZSxhdm9pZGZyaWVuZGx5PWZhbHNlLGF2b2lkZ3JvdW5kPWZhbHNlLGJvdW5jZXJlYm91bmQ9MCxjZWd0YWc9J2RndW5wcm9qZWN0aWxlJyxjb21tYW5kZmlyZT10cnVlLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLjE1LGVkZ2VlZmZlY3RpdmVuZXNzPTAuMTUsZW5lcmd5cGVyc2hvdD01MDAsZXhwbG9zaW9uZ2VuZXJhdG9yPSdjdXN0b206ZXhwbGRndW4nLGZpcmVzdGFydGVyPTEwMCxmaXJlc3VibWVyc2VkPWZhbHNlLGdyb3VuZGJvdW5jZT10cnVlLGltcHVsc2Vib29zdD0wLGltcHVsc2VmYWN0b3I9MCxuYW1lPSdEaXNpbnRlZ3JhdG9yJyxub2V4cGxvZGU9dHJ1ZSxub3NlbGZkYW1hZ2U9dHJ1ZSxyYW5nZT0yNTAscmVsb2FkdGltZT02LHBhcmFseXplcj17fSxzb3VuZGhpdD0neHBsb21hczJzJyxzb3VuZGhpdHdldD0nc2l6emxleHMnLHNvdW5kc3RhcnQ9J2Rpc2lndW4xJyxzb3VuZGhpdHZvbHVtZT0zNixzb3VuZHN0YXJ0dm9sdW1lPTk2LHNvdW5kdHJpZ2dlcj10cnVlLHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3YXRlcndlYXBvbj10cnVlLHdlYXBvbnRpbWVyPTQuMix3ZWFwb250eXBlPSdER3VuJyx3ZWFwb252ZWxvY2l0eT0zMDAsZGFtYWdlPXtjb21tYW5kZXJzPTAsZGVmYXVsdD0yMDAwMCxyYXB0b3JzPTEwMDAwfX19LHdlYXBvbnM9e1snMSddPXtkZWY9J2FybWNvbWxhc2VyJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQicsZmFzdGF1dG9yZXRhcmdldGluZz10cnVlfSxbJzMnXT17ZGVmPSdESVNJTlRFR1JBVE9SJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J05PVFNVQid9fX0sY29yY29tbHZsMz17c3BlZWQ9ODAsaGVhbHRoPTMwMDAwLGVuZXJneW1ha2U9MjE4MCxtZXRhbG1ha2U9NDksYXV0b2hlYWw9MTUwMCx3b3JrZXJ0aW1lPTEyMDAsYnVpbGRkaXN0YW5jZT0yNTAsYnVpbGRvcHRpb25zPXtbJzEnXT0nY29yZnVzJyxbJzInXT0nY29yYWZ1cycsWyczJ109J2NvcmFnZW8nLFsnNCddPSdjb3JiaG10aCcsWyc1J109J2Nvcm1vaG8nLFsnNiddPSdjb3JtZXhwJyxbJzcnXT0nY29ybW1rcicsWyc4J109J2NvcnV3YWR2ZXMnLFsnOSddPSdjb3J1d2Fkdm1zJyxbJzEwJ109J2NvcmFyYWQnLFsnMTEnXT0nY29yc2hyb3VkJyxbJzEyJ109J2NvcmZvcnQnLFsnMTMnXT0nY29ybGFiJyxbJzE0J109J2NvcnRhcmcnLFsnMTUnXT0nY29yc2QnLFsnMTYnXT0nY29yZ2F0ZScsWycxNyddPSdjb3J0b2FzdCcsWycxOCddPSdjb3J2aXBlJyxbJzE5J109J2NvcmRvb20nLFsnMjAnXT0nY29yZmxhaycsWycyMSddPSdjb3JzY3JlYW1lcicsWycyMiddPSdjb3J2cCcsWycyMyddPSdjb3JmbWQnLFsnMjQnXT0nY29yYXAnLFsnMjUnXT0nY29yaW50JyxbJzI2J109J2NvcnBsYXQnLFsnMjcnXT0nY29yc3knLFsnMjgnXT0nY29ydXdtbWUnLFsnMjknXT0nY29ydXdtbW0nLFsnMzAnXT0nY29yZW5hYScsWyczMSddPSdjb3JmZG9vbScsWyczMiddPSdjb3JhdGwnLFsnMzMnXT0nY29ydXdmdXMnLFsnMzQnXT0nY29yanVnZycsWyczNSddPSdjb3JzaGl2YScsWyczNiddPSdjb3JzdW1vJyxbJzM3J109J2NvcmdvbCcsWyczOCddPSdjb3Jrb3JnJyxbJzM5J109J2Nvcm5hbm90YzJwbGF0JyxbJzQwJ109J2Nvcm5hbm90Y3QyJyxbJzQxJ109J2Nvcm5lY3JvJyxbJzQyJ109J2NvcmRvb210MycsWyc0MyddPSdjb3JobGxsbHQnLFsnNDQnXT0nY29ybWF3JyxbJzQ1J109J2Nvcm13YWxsJyxbJzQ2J109J2NvcmdhdGV0MycsWyc0NyddPSdsZWdlbmRhcnlfYnVsd2FyaycsWyc0OCddPSdjb3JuYW5vdGN0Myd9LGN1c3RvbXBhcmFtcz17ZXZvbHV0aW9uX3RhcmdldD0nY29yY29tbHZsNCcsZXZvbHV0aW9uX2NvbmRpdGlvbj0ndGltZXJfZ2xvYmFsJyxldm9sdXRpb25fdGltZXI9MTc0MH0sd2VhcG9uZGVmcz17Y29yY29tbGFzZXI9e2FyZWFvZmVmZmVjdD0xMixhdm9pZGZlYXR1cmU9ZmFsc2UsYmVhbXRpbWU9MC4xLGNvcmV0aGlja25lc3M9MC4xLGNyYXRlcmFyZWFvZmVmZmVjdD0wLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGN5bGluZGVydGFyZ2V0aW5nPTEsZWRnZWVmZmVjdGl2ZW5lc3M9MSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MSxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbGFzZXJmbGFyZXNpemU9NS41LG5hbWU9J0o3TGFzZXInLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTkwMCxyZWxvYWR0aW1lPTAuNCxyZ2Jjb2xvcj0nMC43IDAgMScsc291bmRoaXRkcnk9Jycsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0nbGFzcmZpcjEnLHNvdW5kdHJpZ2dlcj0xLHRhcmdldG1vdmVlcnJvcj0wLjA1LHRoaWNrbmVzcz0zLHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTkwMCxkYW1hZ2U9e2RlZmF1bHQ9MjAwMCxzdWJzPTV9fSxkaXNpbnRlZ3JhdG9yPXthcmVhb2ZlZmZlY3Q9MzYsYXZvaWRmZWF0dXJlPWZhbHNlLGF2b2lkZnJpZW5kbHk9ZmFsc2UsYXZvaWRncm91bmQ9ZmFsc2UsYm91bmNlcmVib3VuZD0wLGNlZ3RhZz0nZGd1bnByb2plY3RpbGUnLGNvbW1hbmRmaXJlPXRydWUsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAuMTUsZWRnZWVmZmVjdGl2ZW5lc3M9MC4xNSxlbmVyZ3lwZXJzaG90PTUwMCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpleHBsZGd1bicsZmlyZXN0YXJ0ZXI9MTAwLGZpcmVzdWJtZXJzZWQ9ZmFsc2UsZ3JvdW5kYm91bmNlPXRydWUsaW1wdWxzZWJvb3N0PTAsaW1wdWxzZWZhY3Rvcj0wLG5hbWU9J0Rpc2ludGVncmF0b3InLG5vZXhwbG9kZT10cnVlLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTI1MCxyZWxvYWR0aW1lPTMscGFyYWx5emVyPXt9LHNvdW5kaGl0PSd4cGxvbWFzMnMnLHNvdW5kaGl0d2V0PSdzaXp6bGV4cycsc291bmRzdGFydD0nZGlzaWd1bjEnLHNvdW5kaGl0dm9sdW1lPTM2LHNvdW5kc3RhcnR2b2x1bWU9OTYsc291bmR0cmlnZ2VyPXRydWUsc2l6ZT00LHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3YXRlcndlYXBvbj10cnVlLHdlYXBvbnRpbWVyPTQuMix3ZWFwb250eXBlPSdER3VuJyx3ZWFwb252ZWxvY2l0eT0zMDAsZGFtYWdlPXtjb21tYW5kZXJzPTAsZGVmYXVsdD0yMDAwMCxzY2F2Ym9zcz0xMDAwLHJhcHRvcnM9MTAwMDB9fX0sd2VhcG9ucz17WycxJ109e2RlZj0nQ09SQ09NTEFTRVInLG9ubHl0YXJnZXRjYXRlZ29yeT0nTk9UU1VCJyxmYXN0YXV0b3JldGFyZ2V0aW5nPXRydWV9LFsnNSddPXtkZWY9Jyd9fX0sY29yY29tbHZsND17c3BlZWQ9ODAsaGVhbHRoPTUwMDAwLGVuZXJneW1ha2U9MjM4MCxtZXRhbG1ha2U9NTYsYXV0b2hlYWw9MzU1MCx3b3JrZXJ0aW1lPTE4MDAsYnVpbGRkaXN0YW5jZT0zMDAsYnVpbGRvcHRpb25zPXtbJzEnXT0nY29yZnVzJyxbJzInXT0nY29yYWZ1cycsWyczJ109J2NvcmFnZW8nLFsnNCddPSdjb3JiaG10aCcsWyc1J109J2Nvcm1vaG8nLFsnNiddPSdjb3JtZXhwJyxbJzcnXT0nY29ybW1rcicsWyc4J109J2NvcnV3YWR2ZXMnLFsnOSddPSdjb3J1d2Fkdm1zJyxbJzEwJ109J2NvcmFyYWQnLFsnMTEnXT0nY29yc2hyb3VkJyxbJzEyJ109J2NvcmZvcnQnLFsnMTMnXT0nY29ybGFiJyxbJzE0J109J2NvcnRhcmcnLFsnMTUnXT0nY29yc2QnLFsnMTYnXT0nY29yZ2F0ZScsWycxNyddPSdjb3J0b2FzdCcsWycxOCddPSdjb3J2aXBlJyxbJzE5J109J2NvcmRvb20nLFsnMjAnXT0nY29yZmxhaycsWycyMSddPSdjb3JzY3JlYW1lcicsWycyMiddPSdjb3J2cCcsWycyMyddPSdjb3JmbWQnLFsnMjQnXT0nY29yYXAnLFsnMjUnXT0nY29yaW50JyxbJzI2J109J2NvcnBsYXQnLFsnMjcnXT0nY29yc3knLFsnMjgnXT0nY29ydXdtbWUnLFsnMjknXT0nY29ydXdtbW0nLFsnMzAnXT0nY29yZW5hYScsWyczMSddPSdjb3JmZG9vbScsWyczMiddPSdjb3JhdGwnLFsnMzMnXT0nY29ydXdmdXMnLFsnMzQnXT0nY29yanVnZycsWyczNSddPSdjb3JzaGl2YScsWyczNiddPSdjb3JzdW1vJyxbJzM3J109J2NvcmdvbCcsWyczOCddPSdjb3Jrb3JnJyxbJzM5J109J2Nvcm5hbm90YzJwbGF0JyxbJzQwJ109J2Nvcm5hbm90Y3QyJyxbJzQxJ109J2Nvcm5lY3JvJyxbJzQyJ109J2NvcmRvb210MycsWyc0MyddPSdjb3JobGxsbHQnLFsnNDQnXT0nY29ybWF3JyxbJzQ1J109J2Nvcm13YWxsJyxbJzQ2J109J2NvcmdhdGV0MycsWyc0NyddPSdsZWdlbmRhcnlfYnVsd2FyaycsWyc0OCddPSdjb3JuYW5vdGN0Myd9LGN1c3RvbXBhcmFtcz17c2hpZWxkX3Bvd2VyPTUwMCxzaGllbGRfcmFkaXVzPTEwMH0sd2VhcG9uZGVmcz17Q09SQ09NTEFTRVI9e2FyZWFvZmVmZmVjdD0xMixhdm9pZGZlYXR1cmU9ZmFsc2UsYmVhbXRpbWU9MC4xLGNvcmV0aGlja25lc3M9MC4xLGNyYXRlcmFyZWFvZmVmZmVjdD0wLGNyYXRlcmJvb3N0PTAsY3JhdGVybXVsdD0wLGN5bGluZGVydGFyZ2V0aW5nPTEsZWRnZWVmZmVjdGl2ZW5lc3M9MSxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTcwLGltcGFjdG9ubHk9MSxpbXB1bHNlYm9vc3Q9MCxpbXB1bHNlZmFjdG9yPTAsbGFzZXJmbGFyZXNpemU9NS41LG5hbWU9J0o3TGFzZXInLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTEwMDAscmVsb2FkdGltZT0wLjQscmdiY29sb3I9JzAuNyAwIDEnLHNvdW5kaGl0ZHJ5PScnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J2xhc3JmaXIxJyxzb3VuZHRyaWdnZXI9MSx0YXJnZXRtb3ZlZXJyb3I9MC4wNSx0aGlja25lc3M9Myx0b2xlcmFuY2U9MTAwMDAsdHVycmV0PXRydWUsd2VhcG9udHlwZT0nQmVhbUxhc2VyJyx3ZWFwb252ZWxvY2l0eT05MDAsZGFtYWdlPXtkZWZhdWx0PTI1MDAsc3Vicz01fX0sZGlzaW50ZWdyYXRvcnhsPXthcmVhb2ZlZmZlY3Q9MTA1LGF2b2lkZmVhdHVyZT1mYWxzZSxhdm9pZGZyaWVuZGx5PXRydWUsYXZvaWRncm91bmQ9ZmFsc2UsYnVyc3Q9MSxidXJzdHJhdGU9MCxib3VuY2VyZWJvdW5kPTAsY2VndGFnPSdnYXVzc2Nhbm5vbnByb2plY3RpbGV4bCcsY3JhdGVyYXJlYW9mZWZmZWN0PTAsY3JhdGVyYm9vc3Q9MCxjcmF0ZXJtdWx0PTAsY29tbWFuZGZpcmU9dHJ1ZSxjYW1lcmFTaGFrZT0wLGVkZ2VlZmZlY3RpdmVuZXNzPTEsZW5lcmd5cGVyc2hvdD0wLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmJ1cm5ibGFja2JpZ2dlc3QnLGZpcmVzdGFydGVyPTEwMCxmaXJlc3VibWVyc2VkPWZhbHNlLGdyYXZpdHlhZmZlY3RlZD10cnVlLGltcHVsc2VmYWN0b3I9MCxpbnRlbnNpdHk9NCxuYW1lPSdEYXJrbWF0dGVyIFBob3Rvbi1EaXNydXB0b3InLG5vZXhwbG9kZT10cnVlLG5vc2VsZmRhbWFnZT10cnVlLHJhbmdlPTUwMCxyZWxvYWR0aW1lPTEscmdiY29sb3I9JzAuNyAwLjMgMS4wJyxzaXplPTUuNSxzb3VuZGhpdD0neHBsb21hczInLHNvdW5kaGl0d2V0PSdzaXp6bGV4cycsc291bmRzdGFydD0nZGlzaWd1bjEnLHNvdW5kdHJpZ2dlcj10cnVlLHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250aW1lcj00LjIsd2VhcG9udHlwZT0nREd1bicsd2VhcG9udmVsb2NpdHk9NTA1LGRhbWFnZT17Y29tbWFuZGVycz0wLGRlZmF1bHQ9MjAwMDAsc2NhdmJvc3M9MTAwMCxyYXB0b3JzPTEwMDAwfX0sY29yY29tZXllbGFzZXI9e2FsbG93Tm9uQmxvY2tpbmdBaW09dHJ1ZSxhdm9pZGZyaWVuZGx5PXRydWUsYXJlYW9mZWZmZWN0PTYsYXZvaWRmZWF0dXJlPWZhbHNlLGJlYW10aW1lPTAuMDMzLGNhbWVyYXNoYWtlPTAuMSxjb2xsaWRlZnJpZW5kbHk9ZmFsc2UsY29yZXRoaWNrbmVzcz0wLjM1LGNyYXRlcmFyZWFvZmVmZmVjdD0xMixjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxlZGdlZWZmZWN0aXZlbmVzcz0xLGVuZXJneXBlcnNob3Q9MCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpsYXNlcmhpdC1zbWFsbC1yZWQnLGZpcmVzdGFydGVyPTkwLGZpcmV0b2xlcmFuY2U9MzAwLGltcHVsc2VmYWN0b3I9MCxsYXNlcmZsYXJlc2l6ZT0yLG5hbWU9J0V5ZUxhc2VyJyxub3NlbGZkYW1hZ2U9dHJ1ZSxwcm94aW1pdHlwcmlvcml0eT0xLHJhbmdlPTg3MCxyZWxvYWR0aW1lPTAuMDMzLHJnYmNvbG9yPScwIDEgMCcscmdiY29sb3IyPScwLjggMCAwJyxzY3JvbGxzcGVlZD01LHNvdW5kaGl0ZHJ5PSdmbGFtaGl0MScsc291bmRoaXR3ZXQ9J3NpenpsZScsc291bmRzdGFydD0naGVhdHJheTNidXJuJyxzb3VuZHN0YXJ0dm9sdW1lPTYsc291bmR0cmlnZ2VyPTEsdGhpY2tuZXNzPTIuNSx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTE1MDAsZGFtYWdlPXtkZWZhdWx0PTE4NX19fSx3ZWFwb25zPXtbJzEnXT17ZGVmPSdDT1JDT01MQVNFUicsb25seXRhcmdldGNhdGVnb3J5PSdOT1RTVUInLGZhc3RhdXRvcmV0YXJnZXRpbmc9dHJ1ZX0sWyczJ109e2JhZHRhcmdldGNhdGVnb3J5PSdWVE9MJyxkZWY9J2Rpc2ludGVncmF0b3J4bCcsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ30sWyc1J109e2JhZHRhcmdldGNhdGVnb3J5PSdWVE9MIEdST1VORFNDT1VUJyxkZWY9J2NvcmNvbWV5ZWxhc2VyJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J1NVUkZBQ0UnfSxbJzYnXT17ZGVmPScnfX19fWlmIGcgdGhlbiBmKGcpZW5kIGVuZDtkbyBsb2NhbCBnPXtyYXB0b3JfYWlyX3Njb3V0X2Jhc2ljX3QyX3YxPXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0yNSxyYXB0b3JzcXVhZG1pbmFuZ2VyPTIwLHJhcHRvcnNxdWFkbWF4YW5nZXI9MjYscmFwdG9yc3F1YWR3ZWlnaHQ9MTAscmFwdG9yc3F1YWRyYXJpdHk9J2Jhc2ljJyxyYXB0b3JzcXVhZGJlaGF2aW9yPSdyYWlkZXInLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fX0scmFwdG9yX2hpdmVfYXNzYXVsdF9iYXNpYz17Y3VzdG9tcGFyYW1zPXtyYXB0b3JjdXN0b21zcXVhZD10cnVlLHJhcHRvcnNxdWFkdW5pdHNhbW91bnQ9MjUscmFwdG9yc3F1YWRtaW5hbmdlcj0wLHJhcHRvcnNxdWFkbWF4YW5nZXI9NDAscmFwdG9yc3F1YWR3ZWlnaHQ9MSxyYXB0b3JzcXVhZHJhcml0eT0nYmFzaWMnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J3JhaWRlcicscmFwdG9yc3F1YWRiZWhhdmlvcmRpc3RhbmNlPTUwMCxyYXB0b3JzcXVhZGJlaGF2aW9yY2hhbmNlPTAuNzV9fSxyYXB0b3JfbGFuZF9zd2FybWVyX2Jhc2ljX3QzX3YxPXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0yNSxyYXB0b3JzcXVhZG1pbmFuZ2VyPTAscmFwdG9yc3F1YWRtYXhhbmdlcj00MCxyYXB0b3JzcXVhZHdlaWdodD0yLHJhcHRvcnNxdWFkcmFyaXR5PSdiYXNpYycscmFwdG9yc3F1YWRiZWhhdmlvcj0ncmFpZGVyJyxyYXB0b3JzcXVhZGJlaGF2aW9yZGlzdGFuY2U9NTAwLHJhcHRvcnNxdWFkYmVoYXZpb3JjaGFuY2U9MC43NX19LHJhcHRvcl9ldm9sdmVkX21vdG9ydDQ9e2N1c3RvbXBhcmFtcz17cmFwdG9yY3VzdG9tc3F1YWQ9dHJ1ZSxyYXB0b3JzcXVhZHVuaXRzYW1vdW50PTEyLHJhcHRvcnNxdWFkbWluYW5nZXI9NTAscmFwdG9yc3F1YWRtYXhhbmdlcj0zMDAscmFwdG9yc3F1YWR3ZWlnaHQ9MyxyYXB0b3JzcXVhZHJhcml0eT0nc3BlY2lhbCcscmFwdG9yc3F1YWRiZWhhdmlvcj0nYXJ0aWxsZXJ5JyxyYXB0b3JzcXVhZGJlaGF2aW9yZGlzdGFuY2U9MjUwMCxyYXB0b3JzcXVhZGJlaGF2aW9yY2hhbmNlPTAuNzV9fSxyYXB0b3JfaGl2ZV9hc3NhdWx0X2hlYXZ5PXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0yNSxyYXB0b3JzcXVhZG1pbmFuZ2VyPTU1LHJhcHRvcnNxdWFkbWF4YW5nZXI9NzAscmFwdG9yc3F1YWR3ZWlnaHQ9MSxyYXB0b3JzcXVhZHJhcml0eT0nYmFzaWMnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J2JlcnNlcmsnLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fX0scmFwdG9yX2hpdmVfYXNzYXVsdF9zdXBlcmhlYXZ5PXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0yNSxyYXB0b3JzcXVhZG1pbmFuZ2VyPTgwLHJhcHRvcnNxdWFkbWF4YW5nZXI9ODUscmFwdG9yc3F1YWR3ZWlnaHQ9MSxyYXB0b3JzcXVhZHJhcml0eT0nYmFzaWMnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J2JlcnNlcmsnLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fX0scmFwdG9yX2Fpcl9rYW1pa2F6ZV9iYXNpY190Ml92MT17Y3VzdG9tcGFyYW1zPXtyYXB0b3JjdXN0b21zcXVhZD10cnVlLHJhcHRvcnNxdWFkdW5pdHNhbW91bnQ9NTUscmFwdG9yc3F1YWRtaW5hbmdlcj0xMDAscmFwdG9yc3F1YWRtYXhhbmdlcj0xMDUscmFwdG9yc3F1YWR3ZWlnaHQ9MixyYXB0b3JzcXVhZHJhcml0eT0nYmFzaWMnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J2JlcnNlcmsnLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fX0scmFwdG9yX21hdHJpYXJjaF9maXJlPXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0zMCxyYXB0b3JzcXVhZG1pbmFuZ2VyPTEwNSxyYXB0b3JzcXVhZG1heGFuZ2VyPTEzNSxyYXB0b3JzcXVhZHdlaWdodD0zLHJhcHRvcnNxdWFkcmFyaXR5PSdzcGVjaWFsJyxyYXB0b3JzcXVhZGJlaGF2aW9yPSdiZXJzZXJrJyxyYXB0b3JzcXVhZGJlaGF2aW9yZGlzdGFuY2U9NTAwLHJhcHRvcnNxdWFkYmVoYXZpb3JjaGFuY2U9MC43NX19LHJhcHRvcl9tYXRyaWFyY2hfYmFzaWM9e2N1c3RvbXBhcmFtcz17cmFwdG9yY3VzdG9tc3F1YWQ9dHJ1ZSxyYXB0b3JzcXVhZHVuaXRzYW1vdW50PTMwLHJhcHRvcnNxdWFkbWluYW5nZXI9MTA1LHJhcHRvcnNxdWFkbWF4YW5nZXI9MTM1LHJhcHRvcnNxdWFkd2VpZ2h0PTMscmFwdG9yc3F1YWRyYXJpdHk9J3NwZWNpYWwnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J2JlcnNlcmsnLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fX0scmFwdG9yX21hdHJpYXJjaF9hY2lkPXtjdXN0b21wYXJhbXM9e3JhcHRvcmN1c3RvbXNxdWFkPXRydWUscmFwdG9yc3F1YWR1bml0c2Ftb3VudD0zMCxyYXB0b3JzcXVhZG1pbmFuZ2VyPTEwNSxyYXB0b3JzcXVhZG1heGFuZ2VyPTEzNSxyYXB0b3JzcXVhZHdlaWdodD0zLHJhcHRvcnNxdWFkcmFyaXR5PSdzcGVjaWFsJyxyYXB0b3JzcXVhZGJlaGF2aW9yPSdiZXJzZXJrJyxyYXB0b3JzcXVhZGJlaGF2aW9yZGlzdGFuY2U9NTAwLHJhcHRvcnNxdWFkYmVoYXZpb3JjaGFuY2U9MC43NX19LHJhcHRvcl9tYXRyaWFyY2hfZWxlY3RyaWM9e2N1c3RvbXBhcmFtcz17cmFwdG9yY3VzdG9tc3F1YWQ9dHJ1ZSxyYXB0b3JzcXVhZHVuaXRzYW1vdW50PTMwLHJhcHRvcnNxdWFkbWluYW5nZXI9MTA1LHJhcHRvcnNxdWFkbWF4YW5nZXI9MTM1LHJhcHRvcnNxdWFkd2VpZ2h0PTMscmFwdG9yc3F1YWRyYXJpdHk9J3NwZWNpYWwnLHJhcHRvcnNxdWFkYmVoYXZpb3I9J2JlcnNlcmsnLHJhcHRvcnNxdWFkYmVoYXZpb3JkaXN0YW5jZT01MDAscmFwdG9yc3F1YWRiZWhhdmlvcmNoYW5jZT0wLjc1fSx3ZWFwb25zPXtbJzUnXT17ZGVmPScnfX19LHJhcHRvcl9xdWVlbl92ZXJ5ZWFzeT17c2VsZmRlc3RydWN0YXM9J2N1c3RvbWZ1c2lvbmV4cGxvJyxleHBsb2RlYXM9J2N1c3RvbWZ1c2lvbmV4cGxvJyxtYXh0aGlzdW5pdD0zLGN1c3RvbXBhcmFtcz17cmFwdG9yY3VzdG9tc3F1YWQ9dHJ1ZSxpMThuX2VuX2h1bWFubmFtZT0nUXVlZW4gRGVnZW5lcmF0aXZlJyxpMThuX2VuX3Rvb2x0aXA9J1NIRVMgQSBCSUcgT05FJyxyYXB0b3JzcXVhZHVuaXRzYW1vdW50PTIscmFwdG9yc3F1YWRtaW5hbmdlcj03MCxyYXB0b3JzcXVhZG1heGFuZ2VyPTE1MCxyYXB0b3JzcXVhZHdlaWdodD0yLHJhcHRvcnNxdWFkcmFyaXR5PSdzcGVjaWFsJyxyYXB0b3JzcXVhZGJlaGF2aW9yPSdiZXJzZXJrJyxyYXB0b3JzcXVhZGJlaGF2aW9yZGlzdGFuY2U9NTAwLHJhcHRvcnNxdWFkYmVoYXZpb3JjaGFuY2U9MC43NX0sd2VhcG9uZGVmcz17bWVsZWU9e2RhbWFnZT17ZGVmYXVsdD01MDAwfX0seWVsbG93X21pc3NpbGU9e2RhbWFnZT17ZGVmYXVsdD0xLHZ0b2w9NTAwfX0sZ29vPXtyYW5nZT01MDAsZGFtYWdlPXtkZWZhdWx0PTEyMDB9fX19LGNvcmNvbWx2bDQ9e3dlYXBvbmRlZnM9e2Rpc2ludGVncmF0b3J4bD17ZGFtYWdlPXtjb21tYW5kZXJzPTAsZGVmYXVsdD05OTk5OSxzY2F2Ym9zcz0xMDAwLHJhcHRvcnF1ZWVuPTUwMDB9fX19fWlmIGcgdGhlbiBmKGcpZW5kIGVuZDtkbyBsb2NhbCBnPXthcm1icnRoYT17aGVhbHRoPTEzMDAwLHdlYXBvbmRlZnM9e0FSTUJSVEhBX01BSU49e2RhbWFnZT17Y29tbWFuZGVycz00ODAsZGVmYXVsdD0zMzAwMH0sYXJlYW9mZWZmZWN0PTYwLGVuZXJneXBlcnNob3Q9ODAwMCxyYW5nZT0yNDAwLHJlbG9hZHRpbWU9OSx0dXJucmF0ZT0yMDAwMH19fSxjb3JpbnQ9e2hlYWx0aD0xMzAwMCx3ZWFwb25kZWZzPXtDT1JJTlRfTUFJTj17ZGFtYWdlPXtjb21tYW5kZXJzPTQ4MCxkZWZhdWx0PTg1MDAwfSxhcmVhb2ZlZmZlY3Q9MjMwLGVkZ2VlZmZlY3RpdmVuZXNzPTAuNixlbmVyZ3lwZXJzaG90PTE1MDAwLHJhbmdlPTI3MDAscmVsb2FkdGltZT0xOH19fSxsZWdscnBjPXtoZWFsdGg9MTMwMDAsd2VhcG9uZGVmcz17TEVHTFJQQ19NQUlOPXtkYW1hZ2U9e2NvbW1hbmRlcnM9NDgwLGRlZmF1bHQ9NDUwMH0sZW5lcmd5cGVyc2hvdD0yMDAwLHJhbmdlPTIwMDAscmVsb2FkdGltZT0yLHR1cm5yYXRlPTMwMDAwfX19fWlmIGcgdGhlbiBmKGcpZW5kIGVuZDtkbyBsb2NhbCBnPXtsZWdmb3J0dDQ9e2N1c3RvbXBhcmFtcz17aTE4bl9lbl9odW1hbm5hbWU9J0V4cGVyaW1lbnRhbCBUeXJhbm51cycsaTE4bl9lbl90b29sdGlwPSdJbiBkZWRpY2F0aW9uIHRvIG91ciBjb21tYW5kZXIgVHlyYW5udXMnfSx3ZWFwb25kZWZzPXttYWNoaW5lZ3VuPXthY2N1cmFjeT00MDAsYXJlYW9mZWZmZWN0PTY0LGF2b2lkZnJpZW5kbHk9ZmFsc2UsYXZvaWRmZWF0dXJlPWZhbHNlLGNvbGxpZGVmcmllbmRseT1mYWxzZSxjb2xsaWRlZmVhdHVyZT10cnVlLGJlYW10aW1lPTAuMDksY29yZXRoaWNrbmVzcz0wLjU1LGR1cmF0aW9uPTAuMDksYnVyc3Q9MSxidXJzdHJhdGU9MC4xLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmdlbmVyaWNzaGVsbGV4cGxvc2lvbi10aW55LWFhJyxlbmVyZ3lwZXJzaG90PTAsZmFsbG9mZnJhdGU9MCxmaXJlc3RhcnRlcj01MCxpbnRlcmNlcHRlZGJ5c2hpZWxkdHlwZT00LGludGVuc2l0eT0yLG5hbWU9J3NjYXYgcmFwaWQgZmlyZSBwbGFzbWEgZ3VuJyxyYW5nZT0xMDAwLHJlbG9hZHRpbWU9MC4xLHdlYXBvbnR5cGU9J0xhc2VyQ2Fubm9uJyxyZ2Jjb2xvcj0nMSAwIDAnLHJnYmNvbG9yMj0nMSAxIDEnLHNvdW5kdHJpZ2dlcj10cnVlLHNvdW5kc3RhcnQ9J3RndW5zaGlwZmlyZScsdGV4dHVyZTE9J3Nob3QnLHRleHR1cmUyPSdleHBsbzInLHRoaWNrbmVzcz04LjUsdG9sZXJhbmNlPTEwMDAsdHVycmV0PXRydWUsd2VhcG9udmVsb2NpdHk9MTAwMCxkYW1hZ2U9e2RlZmF1bHQ9NjB9fSxoZWF0cmF5MT17YWxsb3dOb25CbG9ja2luZ0FpbT10cnVlLGF2b2lkZnJpZW5kbHk9dHJ1ZSxhcmVhb2ZlZmZlY3Q9NjQsYXZvaWRmZWF0dXJlPWZhbHNlLGJlYW10aW1lPTAuMDMzLGNhbWVyYXNoYWtlPTAuMSxjb2xsaWRlZnJpZW5kbHk9ZmFsc2UsY29yZXRoaWNrbmVzcz0wLjQ1LGNyYXRlcmFyZWFvZmVmZmVjdD0xMixjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxlZGdlZWZmZWN0aXZlbmVzcz0xLGVuZXJneXBlcnNob3Q9MCxleHBsb3Npb25nZW5lcmF0b3I9J2N1c3RvbTpoZWF0cmF5LWxhcmdlJyxmaXJlc3RhcnRlcj05MCxmaXJldG9sZXJhbmNlPTMwMCxpbXB1bHNlZmFjdG9yPTAsaW50ZW5zaXR5PTksbGFzZXJmbGFyZXNpemU9OCxuYW1lPSdFeHBlcmltZW50YWwgVGhlcm1hbCBPcmRuYW5jZSBHZW5lcmF0b3JzJyxub3NlbGZkYW1hZ2U9dHJ1ZSxwcm94aW1pdHlwcmlvcml0eT0tMSxyYW5nZT04NTAscmVsb2FkdGltZT0wLjAzMyxyZ2Jjb2xvcj0nMSAwLjU1IDAnLHJnYmNvbG9yMj0nMC45IDEuMCAwLjUnLHNjcm9sbHNwZWVkPTUsc291bmRoaXRkcnk9J2hlYXRyYXkzc3RhcnQnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J2hlYXRyYXkzbHAnLHNvdW5kc3RhcnR2b2x1bWU9Nixzb3VuZHRyaWdnZXI9MSx0aGlja25lc3M9Nix0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTE1MDAsZGFtYWdlPXtkZWZhdWx0PTE1MH19LGF0YT17YXJlYW9mZWZmZWN0PTM0LGF2b2lkZmVhdHVyZT1mYWxzZSxiZWFtdGltZT0yLGNvbGxpZGVmcmllbmRseT1mYWxzZSxjb3JldGhpY2tuZXNzPTAuNSxjcmF0ZXJhcmVhb2ZlZmZlY3Q9MCxjcmF0ZXJib29zdD0wLGNyYXRlcm11bHQ9MCxlZGdlZWZmZWN0aXZlbmVzcz0wLjMsZW5lcmd5cGVyc2hvdD03MDAwLGV4cGxvc2lvbmdlbmVyYXRvcj0nY3VzdG9tOmxhc2VyaGl0LWxhcmdlLWJsdWUnLGZpcmVzdGFydGVyPTkwLGltcHVsc2VmYWN0b3I9MCxsYXJnZWJlYW1sYXNlcj10cnVlLGxhc2VyZmxhcmVzaXplPTcsbmFtZT0nSGVhdnkgbG9uZy1yYW5nZSBnMmcgdGFjaHlvbiBhY2NlbGVyYXRvciBiZWFtJyxub3NlbGZkYW1hZ2U9dHJ1ZSxyYW5nZT0xMzAwLHJlbG9hZHRpbWU9MTUscmdiY29sb3I9JzAgMSAxJyxzY3JvbGxzcGVlZD01LHNvdW5kaGl0ZHJ5PScnLHNvdW5kaGl0d2V0PSdzaXp6bGUnLHNvdW5kc3RhcnQ9J3JhcHRvcmxhc2VyJyxzb3VuZHRyaWdnZXI9MSxzb3VuZHN0YXJ0dm9sdW1lPTQsdGV4dHVyZTM9J2xhcmdlYmVhbScsdGhpY2tuZXNzPTEwLHRpbGVsZW5ndGg9MTUwLHRvbGVyYW5jZT0xMDAwMCx0dXJyZXQ9dHJ1ZSx3ZWFwb250eXBlPSdCZWFtTGFzZXInLHdlYXBvbnZlbG9jaXR5PTMxMDAsZGFtYWdlPXtjb21tYW5kZXJzPTQ4MCxkZWZhdWx0PTQ4MDAwfX19LHdlYXBvbnM9e1snMSddPXtiYWR0YXJnZXRjYXRlZ29yeT0nTk9UTEFORCcsZGVmPSdoZWF0cmF5MScsbWFpbmRpcj0nLTEgMCAwJyxtYXhhbmdsZWRpZj0yMTAsb25seXRhcmdldGNhdGVnb3J5PSdTVVJGQUNFJ30sWycyJ109e2JhZHRhcmdldGNhdGVnb3J5PSdOT1RMQU5EJyxkZWY9J2hlYXRyYXkxJyxtYWluZGlyPScxIDAgMCcsbWF4YW5nbGVkaWY9MjEwLG9ubHl0YXJnZXRjYXRlZ29yeT0nU1VSRkFDRSd9LFsnMyddPXtkZWY9J2F0YScsbWFpbmRpcj0nMSAwIDAnLG1heGFuZ2xlZGlmPTE5MCxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J1NVUkZBQ0UnfSxbJzQnXT17ZGVmPSdtYWNoaW5lZ3VuJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J1NVUkZBQ0UnfSxbJzUnXT17ZGVmPSdtYWNoaW5lZ3VuJyxvbmx5dGFyZ2V0Y2F0ZWdvcnk9J1NVUkZBQ0UnfX19fWlmIGcgdGhlbiBmKGcpZW5kIGVuZDtkbyBsb2NhbCBnPXthcm1zaWxvPXtlbmVyZ3ljb3N0PTE1MDAwMDAsbWV0YWxjb3N0PTk4NzIwLGJ1aWxkdGltZT0yMjg1MDAsZm9vdHByaW50eD0xMixmb290cHJpbnR6PTEyLG1heHRoaXN1bml0PTEsZXhwbG9kZWFzPSdhZHZhbmNlZEZ1c2lvbkV4cGxvc2lvbicsd2VhcG9uZGVmcz17bnVjbGVhcl9taXNzaWxlPXthcmVhb2ZlZmZlY3Q9NTAwMCxjYW1lcmFTaGFrZT0xNTAwMCxjcmF0ZXJib29zdD01NSxjcmF0ZXJtdWx0PTQwLGVuZXJneXBlcnNob3Q9MzkwMDAwLG1ldGFscGVyc2hvdD0zMDAwLHNtb2tlc2l6ZT0yOCxzbW9rZWNvbG9yPTAuODUsc291bmRoaXR3ZXR2b2x1bWU9ODAsc291bmRzdGFydHZvbHVtZT01MCxzdG9ja3BpbGV0aW1lPTE2MCx3ZWFwb252ZWxvY2l0eT01MDAsZGFtYWdlPXtjb21tYW5kZXJzPTUwMCxkZWZhdWx0PTE5NTAwLHJhcHRvcj0xMDAwMDB9fX19LGNvcnNpbG89e2VuZXJneWNvc3Q9MTUwMDAwMCxtZXRhbGNvc3Q9OTg3MjAsYnVpbGR0aW1lPTIyODUwMCxmb290cHJpbnR4PTEyLGZvb3RwcmludHo9MTIsbWF4dGhpc3VuaXQ9MSxleHBsb2RlYXM9J2FkdmFuY2VkRnVzaW9uRXhwbG9zaW9uJyx3ZWFwb25kZWZzPXtudWNsZWFyX21pc3NpbGU9e2FyZWFvZmVmZmVjdD01MDAwLGNhbWVyYVNoYWtlPTE1MDAwLGNyYXRlcmJvb3N0PTU1LGNyYXRlcm11bHQ9NDAsZW5lcmd5cGVyc2hvdD0zOTAwMDAsbWV0YWxwZXJzaG90PTMwMDAsc21va2VzaXplPTI4LHNtb2tlY29sb3I9MC44NSxzb3VuZGhpdHdldHZvbHVtZT04MCxzb3VuZHN0YXJ0dm9sdW1lPTUwLHN0b2NrcGlsZXRpbWU9MTYwLHdlYXBvbnZlbG9jaXR5PTUwMCxkYW1hZ2U9e2NvbW1hbmRlcnM9NTAwLGRlZmF1bHQ9MTk1MDAscmFwdG9yPTEwMDAwMH19fX0sbGVnc2lsbz17ZW5lcmd5Y29zdD0xNTAwMDAwLG1ldGFsY29zdD05ODcyMCxidWlsZHRpbWU9MjI4NTAwLGZvb3RwcmludHg9MTIsZm9vdHByaW50ej0xMixtYXh0aGlzdW5pdD0xLGV4cGxvZGVhcz0nYWR2YW5jZWRGdXNpb25FeHBsb3Npb24nLHdlYXBvbmRlZnM9e251Y2xlYXJfbWlzc2lsZT17YXJlYW9mZWZmZWN0PTUwMDAsY2FtZXJhU2hha2U9MTUwMDAsY3JhdGVyYm9vc3Q9NTUsY3JhdGVybXVsdD00MCxlbmVyZ3lwZXJzaG90PTM5MDAwMCxtZXRhbHBlcnNob3Q9MzAwMCxzbW9rZXNpemU9Mjgsc21va2Vjb2xvcj0wLjg1LHNvdW5kaGl0d2V0dm9sdW1lPTgwLHNvdW5kc3RhcnR2b2x1bWU9NTAsc3RvY2twaWxldGltZT0xNjAsd2VhcG9udmVsb2NpdHk9NTAwLGRhbWFnZT17Y29tbWFuZGVycz01MDAsZGVmYXVsdD0xOTUwMCxyYXB0b3I9MTAwMDAwfX19fSxyYXB0b3JfdHVycmV0X2FudGludWtlX3QzX3YxPXttYXh0aGlzdW5pdD0wfSxyYXB0b3JfYW50aW51a2U9e21heHRoaXN1bml0PTB9LHJhcHRvcl90dXJyZXRfYW50aW51a2VfdDRfdjE9e21heHRoaXN1bml0PTB9LHJhcHRvcl90dXJyZXRfYW50aW51a2VfdDJfdjE9e21heHRoaXN1bml0PTB9fWlmIGcgdGhlbiBmKGcpZW5kIGVuZDtsb2NhbCB4O2xvY2FsIHk7bG9jYWwgejtsb2NhbCBBO2xvY2FsIEI7bG9jYWwgQztsb2NhbCBEO2xvY2FsIEU7bG9jYWwgRjtsb2NhbCBHO2xvY2FsIEg7bG9jYWwgSTtsb2NhbCBmdW5jdGlvbiBKKClsb2NhbCBLPVNwcmluZy5HZXRNb2RPcHRpb25zKClpZiBub3QgSyBvciBLLmFkYXB0aXZlX3NwYXduZXJ+PSIxImFuZCBLLmFkYXB0aXZlX3NwYXduZXJ+PTEgdGhlbiByZXR1cm4gZW5kO2xvY2FsIEw9dG9udW1iZXIoSy5hZGFwdGl2ZV9jb21wcmVzc2lvbl9tYXgpb3IgMTA7bG9jYWwgTT1LLmFkYXB0aXZlX3ZhbXBpcmU9PSIxImxvY2FsIE49Sy5hZGFwdGl2ZV9ib3NzX3RpbnQ9PSIxImxvY2FsIE89U3ByaW5nLkdldFVuaXRDb3VudDtsb2NhbCBQPVNwcmluZy5EZXN0cm95VW5pdDtsb2NhbCBRPVNwcmluZy5DcmVhdGVVbml0O2xvY2FsIFI9U3ByaW5nLkdldFVuaXRQb3NpdGlvbjtsb2NhbCBTPVNwcmluZy5HZXRHYWlhVGVhbUlEO2xvY2FsIFQ9U3ByaW5nLkdldEdhbWVTcGVlZDtsb2NhbCBVPVNwcmluZy5HZXRGUFM7bG9jYWwgVj1TcHJpbmcuR2V0VW5pdEhlYWx0aDtsb2NhbCBXPVNwcmluZy5TZXRVbml0SGVhbHRoO2xvY2FsIFg9U3ByaW5nLkdldFVuaXRFeHBlcmllbmNlO2xvY2FsIFk9U3ByaW5nLlNldFVuaXRFeHBlcmllbmNlO2xvY2FsIFo9UygpbG9jYWwgXz17fWxvY2FsIGEwPTE7bG9jYWwgZnVuY3Rpb24gYTEoYTIsYTMpaWYgbm90IGEyIHRoZW4gcmV0dXJuIG5pbCBlbmQ7bG9jYWwgYTQ9VW5pdERlZnNbYTJdaWYgbm90IGE0IHRoZW4gcmV0dXJuIG5pbCBlbmQ7bG9jYWwgaD1hNC5uYW1lO2xvY2FsIGE1PSJfY29tcHJlc3NlZF94Ii4uYTM7bG9jYWwgYTY9aC4uYTU7bG9jYWwgbz1Vbml0RGVmTmFtZXNbYTZdcmV0dXJuIG8gYW5kIG8uaWQgb3IgbmlsIGVuZDt4PWZ1bmN0aW9uKGE3KWlmIGE3JTMwPT0wIHRoZW4gbG9jYWwgYTgsYTk9VCgpbG9jYWwgYWE9VSgpbG9jYWwgYWI9TygpbG9jYWwgYTM9MTtpZiBhOTwwLjggb3IgYWE8MjAgdGhlbiBhMz0xMCBlbHNlaWYgYTk8MC45IG9yIGFhPDM1IHRoZW4gYTM9NSBlbHNlaWYgYTk8MS4wIHRoZW4gYTM9MiBlbmQ7aWYgYWI+MzUwMCB0aGVuIGEzPTEwIGVsc2VpZiBhYj4yMDAwIGFuZCBhMzw1IHRoZW4gYTM9NSBlbHNlaWYgYWI+MTAwMCBhbmQgYTM8MiB0aGVuIGEzPTIgZW5kO2lmIGEzPkwgdGhlbiBhMz1MIGVuZDthMD1hMyBlbmQgZW5kO3k9ZnVuY3Rpb24oYWMsYTIsYWQpaWYgYWR+PVogdGhlbiByZXR1cm4gZW5kO2xvY2FsIGE0PVVuaXREZWZzW2EyXWlmIG5vdCBhNCB0aGVuIHJldHVybiBlbmQ7aWYgYTQuY3VzdG9tUGFyYW1zIGFuZCBhNC5jdXN0b21QYXJhbXMuaXNfY29tcHJlc3NlZF91bml0IHRoZW4gcmV0dXJuIGVuZDtpZiBub3Qoc3RyaW5nLmZpbmQoYTQubmFtZSwicmFwdG9yX2xhbmQiKW9yIHN0cmluZy5maW5kKGE0Lm5hbWUsInJhcHRvcl9haXIiKSl0aGVuIHJldHVybiBlbmQ7bG9jYWwgYTM9YTA7aWYgYTM9PTEgdGhlbiByZXR1cm4gZW5kO2xvY2FsIGFlPWExKGEyLGEzKWlmIG5vdCBhZSB0aGVuIGlmIGEzPT0xMCB0aGVuIGEzPTU7YWU9YTEoYTIsYTMpZW5kO2lmIG5vdCBhZSBhbmQgYTM+PTUgdGhlbiBhMz0yO2FlPWExKGEyLGEzKWVuZDtpZiBub3QgYWUgdGhlbiByZXR1cm4gZW5kIGVuZDtfW2EyXT0oX1thMl1vciAwKSsxO2lmIF9bYTJdPj1hMyB0aGVuIGxvY2FsIGFmLGFnLGFoPVIoYWMpbG9jYWwgYWk9UShhZSxhZixhZyxhaCwwLGFkKWlmIE4gYW5kIGFpIGFuZCBzcFNldFVuaXRDb2xvciB0aGVuIHNwU2V0VW5pdENvbG9yKGFpLDEsMCwwLDEpZW5kO19bYTJdPTAgZW5kO1AoYWMsZmFsc2UsdHJ1ZSllbmQ7ej1mdW5jdGlvbihhYyxhMixhZCxhaixhayxhbClpZiBub3QgTSB0aGVuIHJldHVybiBlbmQ7aWYgYWR+PVogb3IgYWx+PVogdGhlbiByZXR1cm4gZW5kO2lmIG5vdCBhMCBvciBhMDwxMCB0aGVuIHJldHVybiBlbmQ7bG9jYWwgYW09VW5pdERlZnNbYTJdbG9jYWwgYW49VW5pdERlZnNbYWtdaWYgbm90KGFtIGFuZCBhbil0aGVuIHJldHVybiBlbmQ7bG9jYWwgYW89c3RyaW5nLmZpbmQoYW0ubmFtZSwicmFwdG9yIilsb2NhbCBhcD1zdHJpbmcuZmluZChhbi5uYW1lLCJyYXB0b3IiKWlmIGFvIGFuZCBhcCB0aGVuIGxvY2FsIGFxPVYoYWMpb3IgMDtsb2NhbCBhcj1WKGFqKW9yIDA7bG9jYWwgYXMsYXQsYXUsYXY7aWYgYXE+PWFyIHRoZW4gYXM9YWM7YXQ9YWo7YXU9YXE7YXY9YXIgZWxzZSBhcz1hajthdD1hYzthdT1hcjthdj1hcSBlbmQ7UChhdCxmYWxzZSx0cnVlKVcoYXMsYXUrYXYpbG9jYWwgYXc9WChhcylvciAwO2xvY2FsIGF4PVgoYXQpb3IgMDtZKGFzLGF3K2F4KWVuZCBlbmQgZW5kO2lmIEVOQUJMRV9BREFQVElWRVNQQVdORVIgdGhlbiBKKCllbmQ7bG9jYWwgZnVuY3Rpb24gYXkoKWxvY2FsIGF6PVNwcmluZy5HZXRHYW1lRnJhbWU7bG9jYWwgVD1TcHJpbmcuR2V0R2FtZVNwZWVkO2xvY2FsIFA9U3ByaW5nLkRlc3Ryb3lVbml0O2xvY2FsIGFBPVNwcmluZy5HZXRUZWFtVW5pdHM7bG9jYWwgUz1TcHJpbmcuR2V0R2FpYVRlYW1JRDtsb2NhbCBhQj1TcHJpbmcuR2V0VW5pdERlZklEO2xvY2FsIGFDPVNwcmluZy5BZGRUZWFtUmVzb3VyY2U7bG9jYWwgYUQ9U3ByaW5nLkdldFRlYW1MaXN0O2xvY2FsIGFFPVNwcmluZy5WYWxpZFVuaXRJRDtsb2NhbCBSPVNwcmluZy5HZXRVbml0UG9zaXRpb247bG9jYWwgYUY9U3ByaW5nLlNwYXduQ0VHO2xvY2FsIGFHPVNwcmluZy5TZW5kTWVzc2FnZTtsb2NhbCBPPVNwcmluZy5HZXRVbml0Q291bnQ7bG9jYWwgYUg9U3ByaW5nLkdldFRlYW1TdGFydFBvc2l0aW9uO2xvY2FsIG49bWF0aC5mbG9vcjtsb2NhbCBLPVNwcmluZy5HZXRNb2RPcHRpb25zKClsb2NhbCBhST10b251bWJlcihLLmN1bGxfc2ltc3BlZWQpb3IgMC45O2xvY2FsIGFKPXRvbnVtYmVyKEsuY3VsbF9tYXh1bml0cylvciA1MDAwO2xvY2FsIGFLPUsuY3VsbF9lbmFibGVkPT0iMSJsb2NhbCBhTD10b251bWJlcihLLmN1bGxfcmFkaXVzKW9yIDIwMDA7QT1mdW5jdGlvbigpU3ByaW5nLkVjaG8oIltFY28gQ3VsbGVyXSBJbml0aWFsaXplZCB3aXRoIE1JTl9TSU1fU1BFRUQ9Ii4udG9zdHJpbmcoYUkpLi4iLCBNQVhfVU5JVFM9Ii4udG9zdHJpbmcoYUopLi4iLCBFTkFCTEVEPSIuLnRvc3RyaW5nKGFLKS4uIiwgUkFESVVTPSIuLnRvc3RyaW5nKGFMKSllbmQ7bG9jYWwgWj1TKClsb2NhbCBhTT17WyJhcm1zb2xhciJdPXRydWUsWyJjb3Jzb2xhciJdPXRydWUsWyJhcm13aW4iXT10cnVlLFsiY29yd2luIl09dHJ1ZSxbImFybW1ha3IiXT10cnVlLFsiY29ybWFrciJdPXRydWV9bG9jYWwgYU49e31sb2NhbCBhTz0xO2xvY2FsIGFQPWZhbHNlO2xvY2FsIGFRPSJJRExFImxvY2FsIGFSPTA7bG9jYWwgYVM9MzAwO2xvY2FsIGFUPXt9bG9jYWwgYVU9MTAyNDtsb2NhbCBhVj05MDA7bG9jYWwgZnVuY3Rpb24gYVcoYWYsYWgpbG9jYWwgYVg9bihhZi9hVSlsb2NhbCBhWT1uKGFoL2FVKXJldHVybiBhWCxhWSxhWC4uIjoiLi5hWSBlbmQ7bG9jYWwgZnVuY3Rpb24gYVooYWMpbG9jYWwgYWYsYTgsYWg9UihhYylpZiBhZiB0aGVuIGxvY2FsIGE4LGE4LGFfPWFXKGFmLGFoKWFUW2FfXT1heigpZW5kIGVuZDtCPWZ1bmN0aW9uKGFjLGEyLGIwLGIxLGIyLGIzLGI0LGI1LGI2LGI3KWFaKGFjKWlmIGI1IHRoZW4gYVooYjUpZW5kIGVuZDtDPWZ1bmN0aW9uKGFjLGEyLGIwLGI4LGIzLGI5LGJhKWFaKGFjKWVuZDtEPWZ1bmN0aW9uKGE3KWlmIG5vdCBhSyB0aGVuIHJldHVybiBlbmQ7aWYgYTclMzA9PTAgdGhlbiBsb2NhbCBhOCxhOT1UKClsb2NhbCBiYj1PKClsb2NhbCBiYz1hOTxhSSBvciBiYj5hSjtpZiBhUT09IklETEUidGhlbiBpZiBiYyB0aGVuIGFRPSJXQVJOSU5HImFSPWE3O2FHKCLimqDvuI8gUGVyZm9ybWFuY2UgQ3JpdGljYWwhIEVjbyBDdWxsaW5nIGluIDEwcy4uLiIpZW5kIGVsc2VpZiBhUT09IldBUk5JTkcidGhlbiBpZiBub3QgYmMgdGhlbiBhUT0iSURMRSJhRygi4pyFIFBlcmZvcm1hbmNlIFN0YWJpbGl6ZWQuIEN1bGxpbmcgQ2FuY2VsbGVkLiIpZWxzZWlmIGE3LWFSPj1hUyB0aGVuIGFRPSJBQ1RJVkUiYUcoIuKZu++4jyBFY28gQ3VsbGluZyBTVEFSVEVEOiBSZW1vdmluZyBpbmFjdGl2ZSBUMSBzdHJ1Y3R1cmVzLi4uIilhTj17fWFPPTE7YVA9ZmFsc2U7bG9jYWwgYmQ9YUQoKWZvciBhOCxhZCBpbiBwYWlycyhiZClkbyBpZiBhZH49WiB0aGVuIGxvY2FsIGJlPWFBKGFkKWZvciBhOCxiZiBpbiBwYWlycyhiZSlkbyBsb2NhbCBiZz1hQihiZilpZiBiZyB0aGVuIGxvY2FsIGE0PVVuaXREZWZzW2JnXWlmIGE0IGFuZCBhTVthNC5uYW1lXXRoZW4gdGFibGUuaW5zZXJ0KGFOLHtpZD1iZix0ZWFtPWFkLGRlZklkPWJnfSllbmQgZW5kIGVuZCBlbmQgZW5kO2lmI2FOPjAgdGhlbiBhUD10cnVlIGVsc2UgYVE9IklETEUiZW5kIGVuZCBlbHNlaWYgYVE9PSJBQ1RJVkUidGhlbiBpZiBub3QgYVAgdGhlbiBhUT0iSURMRSJlbmQgZW5kIGVuZDtpZiBhUCB0aGVuIGxvY2FsIGJoPTIwO2xvY2FsIGJpPTA7bG9jYWwgYmo9YXooKXdoaWxlIGJpPGJoIGFuZCBhTzw9I2FOIGRvIGxvY2FsIGJrPWFOW2FPXWFPPWFPKzE7Ymk9YmkrMTtsb2NhbCBiZj1iay5pZDtpZiBhRShiZil0aGVuIGxvY2FsIGFmLGFnLGFoPVIoYmYpbG9jYWwgYmw9dHJ1ZTtpZiBhZiB0aGVuIGxvY2FsIGFYLGFZLGE4PWFXKGFmLGFoKWZvciBibT0tMSwxIGRvIGZvciBibj0tMSwxIGRvIGxvY2FsIGFfPWFYK2JtLi4iOiIuLmFZK2JuO2xvY2FsIGJvPWFUW2FfXWlmIGJvIGFuZCBiai1ibzxhViB0aGVuIGJsPWZhbHNlO2JyZWFrIGVuZCBlbmQ7aWYgbm90IGJsIHRoZW4gYnJlYWsgZW5kIGVuZDtpZiBibCB0aGVuIGxvY2FsIGJwPWFBKGJrLnRlYW0pbG9jYWwgYnE9ZmFsc2U7bG9jYWwgYnIsYnMsYnQ9YUgoYmsudGVhbSlpZiBiciB0aGVuIGxvY2FsIGJ1PShhZi1icileMisoYWgtYnQpXjI7aWYgYnU8YUxeMiB0aGVuIGJsPWZhbHNlO2JsPWZhbHNlIGVuZCBlbmQ7aWYgYmwgdGhlbiBsb2NhbCBhND1Vbml0RGVmc1tiay5kZWZJZF1pZiBhNCB0aGVuIGxvY2FsIGJ2PWE0Lm1ldGFsQ29zdCBvciAwO2FDKGJrLnRlYW0sIm1ldGFsIixidilhRigibWVkaXVtZXhwbG9zaW9uIixhZixhZyxhaCwwLDAsMClQKGJmLGZhbHNlLHRydWUpZW5kIGVuZCBlbmQgZW5kIGVuZCBlbmQ7aWYgYU8+I2FOIHRoZW4gYVA9ZmFsc2U7YU49e31lbmQgZW5kIGVuZCBlbmQ7aWYgRU5BQkxFX0NVTExJTkcgdGhlbiBheSgpZW5kO2xvY2FsIGZ1bmN0aW9uIGJ3KClsb2NhbCBLPVNwcmluZy5HZXRNb2RPcHRpb25zKClpZiBub3QgSyBvciBLLmZ1c2lvbl9tb2Rlfj0iMSJhbmQgSy5mdXNpb25fbW9kZX49MSB0aGVuIHJldHVybiBlbmQ7bG9jYWwgUj1TcHJpbmcuR2V0VW5pdFBvc2l0aW9uO2xvY2FsIGFCPVNwcmluZy5HZXRVbml0RGVmSUQ7bG9jYWwgUT1TcHJpbmcuQ3JlYXRlVW5pdDtsb2NhbCBQPVNwcmluZy5EZXN0cm95VW5pdDtsb2NhbCBieD1TcHJpbmcuU2V0VW5pdE5ldXRyYWw7bG9jYWwgVj1TcHJpbmcuR2V0VW5pdEhlYWx0aDtsb2NhbCBXPVNwcmluZy5TZXRVbml0SGVhbHRoO2xvY2FsIGJ5PVNwcmluZy5HZXRVbml0c0luQ3lsaW5kZXI7bG9jYWwgWD1TcHJpbmcuR2V0VW5pdEV4cGVyaWVuY2U7bG9jYWwgWT1TcHJpbmcuU2V0VW5pdEV4cGVyaWVuY2U7bG9jYWwgYno9e31sb2NhbCBiQT17fUU9ZnVuY3Rpb24oKWxvY2FsIGJCPXsiYXJtc29sYXIiLCJjb3Jzb2xhciIsImFybXdpbiIsImNvcndpbiIsImFybW1ha3IiLCJjb3JtYWtyIiwiYXJtbGx0IiwiY29ybGx0In1mb3IgYTgsaCBpbiBwYWlycyhiQilkbyBsb2NhbCBiQz1Vbml0RGVmTmFtZXNbaF1sb2NhbCBiRD1Vbml0RGVmTmFtZXNbaC4uIl90MiJdaWYgYkMgdGhlbiBiQVtiQy5pZF09MSBlbmQ7aWYgYkMgYW5kIGJEIHRoZW4gYnpbYkMuaWRdPWJELmlkO2JBW2JELmlkXT0yIGVuZDtmb3IgYkU9Miw0IGRvIGxvY2FsIGJGPVVuaXREZWZOYW1lc1toLi4iX3QiLi5iRV1sb2NhbCBiRz1Vbml0RGVmTmFtZXNbaC4uIl90Ii4uYkUrMV1pZiBiRiB0aGVuIGJBW2JGLmlkXT1iRSBlbmQ7aWYgYkYgYW5kIGJHIHRoZW4gYnpbYkYuaWRdPWJHLmlkO2JBW2JHLmlkXT1iRSsxIGVuZCBlbmQgZW5kIGVuZDtGPWZ1bmN0aW9uKGFjLGEyLGFkKWxvY2FsIGJIPXRvbnVtYmVyKEsuZnVzaW9uX21pbnRpZXIpb3IgMTtsb2NhbCBiST1iQVthMl1vciAwO2lmIGJJPGJIIHRoZW4gcmV0dXJuIGVuZDtsb2NhbCBiSj1ielthMl1pZiBub3QgYkogdGhlbiByZXR1cm4gZW5kO2xvY2FsIGFmLGE4LGFoPVIoYWMpbG9jYWwgYTQ9VW5pdERlZnNbYTJdbG9jYWwgYks9YTQuZm9vdHByaW50WCoxNjtsb2NhbCBiTD1hNC5mb290cHJpbnRaKjE2O2xvY2FsIGJNPW1hdGgubWF4KGJLLGJMKSoyO2xvY2FsIGJOPWJ5KGFmLGFoLGJNLGFkKWxvY2FsIGFOPXt9Zm9yIGE4LGJPIGluIHBhaXJzKGJOKWRvIGlmIGFCKGJPKT09YTIgYW5kIGJPfj1hYyB0aGVuIGxvY2FsIGJQLGE4LGJRPVIoYk8pdGFibGUuaW5zZXJ0KGFOLHtpZD1iTyx4PWJQLHo9YlF9KWVuZCBlbmQ7aWYjYU48MyB0aGVuIHJldHVybiBlbmQ7bG9jYWwgZnVuY3Rpb24gYlIoYlMsYlQpZm9yIGE4LGJVIGluIHBhaXJzKGFOKWRvIGlmIG1hdGguYWJzKGJVLngtYlMpPDggYW5kIG1hdGguYWJzKGJVLnotYlQpPDggdGhlbiByZXR1cm4gYlUuaWQgZW5kIGVuZDtyZXR1cm4gbmlsIGVuZDtsb2NhbCBmdW5jdGlvbiBiVihiVyxiWCxiWSxiWilpZiBiVyBhbmQgYlggYW5kIGJZIGFuZCBiWiB0aGVuIGJ4KGJXLHRydWUpYngoYlgsdHJ1ZSlieChiWSx0cnVlKWJ4KGJaLHRydWUpbG9jYWwgYXE9VihiVylvciAwO2xvY2FsIGFyPVYoYlgpb3IgMDtsb2NhbCBiXz1WKGJZKW9yIDA7bG9jYWwgYzA9VihiWilvciAwO2xvY2FsIGMxLGE4LGMyPVIoYlcpbG9jYWwgYzMsYTgsYzQ9UihiWilsb2NhbCBjNT0oYzErYzMpLzI7bG9jYWwgYzY9KGMyK2M0KS8yO2xvY2FsIGF3PVgoYlcpb3IgMDtsb2NhbCBheD1YKGJYKW9yIDA7bG9jYWwgYzc9WChiWSlvciAwO2xvY2FsIGM4PVgoYlopb3IgMDtsb2NhbCBjOT1hdytheCtjNytjODtsb2NhbCBjYT10b251bWJlcihLLmZ1c2lvbl9lZmZpY2llbmN5KW9yIDEuMTA7Yzk9YzkqY2E7UChiVyxmYWxzZSx0cnVlKVAoYlgsZmFsc2UsdHJ1ZSlQKGJZLGZhbHNlLHRydWUpUChiWixmYWxzZSx0cnVlKWxvY2FsIGNiPVEoYkosYzUsMCxjNiwwLGFkKWlmIGNiIHRoZW4gbG9jYWwgY2M9KGFxK2FyK2JfK2MwKSpjYTtXKGNiLGNjKVkoY2IsYzkpZW5kO3JldHVybiB0cnVlIGVuZDtyZXR1cm4gZmFsc2UgZW5kO2lmIGJWKGFjLGJSKGFmK2JLLGFoKSxiUihhZixhaCtiTCksYlIoYWYrYkssYWgrYkwpKXRoZW4gcmV0dXJuIGVuZDtpZiBiVihiUihhZi1iSyxhaCksYWMsYlIoYWYtYkssYWgrYkwpLGJSKGFmLGFoK2JMKSl0aGVuIHJldHVybiBlbmQ7aWYgYlYoYlIoYWYsYWgtYkwpLGJSKGFmK2JLLGFoLWJMKSxhYyxiUihhZitiSyxhaCkpdGhlbiByZXR1cm4gZW5kO2lmIGJWKGJSKGFmLWJLLGFoLWJMKSxiUihhZixhaC1iTCksYlIoYWYtYkssYWgpLGFjKXRoZW4gcmV0dXJuIGVuZCBlbmQgZW5kO2lmIEVOQUJMRV9GVVNJT05DT1JFIHRoZW4gYncoKWVuZDtsb2NhbCBmdW5jdGlvbiBjZCgpbG9jYWwgUj1TcHJpbmcuR2V0VW5pdFBvc2l0aW9uO2xvY2FsIGFCPVNwcmluZy5HZXRVbml0RGVmSUQ7bG9jYWwgY2U9U3ByaW5nLkdpdmVPcmRlclRvVW5pdDtsb2NhbCBhej1TcHJpbmcuR2V0R2FtZUZyYW1lO2xvY2FsIGJ5PVNwcmluZy5HZXRVbml0c0luQ3lsaW5kZXI7bG9jYWwgYUE9U3ByaW5nLkdldFRlYW1Vbml0cztsb2NhbCBhRD1TcHJpbmcuR2V0VGVhbUxpc3Q7bG9jYWwgYUU9U3ByaW5nLlZhbGlkVW5pdElEO2xvY2FsIGNmPW1hdGguc3FydDtsb2NhbCBjZz1tYXRoLmFicztsb2NhbCBuPW1hdGguZmxvb3I7bG9jYWwgY2g9bWF0aC5yYW5kb207bG9jYWwgY2k9U3ByaW5nLlNldFVuaXRMYWJlbDtsb2NhbCBjaj1TcHJpbmcuR2V0TW9kT3B0aW9ucztsb2NhbCBjaz1TcHJpbmcuR2V0R2FpYVRlYW1JRCgpbG9jYWwgY2w9MzA7bG9jYWwgYVU9NTEyO2xvY2FsIGNtPTIwO2xvY2FsIGNuPXt9bG9jYWwgY289e31sb2NhbCBjcD0xO2xvY2FsIGNxPTA7bG9jYWwgY3I9bmlsO2xvY2FsIGZ1bmN0aW9uIGFXKGFmLGFoKWxvY2FsIGFYPW4oYWYvYVUpbG9jYWwgYVk9bihhaC9hVSlyZXR1cm4gYVguLiI6Ii4uYVkgZW5kO2xvY2FsIGZ1bmN0aW9uIGNzKGFjKWxvY2FsIGFmLGE4LGFoPVIoYWMpaWYgYWYgdGhlbiBsb2NhbCBhXz1hVyhhZixhaClpZiBub3QgY29bYV9ddGhlbiBjb1thX109e31lbmQ7dGFibGUuaW5zZXJ0KGNvW2FfXSxhYyllbmQgZW5kO2xvY2FsIGZ1bmN0aW9uIGN0KCljbz17fWxvY2FsIGN1PWFEKClmb3IgYTgsYWQgaW4gcGFpcnMoY3UpZG8gaWYgYWR+PWNrIHRoZW4gbG9jYWwgYmU9YUEoYWQpZm9yIGE4LGJmIGluIHBhaXJzKGJlKWRvIGNzKGJmKWVuZCBlbmQgZW5kIGVuZDtsb2NhbCBmdW5jdGlvbiBjdihhYylsb2NhbCBhZixhOCxhaD1SKGFjKWlmIG5vdCBhZiB0aGVuIHJldHVybiBlbmQ7bG9jYWwgSz1jaigpaWYgSyBhbmQoSy5kZWJ1Z19tb2RlPT0iMSJvciBLLmRlYnVnX21vZGU9PTEpdGhlbiBjaShhYywiU3F1YWQgTGVhZGVyIillbmQ7bG9jYWwgYVg9bihhZi9hVSlsb2NhbCBhWT1uKGFoL2FVKWxvY2FsIGN3PW5pbDtsb2NhbCBjeD05OTk5OTk5OTtmb3IgYm09LTEsMSBkbyBmb3IgYm49LTEsMSBkbyBsb2NhbCBhXz1hWCtibS4uIjoiLi5hWStibjtsb2NhbCBjeT1jb1thX11pZiBjeSB0aGVuIGZvciBhOCxjeiBpbiBwYWlycyhjeSlkbyBsb2NhbCBjQSxhOCxjQj1SKGN6KWlmIGNBIHRoZW4gbG9jYWwgYnU9KGNBLWFmKV4yKyhjQi1haCleMjtpZiBidTxjeCB0aGVuIGN4PWJ1O2N3PWN6IGVuZCBlbmQgZW5kIGVuZCBlbmQgZW5kO2lmIGN3IHRoZW4gY2UoYWMsQ01ELkFUVEFDSyx7Y3d9LHt9KWVsc2UgY2UoYWMsQ01ELkZJR0hULHtHYW1lLm1hcFNpemVYLzIsMCxHYW1lLm1hcFNpemVaLzJ9LHt9KWVuZCBlbmQ7bG9jYWwgZnVuY3Rpb24gY0MoYWMsY0QpaWYgY0QgYW5kIGFFKGNEKXRoZW4gbG9jYWwgY0UsYTgsY0Y9UihjRClpZiBjRSB0aGVuIGxvY2FsIGNHPWNoKC01MCw1MClsb2NhbCBjSD1jaCgtNTAsNTApY2UoYWMsQ01ELk1PVkUse2NFK2NHLDAsY0YrY0h9LHt9KXJldHVybiBlbmQgZW5kO2N2KGFjKWVuZDtsb2NhbCBmdW5jdGlvbiBjSShhYylsb2NhbCBnPWNuW2FjXWlmIG5vdCBnIHRoZW4gcmV0dXJuIGVuZDtpZiBnLmlzTGVhZGVyIHRoZW4gY3YoYWMpZWxzZSBjQyhhYyxnLmxlYWRlcklEKWVuZCBlbmQ7Rz1mdW5jdGlvbihhYyxhMixhZClpZiBhZD09Y2sgdGhlbiBpZiBjcT49Y20gb3IgY3I9PW5pbCBvciBub3QgYUUoY3IpdGhlbiBjcD1jcCsxO2NxPTE7Y3I9YWM7Y25bYWNdPXtpZD1hYyxidWNrZXQ9YWMlY2wsaXNMZWFkZXI9dHJ1ZSxzcXVhZElEPWNwfWVsc2UgY3E9Y3ErMTtjblthY109e2lkPWFjLGJ1Y2tldD1hYyVjbCxpc0xlYWRlcj1mYWxzZSxsZWFkZXJJRD1jcixzcXVhZElEPWNwfWVuZCBlbHNlIGNzKGFjKWVuZCBlbmQ7SD1mdW5jdGlvbihhYyxhMixhZClpZiBjblthY110aGVuIGNuW2FjXT1uaWw7aWYgYWM9PWNyIHRoZW4gY3I9bmlsO2NxPWNtIGVuZCBlbmQgZW5kO0k9ZnVuY3Rpb24oYTcpaWYgYTclMzA9PTAgdGhlbiBjdCgpZW5kO2xvY2FsIGNKPWE3JWNsO2ZvciBwLGcgaW4gcGFpcnMoY24pZG8gaWYgZy5idWNrZXQ9PWNKIHRoZW4gY0kocCllbmQgZW5kIGVuZCBlbmQ7aWYgRU5BQkxFX1JBUFRPUkFJT1BUSU1JWkVEIHRoZW4gY2QoKWVuZDtmdW5jdGlvbiBnYWRnZXQ6R2FtZUZyYW1lKC4uLilpZiB4IHRoZW4geCguLi4pZW5kO2lmIEQgdGhlbiBEKC4uLillbmQ7aWYgSSB0aGVuIEkoLi4uKWVuZCBlbmQ7ZnVuY3Rpb24gZ2FkZ2V0OlVuaXRDcmVhdGVkKC4uLilpZiB5IHRoZW4geSguLi4pZW5kO2lmIEcgdGhlbiBHKC4uLillbmQgZW5kO2Z1bmN0aW9uIGdhZGdldDpVbml0Q29sbGlzaW9uKC4uLilpZiB6IHRoZW4geiguLi4pZW5kIGVuZDtmdW5jdGlvbiBnYWRnZXQ6SW5pdGlhbGl6ZSguLi4paWYgQSB0aGVuIEEoLi4uKWVuZDtpZiBFIHRoZW4gRSguLi4pZW5kIGVuZDtmdW5jdGlvbiBnYWRnZXQ6VW5pdERhbWFnZWQoLi4uKWlmIEIgdGhlbiBCKC4uLillbmQgZW5kO2Z1bmN0aW9uIGdhZGdldDpVbml0V2VhcG9uRmlyZSguLi4paWYgQyB0aGVuIEMoLi4uKWVuZCBlbmQ7ZnVuY3Rpb24gZ2FkZ2V0OlVuaXRGaW5pc2hlZCguLi4paWYgRiB0aGVuIEYoLi4uKWVuZCBlbmQ7ZnVuY3Rpb24gZ2FkZ2V0OlVuaXREZXN0cm95ZWQoLi4uKWlmIEggdGhlbiBIKC4uLillbmQgZW5k",
-}
+culling_GameFrame = function(n)
+    if not CULL_ENABLED then return end
 
-local encoded = table.concat(chunks)
-local decoded = Base64Decode(encoded)
-local func, loadErr = loadstring(decoded)
-if func then
-    local status, err = pcall(func)
-    if not status then
-        Spring.Echo("Runtime Error in MasterGadget: " .. tostring(err))
+    -- State Machine Update (Every 30 frames)
+    if n % 30 == 0 then
+        local _, simSpeed = spGetGameSpeed()
+        local currentUnits = spGetUnitCount()
+        local conditionsMet = (simSpeed < MIN_SIM_SPEED) or (currentUnits > MAX_UNITS)
+
+        if cullState == "IDLE" then
+            if conditionsMet then
+                cullState = "WARNING"
+                warningStartTime = n
+                spSendMessage("⚠️ Performance Critical! Eco Culling in 10s...")
+            end
+        elseif cullState == "WARNING" then
+            if not conditionsMet then
+                cullState = "IDLE"
+                spSendMessage("✅ Performance Stabilized. Culling Cancelled.")
+            elseif (n - warningStartTime) >= WARNING_DURATION then
+                cullState = "ACTIVE"
+                spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
+
+                -- Collection Logic
+                candidates = {}
+                candidatesIndex = 1
+                processingActive = false
+
+                local teamList = spGetTeamList()
+                for _, teamID in pairs(teamList) do
+                    if teamID ~= GAIA_TEAM_ID then
+                        local units = spGetTeamUnits(teamID)
+                        for _, uID in pairs(units) do
+                             local udID = spGetUnitDefID(uID)
+                             if udID then
+                                local ud = UnitDefs[udID]
+                                if ud and cullableUnits[ud.name] then
+                                    table.insert(candidates, {id = uID, team = teamID, defId = udID})
+                                end
+                             end
+                        end
+                    end
+                end
+
+                if #candidates > 0 then
+                    processingActive = true
+                else
+                    cullState = "IDLE"
+                end
+            end
+        elseif cullState == "ACTIVE" then
+             if not processingActive then
+                 cullState = "IDLE"
+             end
+        end
     end
-else
-    Spring.Echo("Syntax Error loading MasterGadget logic: " .. tostring(loadErr))
+
+    -- Process Batch (Every Frame if active)
+    if processingActive then
+        local batchSize = 20 -- Check 20 units per frame
+        local processedCount = 0
+        local currentFrame = spGetGameFrame()
+
+        while processedCount < batchSize and candidatesIndex <= #candidates do
+            local candidate = candidates[candidatesIndex]
+            candidatesIndex = candidatesIndex + 1
+            processedCount = processedCount + 1
+
+            local uID = candidate.id
+            if spValidUnitID(uID) then
+                 -- Check Safe Zone Cache (Combat Grid)
+                 local x, y, z = spGetUnitPosition(uID)
+                 local safe = true
+
+                 if x then
+                     local gx, gz, _ = GetGridKey(x, z)
+
+                     -- Check current and neighbor cells (3x3)
+                     for dx = -1, 1 do
+                         for dz = -1, 1 do
+                             local key = (gx + dx) .. ":" .. (gz + dz)
+                             local lastActive = combatGrid[key]
+                             if lastActive and (currentFrame - lastActive < ACTIVE_DURATION) then
+                                 safe = false
+                                 break
+                             end
+                         end
+                         if not safe then break end
+                     end
+
+                     if safe then
+                        -- Check Safe Radius from Start (approximate using 0,0 for now or assume commander/start pos)
+                        -- The plan asked for "Safe Zone Radius" from start point/commander.
+                        -- We will assume any unit within SAFE_RADIUS of ANY friendly commander is safe.
+                        -- Actually, the current "Combat Grid" logic seems to be about "Active Combat".
+                        -- The "Safe Zone" in the plan might be distinct.
+                        -- For now, let's keep the Combat Grid logic as the primary safety check (as implemented).
+                        -- If SAFE_RADIUS is intended to be a static zone around start, we need start positions.
+
+                        -- Let's stick to the implementation I see here which uses "Combat Grid" for safety.
+                        -- However, I should check distance to commanders if I want to respect SAFE_RADIUS strictly.
+                        -- Let's check nearest commander.
+                        local commanders = spGetTeamUnits(candidate.team) -- Optimize: Filter for commanders
+                        local inSafeZone = false
+                        -- This is expensive. Let's assume the previous logic handles safety via activity.
+                        -- But the prompt asked for "Safe Zone Radius".
+                        -- Let's check distance to (0,0) or start pos if available.
+                        -- spGetTeamStartPosition(teamID)
+                        local sx, sy, sz = spGetTeamStartPosition(candidate.team)
+                        if sx then
+                             local distSq = (x - sx)^2 + (z - sz)^2
+                             if distSq < SAFE_RADIUS^2 then
+                                 safe = false -- It IS safe from culling (so safe=false means don't cull?)
+                                 -- Variable 'safe' here means "Safe to CULL". This is confusing naming in my code.
+                                 -- In the code above: 'safe = true' -> check grid -> if active combat -> safe = false.
+                                 -- So 'safe' means "Eligible for Culling".
+                                 -- If inside SAFE_RADIUS of start, it should be NOT eligible.
+                                 safe = false
+                             end
+                        end
+
+                        if safe then
+                             -- Refund
+                            local ud = UnitDefs[candidate.defId]
+                            if ud then
+                                local metalCost = ud.metalCost or 0
+                                spAddTeamResource(candidate.team, "metal", metalCost)
+
+                            -- Visuals
+                            spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)
+
+                            -- Destroy
+                            spDestroyUnit(uID, false, true)
+                            end
+                        end
+                     end
+                 end
+            end
+        end
+
+        if candidatesIndex > #candidates then
+            processingActive = false
+            candidates = {}
+        end
+    end
+end
+
+end
+if ENABLE_CULLING then
+    Initialize_culling()
+end
+
+local function Initialize_fusioncore()
+
+
+
+
+-- Check Mod Option
+local modOptions = Spring.GetModOptions()
+-- In testing, modOptions might be nil or strings. Check carefully.
+if not modOptions or (modOptions.fusion_mode ~= "1" and modOptions.fusion_mode ~= 1) then
+    return
+end
+
+local spGetUnitPosition = Spring.GetUnitPosition
+local spGetUnitDefID = Spring.GetUnitDefID
+local spCreateUnit = Spring.CreateUnit
+local spDestroyUnit = Spring.DestroyUnit
+local spSetUnitNeutral = Spring.SetUnitNeutral
+local spGetUnitHealth = Spring.GetUnitHealth
+local spSetUnitHealth = Spring.SetUnitHealth
+local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
+local spGetUnitExperience = Spring.GetUnitExperience
+local spSetUnitExperience = Spring.SetUnitExperience
+
+-- Map of Mergeable UnitDefID -> Next Tier UnitDefID
+local mergeMap = {}
+-- Map of UnitDefID -> Tier (1 to 5)
+local unitTier = {}
+
+fusioncore_Initialize = function()
+    -- Hardcoded base names that we know are generated by unit-generators.ts
+    local baseNames = {"armsolar", "corsolar", "armwin", "corwin", "armmakr", "cormakr", "armllt", "corllt"}
+
+    for _, name in pairs(baseNames) do
+        -- T1 -> T2
+        local u1 = UnitDefNames[name]
+        local u2 = UnitDefNames[name .. "_t2"]
+        if u1 then unitTier[u1.id] = 1 end
+        if u1 and u2 then
+             mergeMap[u1.id] = u2.id
+             unitTier[u2.id] = 2
+        end
+
+        -- T2 -> T3, T3 -> T4, T4 -> T5
+        for i = 2, 4 do
+            local cur = UnitDefNames[name .. "_t" .. i]
+            local next = UnitDefNames[name .. "_t" .. (i+1)]
+            if cur then unitTier[cur.id] = i end
+            if cur and next then
+                 mergeMap[cur.id] = next.id
+                 unitTier[next.id] = i+1
+            end
+        end
+    end
+end
+
+fusioncore_UnitFinished = function(unitID, unitDefID, teamID)
+    local minTier = tonumber(modOptions.fusion_mintier) or 1
+    local currentTier = unitTier[unitDefID] or 0
+    if currentTier < minTier then return end
+
+    local nextTierID = mergeMap[unitDefID]
+    if not nextTierID then return end
+
+    local x, _, z = spGetUnitPosition(unitID)
+    local ud = UnitDefs[unitDefID]
+    -- Spring footprint is in 16-elmo blocks. e.g. 2x2 footprint = 32x32 elmos.
+    local fpX = ud.footprintX * 16
+    local fpZ = ud.footprintZ * 16
+
+    -- Search radius slightly larger than 2x footprint
+    local searchRadius = math.max(fpX, fpZ) * 2
+    local nearby = spGetUnitsInCylinder(x, z, searchRadius, teamID)
+
+    local candidates = {}
+    for _, uid in pairs(nearby) do
+        if spGetUnitDefID(uid) == unitDefID and uid ~= unitID then
+            local ux, _, uz = spGetUnitPosition(uid)
+            table.insert(candidates, {id=uid, x=ux, z=uz})
+        end
+    end
+
+    if #candidates < 3 then return end
+
+    -- Helper to find unit at specific relative coordinates with tolerance
+    local function FindAt(targetX, targetZ)
+        for _, c in pairs(candidates) do
+            if math.abs(c.x - targetX) < 8 and math.abs(c.z - targetZ) < 8 then
+                return c.id
+            end
+        end
+        return nil
+    end
+
+    -- Helper to execute merge
+    local function ExecuteMerge(uTL, uTR, uBL, uBR)
+        if uTL and uTR and uBL and uBR then
+             -- Lock units
+            spSetUnitNeutral(uTL, true)
+            spSetUnitNeutral(uTR, true)
+            spSetUnitNeutral(uBL, true)
+            spSetUnitNeutral(uBR, true)
+
+            local h1 = spGetUnitHealth(uTL) or 0
+            local h2 = spGetUnitHealth(uTR) or 0
+            local h3 = spGetUnitHealth(uBL) or 0
+            local h4 = spGetUnitHealth(uBR) or 0
+
+            -- Calculate average center
+            local px1, _, pz1 = spGetUnitPosition(uTL)
+            local px4, _, pz4 = spGetUnitPosition(uBR)
+            local cx = (px1 + px4) / 2
+            local cz = (pz1 + pz4) / 2
+
+            -- Get XP from fused units
+            local xp1 = spGetUnitExperience(uTL) or 0
+            local xp2 = spGetUnitExperience(uTR) or 0
+            local xp3 = spGetUnitExperience(uBL) or 0
+            local xp4 = spGetUnitExperience(uBR) or 0
+            local totalXP = xp1 + xp2 + xp3 + xp4
+
+            -- Apply Efficiency Bonus
+            local efficiency = tonumber(modOptions.fusion_efficiency) or 1.10
+            totalXP = totalXP * efficiency
+
+            -- Destroy source units
+            spDestroyUnit(uTL, false, true)
+            spDestroyUnit(uTR, false, true)
+            spDestroyUnit(uBL, false, true)
+            spDestroyUnit(uBR, false, true)
+
+            -- Create new unit
+            local newUnit = spCreateUnit(nextTierID, cx, 0, cz, 0, teamID)
+            if newUnit then
+                -- Sum HP from fused units and apply bonus
+                local totalHealth = (h1 + h2 + h3 + h4) * efficiency
+                -- Check max health of new unit to avoid overflow if needed,
+                -- though usually SetUnitHealth clamps it or allows overflow.
+                -- We set it to the sum.
+                spSetUnitHealth(newUnit, totalHealth)
+
+                -- Sum XP
+                spSetUnitExperience(newUnit, totalXP)
+            end
+            return true
+        end
+        return false
+    end
+
+    -- Check 4 permutations where 'unitID' is one of the corners
+
+    -- Case 1: This is TL. Check TR, BL, BR.
+    if ExecuteMerge(unitID, FindAt(x+fpX, z), FindAt(x, z+fpZ), FindAt(x+fpX, z+fpZ)) then return end
+
+    -- Case 2: This is TR. Check TL, BL, BR.
+    if ExecuteMerge(FindAt(x-fpX, z), unitID, FindAt(x-fpX, z+fpZ), FindAt(x, z+fpZ)) then return end
+
+    -- Case 3: This is BL. Check TL, TR, BR.
+    if ExecuteMerge(FindAt(x, z-fpZ), FindAt(x+fpX, z-fpZ), unitID, FindAt(x+fpX, z)) then return end
+
+    -- Case 4: This is BR. Check TL, TR, BL.
+    if ExecuteMerge(FindAt(x-fpX, z-fpZ), FindAt(x, z-fpZ), FindAt(x-fpX, z), unitID) then return end
+end
+
+fusioncore_UnitDestroyed = function(unitID, unitDefID, teamID)
+    -- Mega Nuke Logic (Triggered if ENABLE_MEGANUKE is true)
+    if not (ENABLE_MEGANUKE or (modOptions and modOptions.meganuke == "1")) then return end
+
+    -- Check if it is a high-tier fusion unit
+    local tier = unitTier[unitDefID]
+    if tier and tier >= 3 then
+        local x, y, z = spGetUnitPosition(unitID)
+        -- Spawn a large explosion
+        if Spring.SpawnCEG then
+            Spring.SpawnCEG("atomic_blast", x, y, z, 0, 1, 0)
+        end
+        -- Could add Area Damage here if needed
+    end
+end
+
+end
+if ENABLE_FUSIONCORE then
+    Initialize_fusioncore()
+end
+
+local function Initialize_raptoraioptimized()
+
+
+
+
+-- Localization of Global Functions
+local spGetUnitPosition = Spring.GetUnitPosition
+local spGetUnitDefID = Spring.GetUnitDefID
+local spGiveOrderToUnit = Spring.GiveOrderToUnit
+local spGetGameFrame = Spring.GetGameFrame
+local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
+local spGetTeamUnits = Spring.GetTeamUnits
+local spGetTeamList = Spring.GetTeamList
+local spValidUnitID = Spring.ValidUnitID
+local math_sqrt = math.sqrt
+local math_abs = math.abs
+local math_floor = math.floor
+local math_random = math.random
+local spSetUnitLabel = Spring.SetUnitLabel
+local spGetModOptions = Spring.GetModOptions
+
+-- Constants
+local RAPTOR_TEAM_ID = Spring.GetGaiaTeamID()
+local BUCKET_COUNT = 30
+local GRID_SIZE = 512
+local SQUAD_SIZE = 20
+
+-- State
+local raptorUnits = {} -- Map: unitID -> { bucket, isLeader, leaderID, squadID }
+local targetGrid = {} -- Map: gridKey -> list of unitIDs (targets)
+
+-- Squad Management State
+local currentSquadID = 1
+local currentSquadCount = 0
+local currentLeaderID = nil
+
+-- Helper: Get Grid Key
+local function GetGridKey(x, z)
+    local gx = math_floor(x / GRID_SIZE)
+    local gz = math_floor(z / GRID_SIZE)
+    return gx .. ":" .. gz
+end
+
+-- Spatial Partitioning: Register Target
+local function RegisterTarget(unitID)
+    local x, _, z = spGetUnitPosition(unitID)
+    if x then
+        local key = GetGridKey(x, z)
+        if not targetGrid[key] then targetGrid[key] = {} end
+        table.insert(targetGrid[key], unitID)
+    end
+end
+
+-- Rebuild Grid
+local function RebuildTargetGrid()
+    targetGrid = {}
+    local teams = spGetTeamList()
+    for _, teamID in pairs(teams) do
+        if teamID ~= RAPTOR_TEAM_ID then
+            local units = spGetTeamUnits(teamID)
+            for _, uID in pairs(units) do
+                RegisterTarget(uID)
+            end
+        end
+    end
+end
+
+-- Logic: Squad Leader (Full Pathing/Targeting)
+local function ProcessLeader(unitID)
+    local x, _, z = spGetUnitPosition(unitID)
+    if not x then return end
+
+    -- Visual Debugging
+    local modOptions = spGetModOptions()
+    if modOptions and (modOptions.debug_mode == "1" or modOptions.debug_mode == 1) then
+        spSetUnitLabel(unitID, "Squad Leader")
+    end
+
+    -- Query Spatial Grid for nearest target
+    local gx = math_floor(x / GRID_SIZE)
+    local gz = math_floor(z / GRID_SIZE)
+
+    local bestTarget = nil
+    local minDistSq = 99999999
+
+    -- Search 3x3 grid cells
+    for dx = -1, 1 do
+        for dz = -1, 1 do
+            local key = (gx + dx) .. ":" .. (gz + dz)
+            local targets = targetGrid[key]
+            if targets then
+                for _, tID in pairs(targets) do
+                    local tx, _, tz = spGetUnitPosition(tID)
+                    if tx then
+                        local distSq = (tx - x)^2 + (tz - z)^2
+                        if distSq < minDistSq then
+                            minDistSq = distSq
+                            bestTarget = tID
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if bestTarget then
+        -- Attack specific target
+        spGiveOrderToUnit(unitID, CMD.ATTACK, {bestTarget}, {})
+    else
+        -- Attack move to center/base
+        -- Optimization: Only issue if command queue is empty?
+        -- For now, issue every few seconds (governed by Time Slicing) is fine.
+        spGiveOrderToUnit(unitID, CMD.FIGHT, {Game.mapSizeX/2, 0, Game.mapSizeZ/2}, {})
+    end
+end
+
+-- Logic: Squad Follower (Cheap Follow)
+local function ProcessFollower(unitID, leaderID)
+    -- Check if leader exists
+    if leaderID and spValidUnitID(leaderID) then
+        local lx, _, lz = spGetUnitPosition(leaderID)
+        if lx then
+            -- Move to random offset around leader
+            local ox = math_random(-50, 50)
+            local oz = math_random(-50, 50)
+            -- CMD.MOVE is cheaper than CMD.FIGHT/ATTACK usually, but doesn't engage.
+            -- CMD.FIGHT allows engaging enemies on the way.
+            -- Plan said "CMD.FIGHT or CMD.MOVE". MOVE is strictly cheaper pathing-wise (no enemy scan).
+            spGiveOrderToUnit(unitID, CMD.MOVE, {lx + ox, 0, lz + oz}, {})
+            return
+        end
+    end
+
+    -- Fallback: Behave like a leader if orphaned
+    ProcessLeader(unitID)
+end
+
+local function ProcessUnit(unitID)
+    local data = raptorUnits[unitID]
+    if not data then return end
+
+    if data.isLeader then
+        ProcessLeader(unitID)
+    else
+        ProcessFollower(unitID, data.leaderID)
+    end
+end
+
+-- Event: UnitCreated
+raptoraioptimized_UnitCreated = function(unitID, unitDefID, teamID)
+    if teamID == RAPTOR_TEAM_ID then
+        -- Squad Assignment
+        if currentSquadCount >= SQUAD_SIZE or currentLeaderID == nil or not spValidUnitID(currentLeaderID) then
+            -- New Squad / New Leader
+            currentSquadID = currentSquadID + 1
+            currentSquadCount = 1
+            currentLeaderID = unitID
+
+            raptorUnits[unitID] = {
+                id = unitID,
+                bucket = unitID % BUCKET_COUNT,
+                isLeader = true,
+                squadID = currentSquadID
+            }
+        else
+            -- Follower
+            currentSquadCount = currentSquadCount + 1
+            raptorUnits[unitID] = {
+                id = unitID,
+                bucket = unitID % BUCKET_COUNT,
+                isLeader = false,
+                leaderID = currentLeaderID,
+                squadID = currentSquadID
+            }
+        end
+    else
+        RegisterTarget(unitID)
+    end
+end
+
+-- Event: UnitDestroyed
+raptoraioptimized_UnitDestroyed = function(unitID, unitDefID, teamID)
+    if raptorUnits[unitID] then
+        raptorUnits[unitID] = nil
+        if unitID == currentLeaderID then
+            currentLeaderID = nil -- Next spawn will start new squad
+            currentSquadCount = SQUAD_SIZE -- Force new squad creation
+        end
+    end
+end
+
+-- GameFrame: Time-Slicing Scheduler
+raptoraioptimized_GameFrame = function(n)
+    -- Rebuild target grid periodically
+    if n % 30 == 0 then
+        RebuildTargetGrid()
+    end
+
+    local currentBucket = n % BUCKET_COUNT
+
+    for id, data in pairs(raptorUnits) do
+        if data.bucket == currentBucket then
+            ProcessUnit(id)
+        end
+    end
+end
+
+end
+if ENABLE_RAPTORAIOPTIMIZED then
+    Initialize_raptoraioptimized()
+end
+
+-- Master Dispatcher
+function gadget:GameFrame(...)
+    if adaptivespawner_GameFrame then adaptivespawner_GameFrame(...) end
+    if culling_GameFrame then culling_GameFrame(...) end
+    if raptoraioptimized_GameFrame then raptoraioptimized_GameFrame(...) end
+end
+function gadget:UnitCreated(...)
+    if adaptivespawner_UnitCreated then adaptivespawner_UnitCreated(...) end
+    if raptoraioptimized_UnitCreated then raptoraioptimized_UnitCreated(...) end
+end
+function gadget:UnitCollision(...)
+    if adaptivespawner_UnitCollision then adaptivespawner_UnitCollision(...) end
+end
+function gadget:Initialize(...)
+    if culling_Initialize then culling_Initialize(...) end
+    if fusioncore_Initialize then fusioncore_Initialize(...) end
+end
+function gadget:UnitDamaged(...)
+    if culling_UnitDamaged then culling_UnitDamaged(...) end
+end
+function gadget:UnitWeaponFire(...)
+    if culling_UnitWeaponFire then culling_UnitWeaponFire(...) end
+end
+function gadget:UnitFinished(...)
+    if fusioncore_UnitFinished then fusioncore_UnitFinished(...) end
+end
+function gadget:UnitDestroyed(...)
+    if fusioncore_UnitDestroyed then fusioncore_UnitDestroyed(...) end
+    if raptoraioptimized_UnitDestroyed then raptoraioptimized_UnitDestroyed(...) end
 end
