@@ -23,8 +23,16 @@ function handleUpdate() {
 function handleResetDefault() {
     // Reset checks to default
     simpleConfig.forEach(opt => {
-        const checkbox = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
-        if (checkbox) checkbox.checked = opt.default;
+        const input = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
+        if (input) {
+            if (opt.type === 'checkbox') {
+                input.checked = opt.default as boolean;
+            } else {
+                input.value = (opt.default as number).toString();
+                const display = input.nextElementSibling;
+                if (display) display.textContent = input.value;
+            }
+        }
     });
     handleUpdate();
 }
@@ -32,8 +40,17 @@ function handleResetDefault() {
 function handleResetNone() {
     // Reset checks to false
     simpleConfig.forEach(opt => {
-        const checkbox = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
-        if (checkbox) checkbox.checked = false;
+        const input = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
+        if (input) {
+            if (opt.type === 'checkbox') {
+                input.checked = false;
+            } else {
+                const min = opt.min !== undefined ? opt.min : 0;
+                input.value = min.toString();
+                const display = input.nextElementSibling;
+                if (display) display.textContent = input.value;
+            }
+        }
     });
     handleUpdate();
 }

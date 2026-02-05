@@ -10,18 +10,42 @@ export function renderSimpleOptions(
         wrapper.className = 'option-wrapper';
 
         const label = document.createElement('label');
-        label.className = 'checkbox-label';
-
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.checked = opt.default;
-        input.dataset.modOption = opt.modOption;
-        input.addEventListener('change', onChange);
-
-        label.appendChild(input);
-        label.appendChild(document.createTextNode(opt.label));
-
+        label.className = 'option-label';
+        label.textContent = opt.label;
         wrapper.appendChild(label);
+
+        if (opt.type === 'checkbox') {
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = opt.default as boolean;
+            input.dataset.modOption = opt.modOption;
+            input.addEventListener('change', onChange);
+            label.prepend(input); // Checkbox before text
+        } else if (opt.type === 'slider') {
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'slider-controls';
+
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.min = (opt.min !== undefined ? opt.min : 0).toString();
+            input.max = (opt.max !== undefined ? opt.max : 100).toString();
+            input.step = (opt.step !== undefined ? opt.step : 1).toString();
+            input.value = opt.default.toString();
+            input.dataset.modOption = opt.modOption;
+
+            const valueDisplay = document.createElement('span');
+            valueDisplay.className = 'slider-value';
+            valueDisplay.textContent = input.value;
+
+            input.addEventListener('input', () => {
+                valueDisplay.textContent = input.value;
+                onChange();
+            });
+
+            controlsDiv.appendChild(input);
+            controlsDiv.appendChild(valueDisplay);
+            wrapper.appendChild(controlsDiv);
+        }
 
         if (opt.description) {
             const desc = document.createElement('p');
@@ -44,19 +68,16 @@ export function updateSimpleOutput() {
     let commands: string[] = [];
     let lobbyName = "[Mod] NuttyB (Static)";
 
-    // Static Instructions / Base Commands if needed?
     simpleConfig.forEach(opt => {
-        const checkbox = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
-        if (checkbox && checkbox.checked) {
-            commands.push(`!bset ${opt.modOption} 1`);
-        } else {
-             commands.push(`!bset ${opt.modOption} 0`);
+        const input = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
+        if (input) {
+            if (opt.type === 'checkbox') {
+                commands.push(`!bset ${opt.modOption} ${input.checked ? 1 : 0}`);
+            } else {
+                commands.push(`!bset ${opt.modOption} ${input.value}`);
+            }
         }
     });
-
-    // Provide the Master Gadget load command or reminder?
-    // User request: "replaced and the lua scripts are fully containing all mod/tweak units and scripts"
-    // The output should likely just be the mod options.
 
     outputArea.value = commands.join('\n');
     if (lobbyNameDisplay) lobbyNameDisplay.textContent = lobbyName;

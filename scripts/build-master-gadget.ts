@@ -22,16 +22,20 @@ const MANDATORY_GLOBALS = [
     'UnitDefs'
 ];
 
-function cleanLuaCode(content: string): string {
-    // Remove block comments --[[ ... ]]
-    // Note: this is a simple regex and might fail on nested brackets in strings, but sufficient for this codebase
+function MinifyLua(content: string): string {
+    // 1. Remove block comments --[[ ... ]]
+    // Use non-greedy match.
     let cleaned = content.replace(/--\[\[[\s\S]*?\]\]/g, '');
-    // Remove line comments -- ...
+
+    // 2. Remove single line comments
+    // CAUTION: This regex assumes -- is not inside a string.
     cleaned = cleaned.replace(/--.*$/gm, '');
-    // Split into lines, trim, filter empty
+
+    // 3. Split, trim, remove empty lines
     const lines = cleaned.split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+
     return lines.join('\n');
 }
 
@@ -78,7 +82,7 @@ if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
 if not table.copy then table.copy = table_copy end
 `;
-    return cleanLuaCode(code);
+    return MinifyLua(code);
 }
 
 function processImportedTweaks(): string {
@@ -99,7 +103,7 @@ function processImportedTweaks(): string {
         let content = fs.readFileSync(filePath, 'utf-8');
 
         // Apply cleaning first to handle logic
-        let cleanedContent = cleanLuaCode(content);
+        let cleanedContent = MinifyLua(content);
 
         let codeBlock = "";
 
@@ -118,7 +122,7 @@ do
     end
 end
 `;
-            codeBlock = cleanLuaCode(codeBlock);
+            codeBlock = MinifyLua(codeBlock);
         } else {
             codeBlock = cleanedContent;
         }
@@ -132,7 +136,7 @@ function processStaticTweaks(): string {
     if (fs.existsSync(STATIC_TWEAKS_FILE)) {
         console.log(`Loading static tweaks from ${STATIC_TWEAKS_FILE}`);
         const content = fs.readFileSync(STATIC_TWEAKS_FILE, 'utf-8');
-        return cleanLuaCode(content);
+        return MinifyLua(content);
     } else {
         console.warn(`Static tweaks file not found: ${STATIC_TWEAKS_FILE}`);
         return "";
@@ -158,7 +162,7 @@ function processGadget(filename: string): ProcessedGadget {
     // Remove SyncedCode check
     content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
 
-    content = cleanLuaCode(content);
+    content = MinifyLua(content);
 
     // Identify events
     const events: string[] = [];
@@ -184,7 +188,7 @@ ${content}
 end
 ${initFuncName}()
 `;
-    content = cleanLuaCode(content);
+    content = MinifyLua(content);
 
     return {
         name: filename,
@@ -342,7 +346,7 @@ ${localizedGlobalsBlock}
     });
 
     // Final cleanup of the assembled file to ensure clean structure (but no luamin)
-    finalFile = cleanLuaCode(finalFile);
+    finalFile = MinifyLua(finalFile);
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
