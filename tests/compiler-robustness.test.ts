@@ -39,8 +39,8 @@ describe('OptimizedLuaCompiler Robustness', () => {
             ]
         };
         const code = compiler.compile([{ tweak, variables: {} }]);
-        expect(code).toContain('local math_max = math.max');
-        expect(code).toContain('math_max ( 100, 200 )');
+        expect(code).toContain('local mM = math.max');
+        expect(code).toContain('mM ( 100, 200 )');
 
         await lua.doString(code);
         const unitDefs = lua.global.get('UnitDefs');
@@ -62,9 +62,9 @@ describe('OptimizedLuaCompiler Robustness', () => {
         };
 
         const code = compiler.compile([{ tweak, variables: {} }]);
-        expect(code).toContain('local math_max = math.max');
+        expect(code).toContain('local mM = math.max');
         expect(code).toContain('"Max health is "');
-        expect(code).toContain('math_max(10, 20)');
+        expect(code).toContain('mM(10, 20)');
 
         await lua.doString(code);
         const unitDefs = lua.global.get('UnitDefs');
@@ -87,7 +87,7 @@ describe('OptimizedLuaCompiler Robustness', () => {
 
         const code = compiler.compile([{ tweak, variables: {} }]);
         // Should NOT define math_max because it's not used in code
-        expect(code).not.toContain('local math_max = math.max');
+        expect(code).not.toContain('local mM = math.max');
         expect(code).toContain('"Use max(speed) setting"');
 
         await lua.doString(code);
