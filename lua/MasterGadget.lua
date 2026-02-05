@@ -2825,6 +2825,28 @@ end
 else
 UnitDef_Post = ApplyTweaks_Post
 end
+if Spring and spGetModOptions then
+local modOptions = spGetModOptions()
+local buildPowerMult = tonumber(modOptions.buildpower_mult) or 1.0
+if buildPowerMult ~= 1.0 then
+for name, def in pairs(UnitDefs) do
+if def.buildSpeed then def.buildSpeed = def.buildSpeed * buildPowerMult end
+if def.workerTime then def.workerTime = def.workerTime * buildPowerMult end
+if def.repairSpeed then def.repairSpeed = def.repairSpeed * buildPowerMult end
+if def.reclaimSpeed then def.reclaimSpeed = def.reclaimSpeed * buildPowerMult end
+if def.resurrectSpeed then def.resurrectSpeed = def.resurrectSpeed * buildPowerMult end
+if def.captureSpeed then def.captureSpeed = def.captureSpeed * buildPowerMult end
+end
+end
+local queenCount = tonumber(modOptions.queen_max_count)
+if queenCount then
+for name, def in pairs(UnitDefs) do
+if string_find(name, "raptor_queen_") then
+def.maxThisUnit = queenCount
+end
+end
+end
+end
 local function Initialize_adaptivespawner()
 local modOptions = spGetModOptions() or {}
 local MAX_COMPRESSION = tonumber(modOptions.adaptive_compression_max) or 10
