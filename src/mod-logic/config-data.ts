@@ -116,7 +116,7 @@ export const gameConfigs: GameConfigs = {
         '!unit_restrictions_nonukes 0',
         '!draft_mode disabled',
         '!unit_restrictions_notacnukes 0',
-        '$welcome-message Settings made with NuttyB Configurator https://rcorex.github.io/nuttyb-config/',
+        '$welcome-message Settings made with NuttyB Configurator https://helios57.github.io/nuttyb-config/',
         '!unit_market 0',
         '!evocom 0',
         '!nowasting all',
@@ -136,24 +136,24 @@ export const gameConfigs: GameConfigs = {
 };
 
 export const formOptionsConfig: FormOptionsConfig[] = [
-    { label: 'NuttyB Main Tweaks', type: 'checkbox', column: 'left', default: true, commandBlocks: [] },
-    { label: 'NuttyB Evolving Commanders', type: 'checkbox', column: 'left', default: false, commandBlocks: ['!evocom 1'] },
+    { label: 'NuttyB Main Tweaks', type: 'checkbox', column: 'left', default: true, commandBlocks: [], description: "Enables the core NuttyB tweaks and settings." },
+    { label: 'NuttyB Evolving Commanders', type: 'checkbox', column: 'left', default: false, commandBlocks: ['!evocom 1'], description: "Enables evolving commanders functionality." },
     {
         label: "Optimization & Scaling",
         type: "header",
         column: "left"
     },
-    { label: 'Enable Singularity Fusion', type: 'checkbox', column: 'left', default: false, modOption: 'fusion_mode', commandBlocks: [] },
-    { label: "Fusion - Min Tier", type: "numeric-tweak", column: "left", defaultValue: "1", min: 1, step: 1, modOption: "fusion_mintier" },
-    { label: "Fusion Efficiency Bonus", type: "numeric-tweak", column: "left", defaultValue: "1.10", min: 1.0, step: 0.05, modOption: "fusion_efficiency" },
-    { label: 'Enable Adaptive Spawner', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_spawner', commandBlocks: [] },
-    { label: "Max Compression Factor", type: "numeric-tweak", column: "left", defaultValue: "10", min: 1, max: 10, step: 1, modOption: "adaptive_compression_max" },
-    { label: 'Enable Vampire Merge', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_vampire', commandBlocks: [] },
-    { label: 'Enable Boss Tint', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_boss_tint', commandBlocks: [] },
-    { label: 'Enable Auto-Culling', type: 'checkbox', column: 'left', default: false, modOption: 'cull_enabled', commandBlocks: [] },
-    { label: "Culling - Min SimSpeed", type: "numeric-tweak", column: "left", defaultValue: "0.9", min: 0.1, step: 0.1, modOption: "cull_simspeed" },
-    { label: "Culling - Max Units", type: "numeric-tweak", column: "left", defaultValue: "5000", min: 100, step: 100, modOption: "cull_maxunits" },
-    { label: "Safe Zone Radius", type: "numeric-tweak", column: "left", defaultValue: "2000", min: 500, step: 100, modOption: "cull_radius" },
+    { label: 'Enable Singularity Fusion', type: 'checkbox', column: 'left', default: false, modOption: 'fusion_mode', commandBlocks: [], description: "Allows fusion reactors to merge into more powerful singularity fusions." },
+    { label: "Fusion - Min Tier", type: "numeric-tweak", column: "left", defaultValue: "1", min: 1, step: 1, modOption: "fusion_mintier", description: "Minimum tech tier required for fusion structures." },
+    { label: "Fusion Efficiency Bonus", type: "numeric-tweak", column: "left", defaultValue: "1.10", min: 1.0, step: 0.05, modOption: "fusion_efficiency", description: "Multiplier for fusion energy output efficiency." },
+    { label: 'Enable Adaptive Spawner', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_spawner', commandBlocks: [], description: "Spawns compressed units to reduce unit count while maintaining difficulty." },
+    { label: "Max Compression Factor", type: "numeric-tweak", column: "left", defaultValue: "10", min: 1, max: 10, step: 1, modOption: "adaptive_compression_max", description: "Maximum compression ratio for adaptive spawning (e.g., 10x)." },
+    { label: 'Enable Vampire Merge', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_vampire', commandBlocks: [], description: "Allows compressed units to absorb others on collision to regain health." },
+    { label: 'Enable Boss Tint', type: 'checkbox', column: 'left', default: false, modOption: 'adaptive_boss_tint', commandBlocks: [], description: "Applies a visual tint to boss units." },
+    { label: 'Enable Auto-Culling', type: 'checkbox', column: 'left', default: false, modOption: 'cull_enabled', commandBlocks: [], description: "Automatically removes older or lower-tier units to improve performance." },
+    { label: "Culling - Min SimSpeed", type: "numeric-tweak", column: "left", defaultValue: "0.9", min: 0.1, step: 0.1, modOption: "cull_simspeed", description: "SimSpeed threshold below which culling activates." },
+    { label: "Culling - Max Units", type: "numeric-tweak", column: "left", defaultValue: "5000", min: 100, step: 100, modOption: "cull_maxunits", description: "Maximum number of units allowed before culling starts." },
+    { label: "Safe Zone Radius", type: "numeric-tweak", column: "left", defaultValue: "2000", min: 500, step: 100, modOption: "cull_radius", description: "Radius around start point where units are safe from culling." },
     {
         label: "Mechanics & Balance",
         type: "checkbox",
@@ -162,14 +162,14 @@ export const formOptionsConfig: FormOptionsConfig[] = [
         commandBlocks: []
     },
     // Mechanics & Balance Checkboxes
-    { label: 'Cross Faction T2', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'T3 Eco', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'T3 Builders', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'Unit Launchers', type: 'checkbox', column: 'left', default: false, commandBlocks: [], tweakTemplateId: "tweak_enable_unit_launchers" },
-    { label: 'LRPC Rebalance v2', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'T4 Defences Test', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'T4 Air Rework', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
-    { label: 'Mega Nuke', type: 'checkbox', column: 'left', default: false, commandBlocks: [] },
+    { label: 'Cross Faction T2', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Allows building T2 units from other factions." },
+    { label: 'T3 Eco', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Enables Tech 3 economy structures." },
+    { label: 'T3 Builders', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Enables Tech 3 construction units." },
+    { label: 'Unit Launchers', type: 'checkbox', column: 'left', default: false, commandBlocks: [], tweakTemplateId: "tweak_enable_unit_launchers", description: "Enables unit launcher structures." },
+    { label: 'LRPC Rebalance v2', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Applies version 2 rebalance to Long Range Plasma Cannons." },
+    { label: 'T4 Defences Test', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Enables experimental T4 defensive structures." },
+    { label: 'T4 Air Rework', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Reworks T4 air units for better balance." },
+    { label: 'Mega Nuke', type: 'checkbox', column: 'left', default: false, commandBlocks: [], description: "Enables the Mega Nuke weapon." },
 
     // Raptor & Queen Health
     {
@@ -192,7 +192,8 @@ export const formOptionsConfig: FormOptionsConfig[] = [
             { label: "3x HP", value: "3", shortLabel: "3x HP" },
             { label: "4x HP", value: "4", shortLabel: "4x HP" },
             { label: "5x HP", value: "5", shortLabel: "5x HP" }
-        ]
+        ],
+        description: "Multiplies the health of Raptor units."
     },
     {
         label: "Queen Health",
@@ -214,7 +215,8 @@ export const formOptionsConfig: FormOptionsConfig[] = [
             { label: "3x QHP", value: "3", shortLabel: "3x QHP" },
             { label: "4x QHP", value: "4", shortLabel: "4x QHP" },
             { label: "5x QHP", value: "5", shortLabel: "5x QHP" }
-        ]
+        ],
+        description: "Multiplies the health of Queen units."
     },
 
     // Limit Max Allowed
@@ -222,45 +224,51 @@ export const formOptionsConfig: FormOptionsConfig[] = [
     {
         label: "T3 Builders", type: "numeric-tweak", column: "left",
         defaultValue: "10", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_t3builders", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_t3builders", tweakVar: "limit",
+        description: "Limits the maximum number of T3 Builders."
     },
     {
         label: "Unit Launchers", type: "numeric-tweak", column: "left",
         defaultValue: "20", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_unit_launchers", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_unit_launchers", tweakVar: "limit",
+        description: "Limits the maximum number of Unit Launchers."
     },
     {
         label: "Epic Ragnarok", type: "numeric-tweak", column: "left",
         defaultValue: "80", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_epic_ragnarok", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_epic_ragnarok", tweakVar: "limit",
+        description: "Limits the maximum number of Epic Ragnarok units."
     },
     {
         label: "Epic Calamity", type: "numeric-tweak", column: "left",
         defaultValue: "80", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_epic_calamity", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_epic_calamity", tweakVar: "limit",
+        description: "Limits the maximum number of Epic Calamity units."
     },
     {
         label: "Epic Tyrannus", type: "numeric-tweak", column: "left",
         defaultValue: "80", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_epic_tyrannus", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_epic_tyrannus", tweakVar: "limit",
+        description: "Limits the maximum number of Epic Tyrannus units."
     },
     {
         label: "Epic Starfall", type: "numeric-tweak", column: "left",
         defaultValue: "80", min: 0, unitLabel: "max/unit",
-        tweakTemplateId: "tweak_limit_epic_starfall", tweakVar: "limit"
+        tweakTemplateId: "tweak_limit_epic_starfall", tweakVar: "limit",
+        description: "Limits the maximum number of Epic Starfall units."
     },
 
     // Game Multipliers
     { label: "Game Multipliers", type: "header", column: "left" },
-    { label: "Resource Income", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_resourceincome" },
-    { label: "Shield Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_shieldpower" },
-    { label: "Build Range", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_builddistance" },
-    { label: "Build Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_buildpower" },
+    { label: "Resource Income", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_resourceincome", description: "Global multiplier for resource income." },
+    { label: "Shield Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_shieldpower", description: "Global multiplier for shield strength." },
+    { label: "Build Range", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_builddistance", description: "Global multiplier for unit build range." },
+    { label: "Build Power", type: "numeric-tweak", column: "left", defaultValue: "2", min: 0, step: 0.1, modOption: "multiplier_buildpower", description: "Global multiplier for unit build power." },
 
     // Raptor Settings
     { label: "Raptor Settings", type: "header", column: "left" },
-    { label: "Queen Quantity", type: "numeric-tweak", column: "left", defaultValue: "8", min: 0, step: 1, modOption: "raptor_queen_count" },
-    { label: "Wave Multiplier", type: "numeric-tweak", column: "left", defaultValue: "1", min: 0, step: 0.1, modOption: "raptor_spawncountmult" },
-    { label: "First Waves Boost", type: "numeric-tweak", column: "left", defaultValue: "0", min: 0, step: 1, modOption: "raptor_firstwavesboost" },
-    { label: "Grace Period Multiplier", type: "numeric-tweak", column: "left", defaultValue: "1", min: 0, step: 0.1, modOption: "raptor_graceperiodmult" }
+    { label: "Queen Quantity", type: "numeric-tweak", column: "left", defaultValue: "25", min: 0, step: 1, modOption: "raptor_queen_count", description: "Number of Queen units to spawn." },
+    { label: "Wave Multiplier", type: "numeric-tweak", column: "left", defaultValue: "4", min: 0, step: 0.1, modOption: "raptor_spawncountmult", description: "Multiplier for the number of Raptors in each wave." },
+    { label: "First Waves Boost", type: "numeric-tweak", column: "left", defaultValue: "4", min: 0, step: 1, modOption: "raptor_firstwavesboost", description: "Multiplier for the intensity of the first few waves." },
+    { label: "Grace Period Multiplier", type: "numeric-tweak", column: "left", defaultValue: "3", min: 0, step: 0.1, modOption: "raptor_graceperiodmult", description: "Multiplier for the duration of the initial grace period." }
 ];

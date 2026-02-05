@@ -9,6 +9,12 @@ NuttyB Raptor Configuration Generator for Beyond All Reason
 - modes.txt is used for base tweaks, maps and modes
 - links.md is shown in the Links section
 
+## Configuration Defaults
+- **Queen Quantity:** 25
+- **Wave Multiplier:** 4x
+- **First Waves Boost:** 4x
+- **Grace Period Multiplier:** 3x
+
 ## Architecture & Performance
 
 This project includes a custom **Lua Tweak DSL** and **Compiler** designed to generate high-performance Lua code for the Spring Engine.

@@ -17,6 +17,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         const optionGroup = formOptionsMap.get(optLabel);
         if (optionGroup) {
             const label = document.createElement('label');
+            if (optionGroup.description) label.title = optionGroup.description;
             const inputElement = document.createElement('input');
             inputElement.type = 'checkbox';
             inputElement.dataset.commandBlocks = JSON.stringify(optionGroup.commandBlocks);
@@ -106,6 +107,7 @@ export function renderOptions(formOptionsConfig: FormOptionsConfig[], gameConfig
         }
 
         const label = document.createElement('label');
+        if (optionGroup.description) label.title = optionGroup.description;
         let inputElement: HTMLInputElement | HTMLSelectElement;
         if (optionGroup.type === 'checkbox') {
             inputElement = document.createElement('input');

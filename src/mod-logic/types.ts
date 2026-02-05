@@ -32,6 +32,7 @@ export interface FormOptionsConfig {
     tweakTemplateId?: string;
     tweakVar?: string;
     modOption?: string;
+    description?: string;
 }
 
 export interface CustomTweak {
