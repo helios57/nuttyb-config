@@ -142,7 +142,8 @@ function processImportedTweaks(): string {
     content = stripDebugPrints(content);
 
     // Minify
-    return MinifyLua(content);
+    // return MinifyLua(content);
+    return content;
 }
 
 interface ProcessedGadget {
@@ -166,10 +167,10 @@ function processGadget(filename: string): ProcessedGadget {
     let content = raw.replace(/function\s+gadget:GetInfo\(\)([\s\S]*?)end/g, '');
 
     // Remove SyncedCode check (we wrap strictly in MasterGadget)
-    content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
+    // content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
 
     // Minify partial
-    content = MinifyLua(content);
+    // content = MinifyLua(content);
 
     // Identify events
     const events: string[] = [];
@@ -290,7 +291,8 @@ async function main() {
     localizedGlobalsBlock += '\n';
 
     // Localize Content
-    const localizedImportedTweaks = localizeContent(importedTweaksLua, localizedMap);
+    // Wrap in do ... end to ensure scope isolation and block closure
+    const localizedImportedTweaks = " do " + localizeContent(importedTweaksLua, localizedMap) + " end ";
 
     gadgets.forEach(g => {
         g.content = localizeContent(g.content, localizedMap);
@@ -310,11 +312,11 @@ async function main() {
         });
     });
 
-    finalFile += commonLua;
-    finalFile += localizedImportedTweaks;
+    finalFile += commonLua + " ";
+    finalFile += localizedImportedTweaks + " ";
 
     gadgets.forEach(g => {
-        finalFile += g.content;
+        finalFile += g.content + " ";
     });
 
     // Events Dispatch
@@ -330,7 +332,7 @@ async function main() {
 
     // Final minification pass to ensure everything is compact (Using Safe Minify)
     // We mask strings again because assembly introduced newlines/spaces between blocks
-    finalFile = MinifyLua(finalFile);
+    // finalFile = MinifyLua(finalFile);
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
