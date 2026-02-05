@@ -52,7 +52,7 @@
     "conditions": [
       {
         "type": "nameMatch",
-        "regex": "alpha_unit"
+        "regex": "^alpha_unit$"
       }
     ],
     "mutations": [
