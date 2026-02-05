@@ -14,14 +14,17 @@ if (not gadgetHandler:IsSyncedCode()) then
   return
 end
 
-local modOptions = Spring.GetModOptions()
-if not modOptions or (modOptions.adaptive_spawner ~= "1" and modOptions.adaptive_spawner ~= 1) then
-    return
-end
+-- Always enabled
+local modOptions = Spring.GetModOptions() or {}
 
 local MAX_COMPRESSION = tonumber(modOptions.adaptive_compression_max) or 10
-local VAMPIRE_ENABLED = (modOptions.adaptive_vampire == "1")
-local BOSS_TINT_ENABLED = (modOptions.adaptive_boss_tint == "1")
+-- Vampire defaults to TRUE
+local VAMPIRE_ENABLED = true
+if modOptions.adaptive_vampire == "0" then VAMPIRE_ENABLED = false end
+
+-- Boss Tint defaults to TRUE
+local BOSS_TINT_ENABLED = true
+if modOptions.adaptive_boss_tint == "0" then BOSS_TINT_ENABLED = false end
 
 local spGetUnitCount = Spring.GetUnitCount
 local spDestroyUnit = Spring.DestroyUnit

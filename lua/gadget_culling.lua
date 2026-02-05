@@ -31,10 +31,11 @@ local spGetUnitCount = Spring.GetUnitCount
 local spGetTeamStartPosition = Spring.GetTeamStartPosition
 local math_floor = math.floor
 
-local modOptions = Spring.GetModOptions()
+local modOptions = Spring.GetModOptions() or {}
 local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
 local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
-local CULL_ENABLED = (modOptions.cull_enabled == "1")
+-- Default to Enabled, unless explicitly disabled
+local CULL_ENABLED = (modOptions.cull_enabled ~= "0")
 local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
 
 function gadget:Initialize()

@@ -14,12 +14,8 @@ if (not gadgetHandler:IsSyncedCode()) then
   return
 end
 
--- Check Mod Option
-local modOptions = Spring.GetModOptions()
--- In testing, modOptions might be nil or strings. Check carefully.
-if not modOptions or (modOptions.fusion_mode ~= "1" and modOptions.fusion_mode ~= 1) then
-    return
-end
+-- Always enabled
+local modOptions = Spring.GetModOptions() or {}
 
 local spGetUnitPosition = Spring.GetUnitPosition
 local spGetUnitDefID = Spring.GetUnitDefID
@@ -173,8 +169,9 @@ function gadget:UnitFinished(unitID, unitDefID, teamID)
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, teamID)
-    -- Mega Nuke Logic (Triggered if ENABLE_MEGANUKE is true)
-    if not (ENABLE_MEGANUKE or (modOptions and modOptions.meganuke == "1")) then return end
+    -- Mega Nuke Logic
+    -- Checked via modOption 'meganuke' == "1"
+    if modOptions.meganuke ~= "1" then return end
 
     -- Check if it is a high-tier fusion unit
     local tier = unitTier[unitDefID]
