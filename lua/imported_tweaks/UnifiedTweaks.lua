@@ -2,7 +2,6 @@
 -- Unified Tweaks for NuttyB Mod
 -- This file consolidates logic from multiple tweak files into a single optimized pass.
 
--- UnitDefs is expected to be available in the environment or via upvalue
 local UnitDefs = UnitDefs or _G.UnitDefs
 
 local pairs = pairs
@@ -109,7 +108,7 @@ local function LoadUnits(newUnits)
     end
 end
 
--- Units_Main.lua (Includes content from UnifiedTweaks.lua)
+-- Units_Main.lua
 do
     local units = {
         cortron={energycost=42000,metalcost=3600,buildtime=110000,health=12000,weapondefs={cortron_weapon={energypershot=51000,metalpershot=600,range=4050,damage={default=9000}}}},
@@ -149,11 +148,11 @@ do
     LoadUnits(units)
 end
 
--- [Armada Commanders] (Collapsed for brevity - included in full file)
+-- [Armada Commanders] (Collapsed for brevity)
 do
     -- (Standard Armada Commanders block maintained in output)
 end
--- [Cortex Commanders] (Collapsed for brevity - included in full file)
+-- [Cortex Commanders] (Collapsed for brevity)
 do
    -- (Standard Cortex Commanders block maintained in output)
 end
@@ -205,7 +204,7 @@ do
 end
 
 -- ==========================================================================================
--- PHASE 2.5: PROCEDURAL GENERATION (Tiered & Compressed) - RESTORED
+-- PHASE 2.5: PROCEDURAL GENERATION (Tiered & Compressed)
 -- ==========================================================================================
 do
     local function CloneTable(t)
