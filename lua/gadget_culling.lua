@@ -37,6 +37,7 @@ local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
 -- Default to Enabled, unless explicitly disabled
 local CULL_ENABLED = (modOptions.cull_enabled ~= "0")
 local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
+local SAFE_RADIUS_SQ = SAFE_RADIUS * SAFE_RADIUS
 
 function gadget:Initialize()
     Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
@@ -63,14 +64,14 @@ local warningStartTime = 0
 local WARNING_DURATION = 300 -- 10 seconds
 
 -- Combat Grid (Safe Zone Caching)
-local combatGrid = {} -- Key: "gx:gz", Value: timestamp (frame)
+local combatGrid = {} -- Key: numeric hash, Value: timestamp (frame)
 local GRID_SIZE = 1024 -- 1024 elmos (approx 2000 range check replacement)
 local ACTIVE_DURATION = 900 -- 30 seconds * 30 frames
 
 local function GetGridKey(x, z)
     local gx = math_floor(x / GRID_SIZE)
     local gz = math_floor(z / GRID_SIZE)
-    return gx, gz, gx .. ":" .. gz
+    return gx, gz, gx + (gz * 10000)
 end
 
 local function MarkActive(unitID)
@@ -94,6 +95,7 @@ end
 
 function gadget:GameFrame(n)
     if not CULL_ENABLED then return end
+    candidates = candidates or {}
 
     -- State Machine Update (Every 30 frames)
     if n % 30 == 0 then
@@ -116,7 +118,8 @@ function gadget:GameFrame(n)
                 spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
 
                 -- Collection Logic
-                candidates = {}
+                -- Clear candidates table instead of creating new one
+                for i = 1, #candidates do candidates[i] = nil end
                 candidatesIndex = 1
                 processingActive = false
 
@@ -172,7 +175,7 @@ function gadget:GameFrame(n)
                      -- Check current and neighbor cells (3x3)
                      for dx = -1, 1 do
                          for dz = -1, 1 do
-                             local key = (gx + dx) .. ":" .. (gz + dz)
+                             local key = (gx + dx) + ((gz + dz) * 10000)
                              local lastActive = combatGrid[key]
                              if lastActive and (currentFrame - lastActive < ACTIVE_DURATION) then
                                  safe = false
@@ -184,31 +187,10 @@ function gadget:GameFrame(n)
 
                      if safe then
                         -- Check Safe Radius from Start (approximate using 0,0 for now or assume commander/start pos)
-                        -- The plan asked for "Safe Zone Radius" from start point/commander.
-                        -- We will assume any unit within SAFE_RADIUS of ANY friendly commander is safe.
-                        -- Actually, the current "Combat Grid" logic seems to be about "Active Combat".
-                        -- The "Safe Zone" in the plan might be distinct.
-                        -- For now, let's keep the Combat Grid logic as the primary safety check (as implemented).
-                        -- If SAFE_RADIUS is intended to be a static zone around start, we need start positions.
-
-                        -- Let's stick to the implementation I see here which uses "Combat Grid" for safety.
-                        -- However, I should check distance to commanders if I want to respect SAFE_RADIUS strictly.
-                        -- Let's check nearest commander.
-                        local commanders = spGetTeamUnits(candidate.team) -- Optimize: Filter for commanders
-                        local inSafeZone = false
-                        -- This is expensive. Let's assume the previous logic handles safety via activity.
-                        -- But the prompt asked for "Safe Zone Radius".
-                        -- Let's check distance to (0,0) or start pos if available.
-                        -- spGetTeamStartPosition(teamID)
                         local sx, sy, sz = spGetTeamStartPosition(candidate.team)
                         if sx then
                              local distSq = (x - sx)^2 + (z - sz)^2
-                             if distSq < SAFE_RADIUS^2 then
-                                 safe = false -- It IS safe from culling (so safe=false means don't cull?)
-                                 -- Variable 'safe' here means "Safe to CULL". This is confusing naming in my code.
-                                 -- In the code above: 'safe = true' -> check grid -> if active combat -> safe = false.
-                                 -- So 'safe' means "Eligible for Culling".
-                                 -- If inside SAFE_RADIUS of start, it should be NOT eligible.
+                             if distSq < SAFE_RADIUS_SQ then
                                  safe = false
                              end
                         end
@@ -234,7 +216,7 @@ function gadget:GameFrame(n)
 
         if candidatesIndex > #candidates then
             processingActive = false
-            candidates = {}
+            for i = 1, #candidates do candidates[i] = nil end
         end
     end
 end
