@@ -119,6 +119,9 @@ export class OptimizedLuaCompiler {
                 const conds = this.generateConditions(input.tweak.conditions, 'name', 'def', input.variables);
                 const condKey = conds.join(' && ');
 
+                // Prevent duplication by checking if input is already in currentGroup (simple check)
+                // Actually, if condKey matches, we append.
+
                 if (currentGroup && currentGroup.conditions.join(' && ') === condKey) {
                     currentGroup.inputs.push(input);
                 } else {

@@ -43,9 +43,18 @@ test.describe('Feature: Verify Generated Content (Lua Code)', () => {
         // Queens are currently excluded from compression.
         expect(decodedLua).toContain('UnitDefs["raptor_land_swarmer_basic_t1_v1_compressed_x10"]');
 
-        // Verify compression flags
-        expect(decodedLua).toContain('is_compressed_unit = true');
-        expect(decodedLua).toContain('compression_factor = 10');
+        // Verify compression flags (Handle both interned and non-interned cases, and minification)
+        const hasInterned = decodedLua.includes('cp[k_is_compressed_unit]');
+        if (hasInterned) {
+            expect(decodedLua).toContain('cp[k_is_compressed_unit] = true');
+            expect(decodedLua).toContain('cp[k_compression_factor] = 10');
+        } else {
+            // Check for table_merge with keys (minified or not)
+            // Minified: is_compressed_unit=true
+            // Not minified: is_compressed_unit = true
+            expect(decodedLua).toMatch(/is_compressed_unit\s*=\s*true/);
+            expect(decodedLua).toMatch(/compression_factor\s*=\s*10/);
+        }
 
         const output = await page.locator('#command-output-1').inputValue();
         expect(output).toContain('!bset adaptive_spawner 1');
