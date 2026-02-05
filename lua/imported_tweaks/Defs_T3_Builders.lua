@@ -79,15 +79,17 @@ for l,m in pairs(b)do
         end
         local r=n and'armshltx'or o and'corgant'or'leggant'
         local s=a[r]
-        h(r,r..e, {
-            energycost=s.energycost*f,
-            icontype=r,
-            metalcost=s.metalcost*f,
-            name=d[m]..'Experimental Gantry Taxed',
-            customparams= {
-                i18n_en_humanname=d[m]..'Experimental Gantry Taxed',i18n_en_tooltip='Produces Experimental Units'
-            }
-        })
+        if s then
+            h(r,r..e, {
+                energycost=s.energycost*f,
+                icontype=r,
+                metalcost=s.metalcost*f,
+                name=d[m]..'Experimental Gantry Taxed',
+                customparams= {
+                    i18n_en_humanname=d[m]..'Experimental Gantry Taxed',i18n_en_tooltip='Produces Experimental Units'
+                }
+            })
+        end
         local t,
         u= {}, {
             m..'nanotct2',m..'nanotct3',m..'alab',m..'avp',m..'aap',m..'gatet3',m..'flak',p and'legdeflector'or m..'gate',p and'legforti'or m..'fort',n and'armshltx'or m..'gant'
@@ -143,8 +145,10 @@ for l,m in pairs(b)do
             },
             buildoptions=t
         })
-        a[j].weapondefs= {}
-        a[j].weapons= {}
+        if a[j] then
+            a[j].weapondefs= {}
+            a[j].weapons= {}
+        end
         j=m..'t3airaide'
         h('armfify',j, {
             blocking=false,
@@ -176,8 +180,10 @@ for l,m in pairs(b)do
             },
             buildoptions=t
         })
-        a[j].weapondefs= {}
-        a[j].weapons= {}
+        if a[j] then
+            a[j].weapondefs= {}
+            a[j].weapons= {}
+        end
         local z=n and'armshltx'or o and'corgant'or'leggant'
         if a[z]and a[z].buildoptions then
             local A=m..'t3aide'

@@ -10,8 +10,10 @@ local a,b,c,d,e,
 f=UnitDefs or {},table.merge,table.copy,'raptor_matriarch_basic','customfusionexplo',Spring;
 local g,
 h=1.3,1.3;
-h=a[d].health/60000;
-g=a['raptor_queen_epic'].health/1250000;
+if a[d] and a['raptor_queen_epic'] then
+    if a[d].health then h=a[d].health/60000 end
+    if a['raptor_queen_epic'].health then g=a['raptor_queen_epic'].health/1250000 end
+end
 local i=1;
 if f.Utilities.Gametype.IsRaptors()then
     i=(#f.GetTeamList()-2)/12
@@ -49,11 +51,12 @@ function k(c,d,e)
         a[c],e or {})
     end
 end
-local d=a[d].health;
+local d_health=0;
+if a[d] and a[d].health then d_health=a[d].health end
 k('raptor_queen_veryeasy','raptor_miniq_a', {
     name='Queenling Prima',
     icontype='raptor_queen_veryeasy',
-    health=d*5,
+    health=d_health*5,
     customparams= {
         i18n_en_humanname='Queenling Prima',i18n_en_tooltip='Majestic and bold, ruler of the hunt.'
     }
@@ -61,7 +64,7 @@ k('raptor_queen_veryeasy','raptor_miniq_a', {
 k('raptor_queen_easy','raptor_miniq_b', {
     name='Queenling Secunda',
     icontype='raptor_queen_easy',
-    health=d*6,
+    health=d_health*6,
     customparams= {
         i18n_en_humanname='Queenling Secunda',i18n_en_tooltip='Swift and sharp, a noble among raptors.'
     }
@@ -69,13 +72,17 @@ k('raptor_queen_easy','raptor_miniq_b', {
 k('raptor_queen_normal','raptor_miniq_c', {
     name='Queenling Tertia',
     icontype='raptor_queen_normal',
-    health=d*7,
+    health=d_health*7,
     customparams= {
         i18n_en_humanname='Queenling Tertia',i18n_en_tooltip='Refined tastes. Likes her prey rare.'
     }
 })
+if a.raptor_miniq_b and a['raptor_matriarch_acid'] then
 a.raptor_miniq_b.weapondefs.acidgoo=c(a['raptor_matriarch_acid'].weapondefs.acidgoo)
+end
+if a.raptor_miniq_c and a['raptor_matriarch_electric'] then
 a.raptor_miniq_c.weapondefs.empgoo=c(a['raptor_matriarch_electric'].weapondefs.goo)
+end
 for a,a in ipairs{
     {'raptor_matriarch_basic','raptor_mama_ba','Matrona','Claws charged with vengeance.'
         }, {'raptor_matriarch_fire','raptor_mama_fi','Pyro Matrona','A firestorm of maternal wrath.'
@@ -86,7 +93,7 @@ for a,a in ipairs{
     k(a[1],a[2], {
         name=a[3],
         icontype=a[1],
-        health=d*1.5,
+        health=d_health*1.5,
         customparams= {
         i18n_en_humanname=a[3],i18n_en_tooltip=a[4]}
     })
@@ -94,7 +101,7 @@ end;
 k('critter_penguinking','raptor_consort', {
     name='Raptor Consort',
     icontype='corkorg',
-    health=d*4,
+    health=d_health*4,
     mass=100000,
     nochasecategory="MOBILE VTOL OBJECT",
     sonarstealth=false,
@@ -104,11 +111,13 @@ k('critter_penguinking','raptor_consort', {
         i18n_en_humanname='Raptor Consort',i18n_en_tooltip='Sneaky powerful little terror.'
     }
 })
+if a.raptor_consort and a['raptor_queen_epic'] then
 a.raptor_consort.weapondefs.goo=c(a['raptor_queen_epic'].weapondefs.goo)
+end
 k('raptor_consort','raptor_doombringer', {
     name='Doombringer',
     icontype='armafust3',
-    health=d*12,
+    health=d_health*12,
     speed=50,
     customparams= {
         i18n_en_humanname='Doombringer',i18n_en_tooltip=[[Your time is up. The Queens called for backup.]]
