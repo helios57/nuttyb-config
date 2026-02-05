@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getDecodedTweak } from './e2e-utils';
+import { getAllDecodedTweaks } from './e2e-utils';
 
 test.describe('Feature: Verify Generated Content (Lua Code)', () => {
     test.beforeEach(async ({ page }) => {
@@ -12,8 +12,9 @@ test.describe('Feature: Verify Generated Content (Lua Code)', () => {
         await checkbox.check();
 
         // The generator runs on input change.
-        // We need to get the !bset tweakdefs output
-        const decodedLua = await getDecodedTweak(page);
+        // We need to get the !bset tweakdefs output (all chunks concatenated)
+        const tweaks = await getAllDecodedTweaks(page);
+        const decodedLua = tweaks.join('\n');
 
         // Assert presence of Fusion logic
         // generateFusionUnits creates _t2, _t3 etc.
@@ -35,7 +36,8 @@ test.describe('Feature: Verify Generated Content (Lua Code)', () => {
         const checkbox = page.locator('input[data-option-label="Enable Adaptive Spawner"]');
         await checkbox.check();
 
-        const decodedLua = await getDecodedTweak(page);
+        const tweaks = await getAllDecodedTweaks(page);
+        const decodedLua = tweaks.join('\n');
 
         // generateMegaRaptors creates _compressed_x10 etc.
         expect(decodedLua).toContain('_compressed_x10');
