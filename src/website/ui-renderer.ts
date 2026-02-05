@@ -50,7 +50,9 @@ export function updateSimpleOutput() {
         const checkbox = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
         if (checkbox && checkbox.checked) {
             commands.push(`!bset ${opt.modOption} 1`);
-            lobbyName += " [MegaNuke]";
+            if (opt.modOption === 'meganuke') {
+                lobbyName += " [MegaNuke]";
+            }
         } else {
              commands.push(`!bset ${opt.modOption} 0`);
         }
