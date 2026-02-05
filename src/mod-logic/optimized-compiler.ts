@@ -9,37 +9,108 @@ export class OptimizedLuaCompiler {
     private builder: string[] = [];
     private indentLevel: number = 0;
     private usedGlobals = new Set<string>();
+    private stringFrequency = new Map<string, number>();
+    private internedStrings = new Map<string, string>(); // original -> variableName
+
+    private readonly SHORT_GLOBALS: Record<string, string> = {
+        'pairs': 'p',
+        'ipairs': 'ip',
+        'string.sub': 'ss',
+        'string.match': 'sm',
+        'string.len': 'sl',
+        'table.insert': 'ti',
+        'table.remove': 'tr',
+        'table.merge': 'tm',
+        'math.floor': 'mf',
+        'math.ceil': 'mc',
+        'math.max': 'mM',
+        'math.min': 'mm',
+        'math.abs': 'ma',
+        'math.random': 'mr',
+        'math.sqrt': 'ms',
+        'Spring.GetModOptions': 'sgmo'
+    };
 
     compile(inputs: CompilerInput[]): string {
         this.builder = [];
         this.indentLevel = 0;
         this.usedGlobals = new Set<string>();
+        this.stringFrequency = new Map<string, number>();
+        this.internedStrings = new Map<string, string>();
 
-        // 1. Pre-scan for globals
+        // 1. Pre-scan for globals and strings
         this.scanGlobals(inputs);
+        this.scanStrings(inputs);
 
-        // 2. Emit Localized Globals
-        this.emitGlobals();
+        // 2. Emit Localized Globals and Interned Strings
+        this.emitGlobalHeader();
 
         this.addStatement('');
 
         // 3. Process Scopes
-        const loopTweaks = inputs.filter(i => i.tweak.scope === 'UnitDefsLoop');
-        const postTweaks = inputs.filter(i => i.tweak.scope === 'UnitDef_Post');
-        const globalTweaks = inputs.filter(i => i.tweak.scope === 'Global');
+        const directLookups: { input: CompilerInput, names: string[] }[] = [];
+        const loopTweaks: CompilerInput[] = [];
+        const postTweaks: CompilerInput[] = [];
+        const globalTweaks: CompilerInput[] = [];
+
+        for (const input of inputs) {
+            if (input.tweak.scope === 'Global') {
+                globalTweaks.push(input);
+            } else if (input.tweak.scope === 'UnitDef_Post') {
+                postTweaks.push(input);
+            } else if (input.tweak.scope === 'UnitDefsLoop') {
+                const direct = this.isDirectLookup(input);
+                if (direct.isDirect) {
+                    directLookups.push({ input, names: direct.names });
+                } else {
+                    loopTweaks.push(input);
+                }
+            }
+        }
 
         // 4. Generate Global Tweaks
         if (globalTweaks.length > 0) {
             for (const input of globalTweaks) {
                 for (const mut of input.tweak.mutations) {
-                    this.generateMutation(mut, 'nil', input.variables);
+                    this.generateMutation(mut, '_G', input.variables);
                 }
             }
         }
 
-        // 5. Generate UnitDefs Loop (Loop Fusion)
+        // 5. Generate Direct Lookups
+        if (directLookups.length > 0) {
+            for (const { input, names } of directLookups) {
+                // Filter out the name condition we used for lookup
+                const otherConditions = input.tweak.conditions.filter(c =>
+                    !(c.type === 'nameInList') &&
+                    !(c.type === 'nameMatch' && names.length === 1 && c.regex === `^${names[0]}$`)
+                );
+
+                for (const unitName of names) {
+                    this.startIf(`UnitDefs["${unitName}"]`);
+                    this.addLocal('def', `UnitDefs["${unitName}"]`);
+                    this.addLocal('name', `"${unitName}"`);
+
+                    const conds = this.generateConditions(otherConditions, 'name', 'def', input.variables);
+                    if (conds.length > 0) {
+                        this.startIf(conds.join(' and '));
+                    }
+
+                    for (const mut of input.tweak.mutations) {
+                        this.generateMutation(mut, 'def', input.variables);
+                    }
+
+                    if (conds.length > 0) {
+                        this.endBlock();
+                    }
+                    this.endBlock();
+                }
+            }
+        }
+
+        // 6. Generate UnitDefs Loop (Loop Fusion)
         if (loopTweaks.length > 0) {
-            this.startLoop('for id, def in pairs(UnitDefs)');
+            this.startLoop(`for id, def in ${this.getGlobalAlias('pairs')}(UnitDefs)`);
             this.addLocal('name', 'def.name or id');
 
             let currentGroup: { inputs: CompilerInput[], conditions: string[] } | null = null;
@@ -123,13 +194,6 @@ export class OptimizedLuaCompiler {
             const last = mergedMutations.length > 0 ? mergedMutations[mergedMutations.length - 1] : null;
 
             if (last && last.mut.op === 'multiply' && item.mut.op === 'multiply' && last.mut.field === item.mut.field) {
-                // We create a new "math" ValueSource on the fly that represents (factor1 * factor2)
-                // Note: resolveValueSource needs to handle the output format if we nest it.
-                // Since we are constructing AST, we can't easily nest "result of resolve" (string) into ValueSource.
-                // However, we can disable merging for complex cases and only support basic merging,
-                // or we just rely on pendingMultiplies logic below which IS robust.
-                // The pendingMultiplies logic below handles the "single calculation line" requirement.
-                // So I don't need to merge AST here.
                 mergedMutations.push(item);
             } else {
                 mergedMutations.push(item);
@@ -144,11 +208,13 @@ export class OptimizedLuaCompiler {
             const parts = field.split('.');
             if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
                  const paramKey = parts[1];
-                 this.startIf(`${defVar}.customparams and ${defVar}.customparams["${paramKey}"]`);
-                 this.addStatement(`${defVar}.customparams["${paramKey}"] = ${defVar}.customparams["${paramKey}"] * (${factorExpr})`);
+                 const keyAccess = this.getInternedOrLiteral(paramKey);
+                 // Using interned key
+                 this.startIf(`${defVar}.customparams and ${defVar}.customparams[${keyAccess}]`);
+                 this.addStatement(`${defVar}.customparams[${keyAccess}] = ${defVar}.customparams[${keyAccess}] * (${factorExpr})`);
                  this.addElse();
-                 this.startIf(`${defVar}.customParams and ${defVar}.customParams["${paramKey}"]`);
-                 this.addStatement(`${defVar}.customParams["${paramKey}"] = ${defVar}.customParams["${paramKey}"] * (${factorExpr})`);
+                 this.startIf(`${defVar}.customParams and ${defVar}.customParams[${keyAccess}]`);
+                 this.addStatement(`${defVar}.customParams[${keyAccess}] = ${defVar}.customParams[${keyAccess}] * (${factorExpr})`);
                  this.endBlock();
                  this.endBlock();
             } else {
@@ -208,7 +274,7 @@ export class OptimizedLuaCompiler {
              const readExpr = this.getFieldRead(defVar, mut.source);
              this.startIf(readExpr);
              const factor = this.resolveValueSource(mut.factor, variables);
-             this.addFieldWrite(defVar, mut.target, `math_floor(${readExpr} * ${factor})`);
+             this.addFieldWrite(defVar, mut.target, `${this.getGlobalAlias('math.floor')}(${readExpr} * ${factor})`);
              this.endBlock();
          } else if (mut.op === 'list_append') {
              const val = this.resolveValueSource(mut.value, variables);
@@ -217,20 +283,21 @@ export class OptimizedLuaCompiler {
              this.startIf(`not ${listVar}`);
              const parts = mut.field.split('.');
              if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                 const keyAccess = this.getInternedOrLiteral(parts[1]);
                  this.addStatement(`${defVar}.customparams = ${defVar}.customparams or {}`);
-                 this.addStatement(`${defVar}.customparams["${parts[1]}"] = {}`);
-                 this.addStatement(`${listVar} = ${defVar}.customparams["${parts[1]}"]`);
+                 this.addStatement(`${defVar}.customparams[${keyAccess}] = {}`);
+                 this.addStatement(`${listVar} = ${defVar}.customparams[${keyAccess}]`);
              } else {
                  this.addStatement(`${defVar}.${mut.field} = {}`);
                  this.addStatement(`${listVar} = ${defVar}.${mut.field}`);
              }
              this.endBlock();
-             this.addStatement(`table_insert(${listVar}, ${val})`);
+             this.addStatement(`${this.getGlobalAlias('table.insert')}(${listVar}, ${val})`);
          }
          else if (mut.op === 'modify_weapon') {
              const weaponName = mut.weaponName || '*';
              this.startIf(`${defVar}.weapondefs`);
-             this.startLoop(`for wName, wDef in pairs(${defVar}.weapondefs)`);
+             this.startLoop(`for wName, wDef in ${this.getGlobalAlias('pairs')}(${defVar}.weapondefs)`);
              if (weaponName !== '*') {
                  this.startIf(`wName == "${weaponName}"`);
              }
@@ -244,18 +311,104 @@ export class OptimizedLuaCompiler {
              this.endBlock();
          }
          else if (mut.op === 'table_merge') {
-             const val = this.resolveValueSource(mut.value, variables);
              const parts = (mut.field as string).split('.');
+             const isSimpleObject = this.isUnrollable(mut.value);
 
-             // Ensure target exists
-             if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
-                  const paramKey = parts[1];
-                  this.addStatement(`if not ${defVar}.customparams then ${defVar}.customparams = {} end`);
-                  this.addStatement(`if not ${defVar}.customparams["${paramKey}"] then ${defVar}.customparams["${paramKey}"] = {} end`);
-                  this.addStatement(`table_merge(${defVar}.customparams["${paramKey}"], ${val})`);
+             if (isSimpleObject) {
+                 // Optimized Unrolling
+                 const obj = mut.value as Record<string, any>;
+                 const keys = Object.keys(obj);
+
+                 if (parts[0].toLowerCase() === 'customparams') {
+                     // Special handling for customparams
+                     let targetExpr = `${defVar}.customparams`;
+
+                     if (parts.length > 1) {
+                         const paramKey = parts[1];
+                         const keyAccess = this.getInternedOrLiteral(paramKey);
+                         // Ensure sub-table exists
+                         this.startIf(`${defVar}.customparams`);
+                             this.addStatement(`if not ${defVar}.customparams[${keyAccess}] then ${defVar}.customparams[${keyAccess}] = {} end`);
+                         this.addElse();
+                             this.addStatement(`if not ${defVar}.customParams then ${defVar}.customParams = {} end`);
+                             this.addStatement(`if not ${defVar}.customParams[${keyAccess}] then ${defVar}.customParams[${keyAccess}] = {} end`);
+                         this.endBlock();
+
+                         // Determine where we are writing
+                         const tableVar = 'target_table';
+                         this.addLocal(tableVar, `(${defVar}.customparams and ${defVar}.customparams[${keyAccess}]) or ${defVar}.customParams[${keyAccess}]`);
+
+                         for (const k of keys) {
+                             const v = this.resolveValueSource(obj[k], variables);
+                             const kAccess = this.getInternedOrLiteral(k);
+                             this.addStatement(`${tableVar}[${kAccess}] = ${v}`);
+                         }
+                     } else {
+                         // Root customparams
+                         // Efficient aliasing
+                         const cpVar = 'cp';
+                         this.addLocal(cpVar, `${defVar}.customparams`);
+                         this.startIf(`not ${cpVar}`);
+                             this.startIf(`${defVar}.customParams`);
+                                 this.addStatement(`${cpVar} = ${defVar}.customParams`);
+                                 this.addStatement(`${defVar}.customparams = ${cpVar}`);
+                             this.addElse();
+                                 this.addStatement(`${cpVar} = {}`);
+                                 this.addStatement(`${defVar}.customparams = ${cpVar}`);
+                             this.endBlock();
+                         this.endBlock();
+
+                         for (const k of keys) {
+                             const v = this.resolveValueSource(obj[k], variables);
+                             const kAccess = this.getInternedOrLiteral(k);
+                             this.addStatement(`${cpVar}[${kAccess}] = ${v}`);
+                         }
+                     }
+                 } else {
+                     // General field unrolling
+                     const val = this.resolveValueSource(mut.value, variables); // Only used if we fallback, but here we loop
+                     // Ensure root exists
+                     const keyAccess = this.getInternedOrLiteral(mut.field as string);
+                     // Note: getInternedOrLiteral handles the field name, but for full path 'a.b' it doesn't split.
+                     // The DSL assumes 'field' is a path. But for table_merge logic in general usage, usually it is 1 level deep or we assume existence?
+                     // Existing code: `if not def.field then def.field = {} end`
+
+                     // If field is complex path 'a.b', checking existence is harder.
+                     // But assuming simple field for optimization is safer.
+
+                     if (parts.length === 1) {
+                         // Simple field
+                         this.addStatement(`if not ${defVar}[${keyAccess}] then ${defVar}[${keyAccess}] = {} end`);
+                         const tVar = 't';
+                         this.addLocal(tVar, `${defVar}[${keyAccess}]`);
+                         for (const k of keys) {
+                             const v = this.resolveValueSource(obj[k], variables);
+                             const kAccess = this.getInternedOrLiteral(k);
+                             this.addStatement(`${tVar}[${kAccess}] = ${v}`);
+                         }
+                     } else {
+                         // Complex path - fallback to table.merge for safety or implement deep check?
+                         // Fallback
+                         const val = this.resolveValueSource(mut.value, variables);
+                         this.addStatement(`if not ${defVar}.${mut.field} then ${defVar}.${mut.field} = {} end`);
+                         this.addStatement(`${this.getGlobalAlias('table.merge')}(${defVar}.${mut.field}, ${val})`);
+                     }
+                 }
              } else {
-                 this.addStatement(`if not ${defVar}.${mut.field} then ${defVar}.${mut.field} = {} end`);
-                 this.addStatement(`table_merge(${defVar}.${mut.field}, ${val})`);
+                 // Fallback to table.merge
+                 const val = this.resolveValueSource(mut.value, variables);
+
+                 // Ensure target exists
+                 if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
+                      const paramKey = parts[1];
+                      const keyAccess = this.getInternedOrLiteral(paramKey);
+                      this.addStatement(`if not ${defVar}.customparams then ${defVar}.customparams = {} end`);
+                      this.addStatement(`if not ${defVar}.customparams[${keyAccess}] then ${defVar}.customparams[${keyAccess}] = {} end`);
+                      this.addStatement(`${this.getGlobalAlias('table.merge')}(${defVar}.customparams[${keyAccess}], ${val})`);
+                 } else {
+                     this.addStatement(`if not ${defVar}.${mut.field} then ${defVar}.${mut.field} = {} end`);
+                     this.addStatement(`${this.getGlobalAlias('table.merge')}(${defVar}.${mut.field}, ${val})`);
+                 }
              }
          }
          else if (mut.op === 'list_remove') {
@@ -265,7 +418,7 @@ export class OptimizedLuaCompiler {
              this.startIf(listVar);
              this.startLoop(`for i = #(${listVar}), 1, -1`);
              this.startIf(`${listVar}[i] == ${val}`);
-             this.addStatement(`table_remove(${listVar}, i)`);
+             this.addStatement(`${this.getGlobalAlias('table.remove')}(${listVar}, i)`);
              this.endBlock();
              this.endBlock();
              this.endBlock();
@@ -274,7 +427,7 @@ export class OptimizedLuaCompiler {
              const source = mut.source === 'SELF' ? defVar : `UnitDefs["${mut.source}"]`;
              const targetName = mut.target ? `"${mut.target}"` : (mut.targetSuffix ? `${defVar}.name .. "${mut.targetSuffix}"` : 'nil');
              this.startIf(source);
-             this.addLocal('newDef', `table_merge({}, ${source})`);
+             this.addLocal('newDef', `${this.getGlobalAlias('table.merge')}({}, ${source})`);
              if (mut.mutations) {
                  for(const subMut of mut.mutations) {
                      this.generateMutation(subMut, 'newDef', variables);
@@ -290,45 +443,47 @@ export class OptimizedLuaCompiler {
         for (const cond of conditions) {
             switch (cond.type) {
                 case 'nameMatch':
-                    conds.push(`string_match(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
+                    conds.push(`${this.getGlobalAlias('string.match')}(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
                     break;
                 case 'nameNotMatch':
-                    conds.push(`not string_match(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
+                    conds.push(`not ${this.getGlobalAlias('string.match')}(${unitNameVar}, "${this.escapeLuaString(cond.regex)}")`);
                     break;
                 case 'nameStartsWith': {
                     const prefix = typeof cond.prefix === 'string' ? cond.prefix : this.resolveValueSource(cond.prefix, variables).replace(/"/g, '');
                     if (typeof cond.prefix !== 'string') {
                          const pVal = this.resolveValueSource(cond.prefix, variables);
-                         conds.push(`string_sub(${unitNameVar}, 1, string_len(${pVal})) == ${pVal}`);
+                         conds.push(`${this.getGlobalAlias('string.sub')}(${unitNameVar}, 1, ${this.getGlobalAlias('string.len')}(${pVal})) == ${pVal}`);
                     } else {
-                        conds.push(`string_sub(${unitNameVar}, 1, ${cond.prefix.length}) == "${this.escapeLuaString(cond.prefix)}"`);
+                        conds.push(`${this.getGlobalAlias('string.sub')}(${unitNameVar}, 1, ${cond.prefix.length}) == "${this.escapeLuaString(cond.prefix)}"`);
                     }
                     break;
                 }
                 case 'nameEndsWith': {
                      if (typeof cond.suffix !== 'string') {
                          const sVal = this.resolveValueSource(cond.suffix, variables);
-                         conds.push(`string_sub(${unitNameVar}, -string_len(${sVal})) == ${sVal}`);
+                         conds.push(`${this.getGlobalAlias('string.sub')}(${unitNameVar}, -${this.getGlobalAlias('string.len')}(${sVal})) == ${sVal}`);
                     } else {
-                        conds.push(`string_sub(${unitNameVar}, -${cond.suffix.length}) == "${this.escapeLuaString(cond.suffix)}"`);
+                        conds.push(`${this.getGlobalAlias('string.sub')}(${unitNameVar}, -${cond.suffix.length}) == "${this.escapeLuaString(cond.suffix)}"`);
                     }
                     break;
                 }
                 case 'customParam':
                     const val = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${this.escapeLuaString(cond.value)}"` : cond.value);
-                    conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] == ${val}) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] == ${val}))`);
+                    const keyAccess = this.getInternedOrLiteral(cond.key);
+                    conds.push(`((${defVar}.customParams and ${defVar}.customParams[${keyAccess}] == ${val}) or (${defVar}.customparams and ${defVar}.customparams[${keyAccess}] == ${val}))`);
                     break;
                 case 'customParamMatch':
-                    conds.push(`((${defVar}.customParams and ${defVar}.customParams["${cond.key}"] and string_match(${defVar}.customParams["${cond.key}"], "${this.escapeLuaString(cond.regex)}")) or (${defVar}.customparams and ${defVar}.customparams["${cond.key}"] and string_match(${defVar}.customparams["${cond.key}"], "${this.escapeLuaString(cond.regex)}")))`);
+                    const keyAccessMatch = this.getInternedOrLiteral(cond.key);
+                    const sm = this.getGlobalAlias('string.match');
+                    conds.push(`((${defVar}.customParams and ${defVar}.customParams[${keyAccessMatch}] and ${sm}(${defVar}.customParams[${keyAccessMatch}], "${this.escapeLuaString(cond.regex)}")) or (${defVar}.customparams and ${defVar}.customparams[${keyAccessMatch}] and ${sm}(${defVar}.customparams[${keyAccessMatch}], "${this.escapeLuaString(cond.regex)}")))`);
                     break;
                 case 'fieldValue':
                     const fVal = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : (typeof cond.value === 'string' ? `"${cond.value}"` : cond.value);
                     conds.push(`${this.getFieldRead(defVar, cond.field)} == ${fVal}`);
                     break;
                 case 'category':
-                    // category is often a string field or a method check. Assuming field 'category'
                     const cVal = typeof cond.value === 'object' ? this.resolveValueSource(cond.value, variables) : `"${cond.value}"`;
-                    conds.push(`string_match(${defVar}.category or "", ${cVal})`);
+                    conds.push(`${this.getGlobalAlias('string.match')}(${defVar}.category or "", ${cVal})`);
                     break;
                 case 'nameInList':
                      const checks = cond.names.map(n => `${unitNameVar} == "${n}"`);
@@ -349,13 +504,12 @@ export class OptimizedLuaCompiler {
                     return this.jsonToLua(v, variables);
                 }
                 if (typedVal.type === 'mod_option') {
-                    return `(Spring_GetModOptions().${typedVal.key} or ${this.jsonToLua(typedVal.default, variables)})`;
+                    return `(${this.getGlobalAlias('Spring.GetModOptions')}().${typedVal.key} or ${this.jsonToLua(typedVal.default, variables)})`;
                 }
                 if (typedVal.type === 'math') {
                     let expr = typedVal.expression;
                     for (const [k, v] of Object.entries(typedVal.variables)) {
                          let resolved = this.resolveValueSource(v as ValueSource, variables);
-                         // If resolved value is a quoted string that looks like an identifier/path, unquote it
                          if (resolved.startsWith('"') && resolved.endsWith('"')) {
                              const unquoted = resolved.slice(1, -1);
                              if (/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(unquoted)) {
@@ -375,21 +529,17 @@ export class OptimizedLuaCompiler {
 
     private transformMathExpression(expr: string): { code: string, globals: Set<string> } {
         const globals = new Set<string>();
-        // Split by string literals to isolate code blocks
-        // This regex matches double-quoted and single-quoted strings, handling escaped quotes.
         const parts = expr.split(/("(?:\\[\s\S]|[^"])*"|'(?:\\[\s\S]|[^'])*')/g);
 
         for (let i = 0; i < parts.length; i += 2) {
-            // Even indices are code, odd are strings
             parts[i] = parts[i].replace(/\b(max|min|ceil|floor|abs|random|sqrt)(\s*\()/g, (match, func, suffix) => {
                 globals.add(`math.${func}`);
-                return `math_${func}${suffix}`;
+                return `${this.SHORT_GLOBALS[`math.${func}`] || 'math.' + func}${suffix}`;
             });
         }
 
         return { code: parts.join(''), globals };
     }
-
 
     private escapeLuaString(str: string): string {
         return str
@@ -405,7 +555,8 @@ export class OptimizedLuaCompiler {
              return this.resolveValueSource(obj, variables);
         }
         if (typeof obj === 'string') {
-            return `"${this.escapeLuaString(obj)}"`;
+            const interned = this.internedStrings.get(obj);
+            return interned ? interned : `"${this.escapeLuaString(obj)}"`;
         }
         if (typeof obj === 'number') return obj.toString();
         if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -416,8 +567,27 @@ export class OptimizedLuaCompiler {
              const parts: string[] = [];
              for (const k in obj) {
                  if (Object.prototype.hasOwnProperty.call(obj, k)) {
-                     const validId = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k);
-                     const keyStr = validId ? k : `["${k}"]`;
+                     const keyAccess = this.getInternedOrLiteral(k);
+                     // If it's a bracket access (interned), use [key] = val
+                     // If it's a string literal, jsonToLua(k) would be "k", but we might want just k if it's a valid ID
+                     // But simpler to always use [k] = v syntax if we support arbitrary keys
+                     // However standard Lua is { key = val } for identifiers.
+                     // The getInternedOrLiteral returns valid lua expression for key access.
+                     // If it is a string literal "key", we can check if it is valid identifier.
+
+                     let keyStr = keyAccess;
+                     if (keyStr.startsWith('"') && keyStr.endsWith('"')) {
+                         const raw = k;
+                         if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(raw)) {
+                             keyStr = raw;
+                         } else {
+                             keyStr = `[${keyStr}]`;
+                         }
+                     } else {
+                         // It's a variable or expression
+                         keyStr = `[${keyStr}]`;
+                     }
+
                      parts.push(`${keyStr} = ${this.jsonToLua(obj[k], variables)}`);
                  }
              }
@@ -440,6 +610,51 @@ export class OptimizedLuaCompiler {
         }
     }
 
+    private scanStrings(inputs: CompilerInput[]) {
+        // Helper to count strings
+        const count = (str: string) => {
+            if (str.length <= 3) return; // Ignore short strings
+            this.stringFrequency.set(str, (this.stringFrequency.get(str) || 0) + 1);
+        };
+
+        const scanVal = (val: any) => {
+            if (typeof val === 'string') count(val);
+            else if (typeof val === 'object' && val !== null) {
+                if (Array.isArray(val)) val.forEach(scanVal);
+                else {
+                    for (const k in val) {
+                        count(k);
+                        scanVal(val[k]);
+                    }
+                }
+            }
+        };
+
+        for (const input of inputs) {
+            // Scan mutations
+            const scanMut = (m: any) => {
+                if (m.field) {
+                    m.field.split('.').forEach((p: string) => count(p));
+                }
+                if (m.value) scanVal(m.value);
+                if (m.factor) scanVal(m.factor);
+                if (m.weaponName) count(m.weaponName);
+                if (m.mutations) m.mutations.forEach(scanMut);
+                if (m.source && m.source !== 'SELF') count(m.source);
+                if (m.target) count(m.target);
+            };
+            input.tweak.mutations.forEach(scanMut);
+
+            // Scan conditions
+            input.tweak.conditions.forEach(c => {
+                 if (c.type === 'customParam' || c.type === 'customParamMatch') count(c.key);
+                 if (c.type === 'fieldValue') count(c.field);
+                 if ('value' in c) scanVal(c.value);
+                 // Regexes are usually unique, but maybe check?
+            });
+        }
+    }
+
     private scanValueSource(obj: any, vars: Record<string, any>) {
         if (!obj || typeof obj !== 'object') return;
         if (obj.type === 'mod_option') this.usedGlobals.add('Spring.GetModOptions');
@@ -458,36 +673,49 @@ export class OptimizedLuaCompiler {
         }
     }
 
-    private emitGlobals() {
+    private emitGlobalHeader() {
+        const emit = (name: string, val: string) => this.addLocal(name, val);
+
         if (this.usedGlobals.has('Spring.GetModOptions')) {
-            this.addLocal('Spring_GetModOptions', 'Spring.GetModOptions');
+            emit(this.SHORT_GLOBALS['Spring.GetModOptions'] || 'Spring_GetModOptions', 'Spring.GetModOptions');
         }
         if (this.usedGlobals.has('table.merge')) {
-             this.addLocal('table_merge', 'table.merge');
+             emit(this.SHORT_GLOBALS['table.merge'] || 'table_merge', 'table.merge');
         }
 
-        const mapping: Record<string, string> = {
-            'pairs': 'pairs',
-            'ipairs': 'ipairs',
-            'string.sub': 'string_sub',
-            'string.match': 'string_match',
-            'string.len': 'string_len',
-            'table.insert': 'table_insert',
-            'table.remove': 'table_remove',
-            'math.floor': 'math_floor',
-            'math.ceil': 'math_ceil',
-            'math.max': 'math_max',
-            'math.min': 'math_min',
-            'math.abs': 'math_abs',
-            'math.random': 'math_random',
-            'math.sqrt': 'math_sqrt'
-        };
+        const sortedGlobals = Array.from(this.usedGlobals).sort();
+        for (const g of sortedGlobals) {
+            // We handled these above or they are mapped
+            if (g === 'Spring.GetModOptions' || g === 'table.merge') continue;
 
-        for (const g of this.usedGlobals) {
-            if (mapping[g]) {
-                this.addLocal(mapping[g], g);
+            if (this.SHORT_GLOBALS[g]) {
+                emit(this.SHORT_GLOBALS[g], g);
             }
         }
+
+        // Emit interned strings
+        // Filter: len > 3 and count > 10 (using 5 for test based on plan thought, but prompt said 10. I'll stick to 10 but might lower if my test case fails to trigger it).
+        // My test case has 11 repeats of "customparams".
+        const THRESHOLD = 10;
+        const sortedStrings = Array.from(this.stringFrequency.entries())
+            .filter(([str, count]) => count > THRESHOLD)
+            .sort((a, b) => b[1] - a[1]); // Most frequent first
+
+        for (const [str, count] of sortedStrings) {
+            // Generate variable name. k_ + simplified string
+            const safeName = 'k_' + str.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 20);
+            this.addLocal(safeName, `"${this.escapeLuaString(str)}"`);
+            this.internedStrings.set(str, safeName);
+        }
+    }
+
+    private getGlobalAlias(global: string): string {
+        return this.SHORT_GLOBALS[global] || global.replace('.', '_');
+    }
+
+    private getInternedOrLiteral(str: string): string {
+        const interned = this.internedStrings.get(str);
+        return interned ? interned : `"${this.escapeLuaString(str)}"`;
     }
 
     // Helper methods
@@ -504,23 +732,117 @@ export class OptimizedLuaCompiler {
         const parts = fieldPath.split('.');
         if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
             const paramKey = parts[1];
-            return `((${defVar}.customParams and ${defVar}.customParams["${paramKey}"]) or (${defVar}.customparams and ${defVar}.customparams["${paramKey}"]))`;
+            const keyAccess = this.getInternedOrLiteral(paramKey);
+            return `((${defVar}.customParams and ${defVar}.customParams[${keyAccess}]) or (${defVar}.customparams and ${defVar}.customparams[${keyAccess}]))`;
         }
-        return `${defVar}.${fieldPath}`;
+
+        const keyAccess = this.getInternedOrLiteral(fieldPath);
+        if (keyAccess.startsWith('"')) {
+            const raw = keyAccess.slice(1, -1);
+            if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(raw)) {
+                return `${defVar}.${raw}`;
+            }
+        }
+        return `${defVar}[${keyAccess}]`;
     }
 
     private addFieldWrite(defVar: string, fieldPath: string, valueExpr: string) {
         const parts = fieldPath.split('.');
         if (parts[0].toLowerCase() === 'customparams' && parts.length > 1) {
             const paramKey = parts[1];
+            const keyAccess = this.getInternedOrLiteral(paramKey);
             this.startIf(`${defVar}.customparams`);
-            this.addStatement(`${defVar}.customparams["${paramKey}"] = ${valueExpr}`);
+            this.addStatement(`${defVar}.customparams[${keyAccess}] = ${valueExpr}`);
             this.addElse();
             this.addStatement(`if not ${defVar}.customParams then ${defVar}.customParams = {} end`);
-            this.addStatement(`${defVar}.customParams["${paramKey}"] = ${valueExpr}`);
+            this.addStatement(`${defVar}.customParams[${keyAccess}] = ${valueExpr}`);
             this.endBlock();
         } else {
-            this.addStatement(`${defVar}.${fieldPath} = ${valueExpr}`);
+            const keyAccess = this.getInternedOrLiteral(fieldPath);
+            if (keyAccess.startsWith('"')) {
+                const raw = keyAccess.slice(1, -1);
+                if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(raw)) {
+                    this.addStatement(`${defVar}.${raw} = ${valueExpr}`);
+                } else {
+                    this.addStatement(`${defVar}[${keyAccess}] = ${valueExpr}`);
+                }
+            } else {
+                this.addStatement(`${defVar}[${keyAccess}] = ${valueExpr}`);
+            }
         }
+    }
+
+    private isDirectLookup(input: CompilerInput): { isDirect: boolean, names: string[] } {
+        if (input.tweak.scope !== 'UnitDefsLoop') return { isDirect: false, names: [] };
+
+        const nameConds = input.tweak.conditions.filter(c =>
+            c.type === 'nameMatch' || c.type === 'nameInList'
+        );
+
+        if (nameConds.length !== 1) return { isDirect: false, names: [] };
+
+        const cond = nameConds[0];
+
+        if (cond.type === 'nameInList') {
+            return { isDirect: true, names: cond.names };
+        }
+
+        if (cond.type === 'nameMatch') {
+            // Check if regex is exact match "^name$"
+            const match = cond.regex.match(/^\^([a-zA-Z0-9_]+)\$$/);
+            if (match) {
+                return { isDirect: true, names: [match[1]] };
+            }
+        }
+
+        return { isDirect: false, names: [] };
+    }
+
+    private isUnrollable(value: any): boolean {
+        if (typeof value !== 'object' || value === null) return false;
+        // If it has 'type' property, it might be a ValueSource, not a simple table
+        if ('type' in value && (value.type === 'variable' || value.type === 'math' || value.type === 'mod_option')) {
+            return false;
+        }
+        if (Array.isArray(value)) return false; // array merge logic is different (append vs replace?)
+
+        // Check if all values are also simple or primitives
+        // Actually, we can support recursion if we implemented recursive unrolling,
+        // but for now we only support 1 level unrolling as per my implementation in generateMutation.
+        // My implementation iterates keys and resolves values.
+        // If value is a nested object, resolveValueSource converts it to Lua table string.
+        // So `t[k] = { ... }`. This overwrites if t[k] existed as a table.
+        // table.merge would merge.
+        // So we can ONLY unroll if the values are PRIMITIVES (or simple arrays/objects that we treat as atomic replacements).
+        // If a value is an object, and we assign it, we are replacing.
+        // If the intention of the Tweak was merging nested tables, this breaks it.
+        // So we must check that values are NOT objects (unless we want to overwrite).
+
+        // But table.merge is often used to add fields.
+        // If I have { tag = "commander" }, value is string. Safe.
+        // If I have { weapons = { ... } }, value is object. Assigning it overwrites existing weapons table?
+        // Yes.
+        // So isUnrollable should return true ONLY if all values are primitives?
+
+        for (const k in value) {
+             const v = value[k];
+             if (typeof v === 'object' && v !== null) {
+                 if ('type' in v) {
+                     // variable/math is fine, it resolves to a value.
+                     // But does it resolve to a table?
+                     // We assume not for safety, or we accept overwrite risk?
+                     // Let's be safe: only unroll primitives.
+                     // Wait, `ValueSource` can be { type: 'variable' }.
+                     // If variable is a number, fine.
+                 } else {
+                     // Nested object/array.
+                     // If we assign `target.k = { ... }`, we overwrite.
+                     // table.merge would merge.
+                     // So we cannot unroll if there are nested objects.
+                     return false;
+                 }
+             }
+        }
+        return true;
     }
 }

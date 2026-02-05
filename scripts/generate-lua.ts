@@ -41,12 +41,31 @@ function main() {
 
     let lua = compiler.compile(inputs);
 
-    // Basic Post-Processing Minification
-    // Remove comments (already removed in compiler, but just in case)
+    // Aggressive Post-Processing Minification
+    // Remove comments
     lua = lua.replace(/--.*$/gm, '');
-    // Remove empty lines
-    lua = lua.replace(/^\s*[\r\n]/gm, '');
-    // Trim lines
+
+    // Split by strings to avoid modifying them
+    const parts = lua.split(/("(?:\\[\s\S]|[^"])*"|'(?:\\[\s\S]|[^'])*')/g);
+
+    for (let i = 0; i < parts.length; i += 2) {
+        let code = parts[i];
+
+        // Remove spaces around operators
+        code = code.replace(/[ \t]*([=+\-*/,<>^])[ \t]*/g, '$1');
+
+        // Remove spaces around parentheses/brackets/braces
+        code = code.replace(/[ \t]*([()\[\]{}])[ \t]*/g, '$1');
+
+        // Normalize whitespace (keep newlines)
+        code = code.replace(/[ \t]+/g, ' ');
+
+        parts[i] = code;
+    }
+
+    lua = parts.join('');
+
+    // Remove empty lines and trim
     lua = lua.split('\n').map(l => l.trim()).filter(l => l).join('\n');
 
     fs.writeFileSync(OUTPUT_PATH, lua);
