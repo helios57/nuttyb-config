@@ -13,28 +13,6 @@ const GADGET_FILES = [
     'gadget_raptor_ai_optimized.lua'
 ];
 
-// Mapping: filename -> modOption key
-const TWEAK_FILES: Record<string, string> = {
-    'Defs_Cross_Faction_T2.lua': 'nuttyb_cross_faction_t2',
-    'Defs_Main.lua': 'nuttyb_main_defs',
-    'Defs_Mega_Nuke.lua': 'meganuke',
-    'Defs_T3_Builders.lua': 'nuttyb_t3_builders',
-    'Defs_T3_Eco.lua': 'nuttyb_t3_eco',
-    'Defs_T4_Air.lua': 'nuttyb_t4_air',
-    'Defs_T4_Defenses.lua': 'nuttyb_t4_defenses',
-    'Defs_T4_Eco.lua': 'nuttyb_t4_eco',
-    'Defs_T4_Epics.lua': 'nuttyb_t4_epics',
-    'Defs_Unit_Launchers.lua': 'nuttyb_unit_launchers',
-    'Defs_Waves_Experimental_Wave_Challenge.lua': 'nuttyb_wave_mode_exp',
-    'Defs_Waves_Mini_Bosses.lua': 'nuttyb_wave_mode_mini',
-    'Units_EVO_XP.lua': 'nuttyb_evo_xp',
-    'Units_LRPC_v2.lua': 'nuttyb_lrpc_v2',
-    'Units_Main.lua': 'nuttyb_main_units',
-    'Units_NuttyB_Evolving_Commanders_Armada.lua': 'nuttyb_evo_com_arm',
-    'Units_NuttyB_Evolving_Commanders_Cortex.lua': 'nuttyb_evo_com_cor',
-    'Units_NuttyB_Evolving_Commanders_Legion.lua': 'nuttyb_evo_com_leg',
-};
-
 function generateCommonLua(): string {
     return `
 -- Common Utilities
@@ -88,46 +66,58 @@ function processImportedTweaks(): string {
 
     let result = "";
 
-    // Sort keys to ensure deterministic order (Defs before Units usually implies D < U, which works)
-    const files = Object.keys(TWEAK_FILES).sort();
+    // Get all .lua files and sort them
+    // Default string sort ensures Defs_* come before Units_* because 'D' < 'U'
+    const files = fs.readdirSync(IMPORTED_TWEAKS_DIR)
+        .filter(f => f.endsWith('.lua'))
+        .sort();
 
     for (const file of files) {
-        const modOption = TWEAK_FILES[file];
         const filePath = path.join(IMPORTED_TWEAKS_DIR, file);
+        console.log(`Processing tweak: ${file}`);
+        let content = fs.readFileSync(filePath, 'utf-8');
 
-        if (fs.existsSync(filePath)) {
-            console.log(`Processing tweak: ${file} (ModOption: ${modOption})`);
-            let content = fs.readFileSync(filePath, 'utf-8');
+        // Strip verbose headers and metadata
+        content = content.replace(/^-- Decoded from tweakdata\.txt.*$/gm, '');
+        content = content.replace(/^--NuttyB .*$/gm, '');
+        content = content.replace(/^-- Authors: .*$/gm, '');
+        content = content.replace(/^-- docs\.google\.com.*$/gm, '');
+        content = content.replace(/^-- [A-Z0-9_]+_(START|END)$/gm, '');
 
-            // Check if file returns a table (heuristic: starts with { after comments)
-            // Strip comments to check
-            const stripped = content.replace(/--.*$/gm, '').trim();
-            if (stripped.startsWith('{')) {
-                // Wrap in table merge logic
-                content = `
-                local newUnits = ${content}
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
-                `;
-            }
+        // Remove empty lines at the start/end created by stripping
+        content = content.trim();
 
-            result += `\n-- Tweak: ${file}\n`;
-            if (file === 'Defs_Mega_Nuke.lua') {
-                result += `if (tonumber(Spring.GetModOptions().${modOption}) == 1) then\n`;
-                result += `${content}\n`;
-                result += `end\n`;
-            } else {
-                result += `${content}\n`;
-            }
+        // Check if file returns a table (heuristic: starts with { after comments)
+        const strippedToCheck = content.replace(/--.*$/gm, '').trim();
+        let codeBlock = "";
+
+        if (strippedToCheck.startsWith('{')) {
+            // Wrap in table merge logic
+            codeBlock = `
+do
+    local newUnits = ${content}
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
+`;
         } else {
-             console.warn(`Tweak file missing: ${file}`);
+            codeBlock = content;
+        }
+
+        result += `\n-- Tweak: ${file}\n`;
+        if (file === 'Defs_Mega_Nuke.lua') {
+            result += `if (tonumber(Spring.GetModOptions().meganuke) == 1) then\n`;
+            result += `${codeBlock}\n`;
+            result += `end\n`;
+        } else {
+            result += `${codeBlock}\n`;
         }
     }
     return result;
