@@ -21,6 +21,11 @@ test.describe('Feature: Verify Generated Content (Lua Code)', () => {
         expect(decodedLua).toContain('UnitDefs["armsolar_t3"]');
         expect(decodedLua).toContain('UnitDefs["corwin_t5"]'); // Random check
 
+        // Verify property scaling presence
+        expect(decodedLua).toContain('health =');
+        expect(decodedLua).toContain('energyMake =');
+        expect(decodedLua).toContain('is_fusion_unit = true');
+
         // Also verify the ModOption command is there (just to be safe, though getDecodedTweak gets the big block)
         const output = await page.locator('#command-output-1').inputValue();
         expect(output).toContain('!bset fusion_mode 1');
@@ -37,6 +42,10 @@ test.describe('Feature: Verify Generated Content (Lua Code)', () => {
         // Check for a unit we know is compressed (e.g., swarmer or solar)
         // Queens are currently excluded from compression.
         expect(decodedLua).toContain('UnitDefs["raptor_land_swarmer_basic_t1_v1_compressed_x10"]');
+
+        // Verify compression flags
+        expect(decodedLua).toContain('is_compressed_unit = true');
+        expect(decodedLua).toContain('compression_factor = 10');
 
         const output = await page.locator('#command-output-1').inputValue();
         expect(output).toContain('!bset adaptive_spawner 1');

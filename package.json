@@ -30,5 +30,9 @@
     "wasmoon": "^1.16.0",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "luamin": "^1.0.4",
+    "luaparse": "^0.3.1"
   }
 }

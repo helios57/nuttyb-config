@@ -247,4 +247,31 @@ test.describe('Feature Verification', () => {
         expect(output).toContain('!bset cull_maxunits 8000');
     });
 
+    test('Verify Updated Default Values', async ({ page }) => {
+        await page.goto('/');
+
+        // Queen Quantity: 25
+        const queenInput = page.getByLabel('Queen Quantity:');
+        await expect(queenInput).toHaveValue('25');
+
+        // Wave Multiplier: 4
+        const waveMultInput = page.getByLabel('Wave Multiplier:');
+        await expect(waveMultInput).toHaveValue('4');
+
+        // First Waves Boost: 4
+        const boostInput = page.getByLabel('First Waves Boost:');
+        await expect(boostInput).toHaveValue('4');
+
+        // Grace Period Multiplier: 3
+        const graceInput = page.getByLabel('Grace Period Multiplier:');
+        await expect(graceInput).toHaveValue('3');
+
+        // Check output contains these values (generated automatically from defaults)
+        const output = await getOutputText(page);
+        expect(output).toContain('!bset raptor_queen_count 25');
+        expect(output).toContain('!bset raptor_spawncountmult 4');
+        expect(output).toContain('!bset raptor_firstwavesboost 4');
+        expect(output).toContain('!bset raptor_graceperiodmult 3');
+    });
+
 });

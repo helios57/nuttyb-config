@@ -12,9 +12,6 @@ import {
 } from './ui-renderer';
 import { GameConfigs, FormOptionsConfig, RawOptionsData, CustomTweak } from '../mod-logic/types';
 
-// Declare global variables for external libraries
-declare const luamin: any;
-
 let rawOptionsData: RawOptionsData[] = [];
 let formOptionsConfig: FormOptionsConfig[] = [];
 let gameConfigs: GameConfigs = { maps: [], modes: [], base: [], scavengers: [] };
@@ -301,30 +298,9 @@ function safeQuerySelector<T extends HTMLElement>(selector: string, parent: Elem
     return parent.querySelector(selector) as T | null;
 }
 
-function loadScript(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${url}"]`)) {
-            resolve();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = url;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
-        document.head.appendChild(script);
-    });
-}
-
 async function initializeApp() {
     try {
         loadCustomOptions();
-
-        // Load Lua libraries first to avoid race conditions
-        await Promise.all([
-            loadScript('https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js'),
-            loadScript('https://cdn.jsdelivr.net/npm/luamin@1.0.4/luamin.min.js')
-        ]);
-        console.log("Lua libraries loaded.");
 
         const [parsedConfigs, configData, linksContent] = await Promise.all([
             parseModesFile('modes.txt'),
@@ -345,24 +321,11 @@ async function initializeApp() {
 
         renderOptions(formOptionsConfig, gameConfigs, updateOutput);
 
-        const onLuaMinLoaded = () => {
-            console.log("Lua libraries loaded.");
+        // Enable generators immediately as dependencies are bundled
         document.querySelectorAll('select[data-is-hp-generator="true"], select[data-is-scav-hp-generator="true"]').forEach(select => {
             (select as HTMLSelectElement).disabled = false;
         });
         updateOutput();
-        };
-
-        if (typeof luamin !== 'undefined') {
-            onLuaMinLoaded();
-        } else {
-            const script = document.querySelector('script[src*="luamin"]');
-            if (script) {
-                script.addEventListener('load', onLuaMinLoaded);
-            } else {
-                console.error("Luamin script tag not found.");
-            }
-        }
 
         renderAllCustomComponents();
         populateStartSelector(gameConfigs, updateOutput);

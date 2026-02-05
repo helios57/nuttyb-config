@@ -1,9 +1,7 @@
 import { OptimizedLuaCompiler } from './optimized-compiler';
 import tweakLibrary from './tweak-library.json';
 import { TweakDefinition } from './tweak-dsl';
-
-// Declare luamin as a global variable since it's loaded via script tag
-declare const luamin: any;
+import luamin from 'luamin';
 
 const library = tweakLibrary as Record<string, TweakDefinition>;
 
@@ -70,17 +68,15 @@ export function generateLuaTweak(type: string, value: string): string {
              const lua = compiler.compile(inputs);
 
              let finalLua = lua;
-             if (typeof luamin !== 'undefined') {
-                 // Preserve the first line comment if it exists
-                 const firstLineMatch = lua.match(/^(--.*)\n/);
-                 const header = firstLineMatch ? firstLineMatch[1] : '';
+             // Preserve the first line comment if it exists
+             const firstLineMatch = lua.match(/^(--.*)\n/);
+             const header = firstLineMatch ? firstLineMatch[1] : '';
 
-                 // Minify the code
-                 const minified = luamin.minify(lua);
+             // Minify the code
+             const minified = luamin.minify(lua);
 
-                 // Reattach header if it was there
-                 finalLua = header ? header + '\n' + minified : minified;
-             }
+             // Reattach header if it was there
+             finalLua = header ? header + '\n' + minified : minified;
 
              return encodeBase64Url(finalLua);
         }
