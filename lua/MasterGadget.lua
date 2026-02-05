@@ -1,6 +1,6 @@
 function gadget:GetInfo() return { name="NuttyB Master Gadget", desc="Combined logic and tweaks for NuttyB Mod", author="NuttyB Team (Generated)", date="2026", license="GPL", layer=0, enabled=true } end if (not gadgetHandler:IsSyncedCode()) then return end -- Localized Globals
 local spAddTeamResource = Spring.AddTeamResource; local spCreateUnit = Spring.CreateUnit; local spDestroyUnit = Spring.DestroyUnit; local spGetFPS = Spring.GetFPS; local spGetGaiaTeamID = Spring.GetGaiaTeamID; local spGetGameFrame = Spring.GetGameFrame; local spGetGameSpeed = Spring.GetGameSpeed; local spGetModOptions = Spring.GetModOptions; local spGetTeamList = Spring.GetTeamList; local spGetTeamStartPosition = Spring.GetTeamStartPosition; local spGetTeamUnits = Spring.GetTeamUnits; local spGetUnitCount = Spring.GetUnitCount; local spGetUnitDefID = Spring.GetUnitDefID; local spGetUnitExperience = Spring.GetUnitExperience; local spGetUnitHealth = Spring.GetUnitHealth; local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy; local spGetUnitPosition = Spring.GetUnitPosition; local spGetUnitsInCylinder = Spring.GetUnitsInCylinder; local spGiveOrderToUnit = Spring.GiveOrderToUnit; local spSendMessage = Spring.SendMessage; local spSetUnitColor = Spring.SetUnitColor; local spSetUnitExperience = Spring.SetUnitExperience; local spSetUnitHealth = Spring.SetUnitHealth; local spSetUnitLabel = Spring.SetUnitLabel; local spSetUnitNeutral = Spring.SetUnitNeutral; local spSpawnCEG = Spring.SpawnCEG; local spValidUnitID = Spring.ValidUnitID; local UnitDefNames = UnitDefNames; local UnitDefs = UnitDefs; local assert = assert; local error = error; local ipairs = ipairs; local math_abs = math.abs; local math_ceil = math.ceil; local math_floor = math.floor; local math_max = math.max; local math_min = math.min; local math_random = math.random; local math_sqrt = math.sqrt; local next = next; local pairs = pairs; local select = select; local string_find = string.find; local string_format = string.format; local string_len = string.len; local string_match = string.match; local string_sub = string.sub; local table_concat = table.concat; local table_insert = table.insert; local table_remove = table.remove; local table_sort = table.sort; local tonumber = tonumber; local tostring = tostring; local type = type; local unpack = unpack;
-local adaptivespawner_GameFrame; local adaptivespawner_UnitCreated; local adaptivespawner_UnitDestroyed; local adaptivespawner_UnitCollision; local fusioncore_Initialize; local fusioncore_UnitFinished; local raptoraioptimized_UnitCreated; local raptoraioptimized_UnitDestroyed; local raptoraioptimized_GameFrame; local function table_merge(dest, src) if not dest then dest = {} end for k, v in pairs(src) do if (type(v) == "table") and (type(dest[k]) == "table") then table_merge(dest[k], v) else dest[k] = v end end return dest end local function table_mergeInPlace(dest, src) if not dest or not src then return end for k, v in pairs(src) do if (type(v) == "table") and (type(dest[k]) == "table") then table_mergeInPlace(dest[k], v) else dest[k] = v end end end local function table_copy(t) if type(t) ~= "table" then return t end local res = {} for k, v in pairs(t) do if type(v) == "table" then res[k] = table_copy(v) else res[k] = v end end return res end if not table.merge then table.merge = table_merge end if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end if not table.copy then table.copy = table_copy end  do
+local adaptivespawner_GameFrame; local adaptivespawner_UnitCreated; local adaptivespawner_UnitDestroyed; local adaptivespawner_UnitCollision; local culling_Initialize; local culling_UnitDamaged; local culling_UnitWeaponFire; local culling_GameFrame; local fusioncore_Initialize; local fusioncore_UnitFinished; local raptoraioptimized_UnitCreated; local raptoraioptimized_UnitDestroyed; local raptoraioptimized_GameFrame; local function table_merge(dest, src) if not dest then dest = {} end for k, v in pairs(src) do if (type(v) == "table") and (type(dest[k]) == "table") then table_merge(dest[k], v) else dest[k] = v end end return dest end local function table_mergeInPlace(dest, src) if not dest or not src then return end for k, v in pairs(src) do if (type(v) == "table") and (type(dest[k]) == "table") then table_mergeInPlace(dest[k], v) else dest[k] = v end end end local function table_copy(t) if type(t) ~= "table" then return t end local res = {} for k, v in pairs(t) do if type(v) == "table" then res[k] = table_copy(v) else res[k] = v end end return res end if not table.merge then table.merge = table_merge end if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end if not table.copy then table.copy = table_copy end  do
 -- Unified Tweaks for NuttyB Mod
 -- This file consolidates logic from multiple tweak files into a single optimized pass.
 
@@ -1186,6 +1186,235 @@ adaptivespawner_UnitCollision = function(unitID, unitDefID, teamID, colliderID, 
     end
 end
  end Initialize_adaptivespawner()   local function Initialize_culling()
+
+if (not gadgetHandler:IsSyncedCode()) then
+  return
+end
+
+local spGetGameFrame = spGetGameFrame
+local spGetGameSpeed = spGetGameSpeed
+local spDestroyUnit = spDestroyUnit
+local spGetTeamUnits = spGetTeamUnits
+local spGetGaiaTeamID = spGetGaiaTeamID
+local spGetUnitDefID = spGetUnitDefID
+-- local spGetUnitNearestEnemy = spGetUnitNearestEnemy -- Removed
+local spAddTeamResource = spAddTeamResource
+local spGetTeamList = spGetTeamList
+local spValidUnitID = spValidUnitID
+local spGetUnitPosition = spGetUnitPosition
+local spSpawnCEG = spSpawnCEG
+local spSendMessage = spSendMessage
+local spGetUnitCount = spGetUnitCount
+local spGetTeamStartPosition = spGetTeamStartPosition
+local math_floor = math_floor
+
+local modOptions = spGetModOptions() or {}
+local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
+local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
+-- Default to Enabled, unless explicitly disabled
+local CULL_ENABLED = (modOptions.cull_enabled ~= "0")
+local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
+local SAFE_RADIUS_SQ = SAFE_RADIUS * SAFE_RADIUS
+
+culling_Initialize = function()
+    -- Debug print removed for Release
+end
+
+local GAIA_TEAM_ID = spGetGaiaTeamID()
+
+-- List of units to cull (T1 Generators/Converters)
+local cullableUnits = {
+    ["armsolar"] = true,
+    ["corsolar"] = true,
+    ["armwin"] = true,
+    ["corwin"] = true,
+    ["armmakr"] = true,
+    ["cormakr"] = true
+}
+
+-- Batch Processing State (Parallel Arrays for Optimization)
+local candidatesID = {}
+local candidatesTeam = {}
+local candidatesDefID = {}
+local candidatesCount = 0
+local candidatesIndex = 1
+
+local processingActive = false
+local cullState = "IDLE" -- IDLE, WARNING, ACTIVE
+local warningStartTime = 0
+local WARNING_DURATION = 300 -- 10 seconds
+
+-- Combat Grid (Safe Zone Caching)
+local combatGrid = {} -- Key: numeric hash, Value: timestamp (frame)
+local GRID_SIZE = 1024 -- 1024 elmos (approx 2000 range check replacement)
+local ACTIVE_DURATION = 900 -- 30 seconds * 30 frames
+
+local function GetGridKey(x, z)
+    local gx = math_floor(x / GRID_SIZE)
+    local gz = math_floor(z / GRID_SIZE)
+    return gx, gz, gx + (gz * 10000)
+end
+
+local function MarkActive(unitID)
+    local x, _, z = spGetUnitPosition(unitID)
+    if x then
+        local _, _, key = GetGridKey(x, z)
+        combatGrid[key] = spGetGameFrame()
+    end
+end
+
+-- Event Handlers to update Combat Grid
+culling_UnitDamaged = function(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    MarkActive(unitID)
+    if attackerID then MarkActive(attackerID) end
+end
+
+culling_UnitWeaponFire = function(unitID, unitDefID, unitTeam, weaponNum, weaponDefID, projectileParams, aimPos)
+    MarkActive(unitID)
+end
+
+
+culling_GameFrame = function(n)
+    if not CULL_ENABLED then return end
+
+    -- State Machine Update (Every 30 frames)
+    if n % 30 == 0 then
+        local _, simSpeed = spGetGameSpeed()
+        local currentUnits = spGetUnitCount()
+        local conditionsMet = (simSpeed < MIN_SIM_SPEED) or (currentUnits > MAX_UNITS)
+
+        if cullState == "IDLE" then
+            if conditionsMet then
+                cullState = "WARNING"
+                warningStartTime = n
+                spSendMessage("⚠️ Performance Critical! Eco Culling in 10s...")
+            end
+        elseif cullState == "WARNING" then
+            if not conditionsMet then
+                cullState = "IDLE"
+                spSendMessage("✅ Performance Stabilized. Culling Cancelled.")
+            elseif (n - warningStartTime) >= WARNING_DURATION then
+                cullState = "ACTIVE"
+                spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
+
+                -- Collection Logic
+                -- Clear candidates arrays
+                for i = 1, candidatesCount do
+                    candidatesID[i] = nil
+                    candidatesTeam[i] = nil
+                    candidatesDefID[i] = nil
+                end
+                candidatesCount = 0
+                candidatesIndex = 1
+                processingActive = false
+
+                local teamList = spGetTeamList()
+                for _, teamID in pairs(teamList) do
+                    if teamID ~= GAIA_TEAM_ID then
+                        local units = spGetTeamUnits(teamID)
+                        for _, uID in pairs(units) do
+                             local udID = spGetUnitDefID(uID)
+                             if udID then
+                                local ud = UnitDefs[udID]
+                                if ud and cullableUnits[ud.name] then
+                                    candidatesCount = candidatesCount + 1
+                                    candidatesID[candidatesCount] = uID
+                                    candidatesTeam[candidatesCount] = teamID
+                                    candidatesDefID[candidatesCount] = udID
+                                end
+                             end
+                        end
+                    end
+                end
+
+                if candidatesCount > 0 then
+                    processingActive = true
+                else
+                    cullState = "IDLE"
+                end
+            end
+        elseif cullState == "ACTIVE" then
+             if not processingActive then
+                 cullState = "IDLE"
+             end
+        end
+    end
+
+    -- Process Batch (Every Frame if active)
+    if processingActive then
+        local batchSize = 20 -- Check 20 units per frame
+        local processedCount = 0
+        local currentFrame = spGetGameFrame()
+
+        while processedCount < batchSize and candidatesIndex <= candidatesCount do
+            local uID = candidatesID[candidatesIndex]
+            local teamID = candidatesTeam[candidatesIndex]
+            local defID = candidatesDefID[candidatesIndex]
+
+            candidatesIndex = candidatesIndex + 1
+            processedCount = processedCount + 1
+
+            if spValidUnitID(uID) then
+                 -- Check Safe Zone Cache (Combat Grid)
+                 local x, y, z = spGetUnitPosition(uID)
+                 local safe = true
+
+                 if x then
+                     local gx, gz, _ = GetGridKey(x, z)
+
+                     -- Check current and neighbor cells (3x3)
+                     for dx = -1, 1 do
+                         for dz = -1, 1 do
+                             local key = (gx + dx) + ((gz + dz) * 10000)
+                             local lastActive = combatGrid[key]
+                             if lastActive and (currentFrame - lastActive < ACTIVE_DURATION) then
+                                 safe = false
+                                 break
+                             end
+                         end
+                         if not safe then break end
+                     end
+
+                     if safe then
+                        -- Check Safe Radius from Start
+                        local sx, sy, sz = spGetTeamStartPosition(teamID)
+                        if sx then
+                             local distSq = (x - sx)^2 + (z - sz)^2
+                             if distSq < SAFE_RADIUS_SQ then
+                                 safe = false
+                             end
+                        end
+
+                        if safe then
+                             -- Refund
+                            local ud = UnitDefs[defID]
+                            if ud then
+                                local metalCost = ud.metalCost or 0
+                                spAddTeamResource(teamID, "metal", metalCost)
+
+                            -- Visuals
+                            spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)
+
+                            -- Destroy
+                            spDestroyUnit(uID, false, true)
+                            end
+                        end
+                     end
+                 end
+            end
+        end
+
+        if candidatesIndex > candidatesCount then
+            processingActive = false
+            for i = 1, candidatesCount do
+                candidatesID[i] = nil
+                candidatesTeam[i] = nil
+                candidatesDefID[i] = nil
+            end
+            candidatesCount = 0
+        end
+    end
+end
  end Initialize_culling()   local function Initialize_fusioncore()
 
 if (not gadgetHandler:IsSyncedCode()) then
@@ -1493,6 +1722,7 @@ raptoraioptimized_GameFrame = function(n)
 end
  end Initialize_raptoraioptimized()  function gadget:GameFrame(...)
 if adaptivespawner_GameFrame then adaptivespawner_GameFrame(...) end
+if culling_GameFrame then culling_GameFrame(...) end
 if raptoraioptimized_GameFrame then raptoraioptimized_GameFrame(...) end
 end
 function gadget:UnitCreated(...)
@@ -1507,7 +1737,14 @@ function gadget:UnitCollision(...)
 if adaptivespawner_UnitCollision then adaptivespawner_UnitCollision(...) end
 end
 function gadget:Initialize(...)
+if culling_Initialize then culling_Initialize(...) end
 if fusioncore_Initialize then fusioncore_Initialize(...) end
+end
+function gadget:UnitDamaged(...)
+if culling_UnitDamaged then culling_UnitDamaged(...) end
+end
+function gadget:UnitWeaponFire(...)
+if culling_UnitWeaponFire then culling_UnitWeaponFire(...) end
 end
 function gadget:UnitFinished(...)
 if fusioncore_UnitFinished then fusioncore_UnitFinished(...) end
