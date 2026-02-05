@@ -24,7 +24,15 @@ describe('Lua Execution Integration', () => {
         // Load config dynamically
         const configPath = path.resolve(__dirname, '../../master_config_normalized.json');
         const configContent = fs.readFileSync(configPath, 'utf-8');
-        const config = JSON.parse(configContent) as TweakDefinition[];
+        let config = JSON.parse(configContent) as TweakDefinition[];
+
+        // Deduplicate by name (safety guard)
+        const seen = new Set();
+        config = config.filter(c => {
+            if (seen.has(c.name)) return false;
+            seen.add(c.name);
+            return true;
+        });
 
         // Compile logic once
         const compiler = new OptimizedLuaCompiler();
