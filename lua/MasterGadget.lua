@@ -68,6 +68,7 @@ local type = type
 local unpack = unpack
 local adaptivespawner_GameFrame
 local adaptivespawner_UnitCreated
+local adaptivespawner_UnitDestroyed
 local adaptivespawner_UnitCollision
 local culling_Initialize
 local culling_UnitDamaged
@@ -75,7 +76,6 @@ local culling_UnitWeaponFire
 local culling_GameFrame
 local fusioncore_Initialize
 local fusioncore_UnitFinished
-local fusioncore_UnitDestroyed
 local raptoraioptimized_UnitCreated
 local raptoraioptimized_UnitDestroyed
 local raptoraioptimized_GameFrame
@@ -114,9 +114,6 @@ end
 if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
 if not table.copy then table.copy = table_copy end
-if (tonumber(spGetModOptions().meganuke) == 1) then
-VFS.Include("lua/Defs_Mega_Nuke.lua")
-end
 local UnitDefs = UnitDefs or {}
 local pairs = pairs
 local ipairs = ipairs
@@ -2848,8 +2845,23 @@ local spGetUnitExperience = spGetUnitExperience
 local spSetUnitExperience = spSetUnitExperience
 local GAIA_TEAM_ID = spGetGaiaTeamID()
 local spawnCounters = {}
-local isRaptorCache = {}
+local tintedUnits = {}
+local isCompressibleCache = {}
+local isGenericRaptorCache = {}
 local compressedDefCache = {}
+local function GetIsGenericRaptor(unitDefID)
+local isRaptor = isGenericRaptorCache[unitDefID]
+if isRaptor == nil then
+local ud = UnitDefs[unitDefID]
+if ud and string_find(ud.name, "raptor") then
+isRaptor = true
+else
+isRaptor = false
+end
+isGenericRaptorCache[unitDefID] = isRaptor
+end
+return isRaptor
+end
 local currentCompressionFactor = 1
 local function GetCompressedDefID(unitDefID, factor)
 local cacheKey = unitDefID .. ":" .. factor
@@ -2895,25 +2907,25 @@ end
 end
 adaptivespawner_UnitCreated = function(unitID, unitDefID, teamID)
 if teamID ~= GAIA_TEAM_ID then return end
-local isRaptor = isRaptorCache[unitDefID]
-if isRaptor == nil then
+local isCompressible = isCompressibleCache[unitDefID]
+if isCompressible == nil then
 local ud = UnitDefs[unitDefID]
 if ud then
 if ud.customParams and ud.customParams.is_compressed_unit then
-isRaptor = false
+isCompressible = false
 else
 if string_find(ud.name, "raptor_land") or string_find(ud.name, "raptor_air") then
-isRaptor = true
+isCompressible = true
 else
-isRaptor = false
+isCompressible = false
 end
 end
 else
-isRaptor = false
+isCompressible = false
 end
-isRaptorCache[unitDefID] = isRaptor
+isCompressibleCache[unitDefID] = isCompressible
 end
-if not isRaptor then return end
+if not isCompressible then return end
 local factor = currentCompressionFactor
 if factor == 1 then return end
 local compressedID = GetCompressedDefID(unitDefID, factor)
@@ -2933,11 +2945,19 @@ if spawnCounters[unitDefID] >= factor then
 local x, y, z = spGetUnitPosition(unitID)
 local newUnitID = spCreateUnit(compressedID, x, y, z, 0, teamID)
 if BOSS_TINT_ENABLED and newUnitID and spSetUnitColor then
+if not tintedUnits[newUnitID] then
 spSetUnitColor(newUnitID, 1, 0, 0, 1)
+tintedUnits[newUnitID] = true
+end
 end
 spawnCounters[unitDefID] = 0
 end
 spDestroyUnit(unitID, false, true)
+end
+adaptivespawner_UnitDestroyed = function(unitID, unitDefID, teamID)
+if tintedUnits[unitID] then
+tintedUnits[unitID] = nil
+end
 end
 adaptivespawner_UnitCollision = function(unitID, unitDefID, teamID, colliderID, colliderDefID, colliderTeamID)
 if not VAMPIRE_ENABLED then return end
@@ -2946,8 +2966,8 @@ if not currentCompressionFactor or currentCompressionFactor < 10 then return end
 local ud1 = UnitDefs[unitDefID]
 local ud2 = UnitDefs[colliderDefID]
 if not (ud1 and ud2) then return end
-local isRaptor1 = string_find(ud1.name, "raptor")
-local isRaptor2 = string_find(ud2.name, "raptor")
+local isRaptor1 = GetIsGenericRaptor(unitDefID)
+local isRaptor2 = GetIsGenericRaptor(colliderDefID)
 if isRaptor1 and isRaptor2 then
 local h1 = spGetUnitHealth(unitID) or 0
 local h2 = spGetUnitHealth(colliderID) or 0
@@ -3240,16 +3260,6 @@ if ExecuteMerge(FindAt(x-fpX, z), unitID, FindAt(x-fpX, z+fpZ), FindAt(x, z+fpZ)
 if ExecuteMerge(FindAt(x, z-fpZ), FindAt(x+fpX, z-fpZ), unitID, FindAt(x+fpX, z)) then return end
 if ExecuteMerge(FindAt(x-fpX, z-fpZ), FindAt(x, z-fpZ), FindAt(x-fpX, z), unitID) then return end
 end
-fusioncore_UnitDestroyed = function(unitID, unitDefID, teamID)
-if modOptions.meganuke ~= "1" then return end
-local tier = unitTier[unitDefID]
-if tier and tier >= 3 then
-local x, y, z = spGetUnitPosition(unitID)
-if spSpawnCEG then
-spSpawnCEG("atomic_blast", x, y, z, 0, 1, 0)
-end
-end
-end
 end
 Initialize_fusioncore()local function Initialize_raptoraioptimized()
 local spGetUnitPosition = spGetUnitPosition
@@ -3361,6 +3371,10 @@ function gadget:UnitCreated(...)
 if adaptivespawner_UnitCreated then adaptivespawner_UnitCreated(...) end
 if raptoraioptimized_UnitCreated then raptoraioptimized_UnitCreated(...) end
 end
+function gadget:UnitDestroyed(...)
+if adaptivespawner_UnitDestroyed then adaptivespawner_UnitDestroyed(...) end
+if raptoraioptimized_UnitDestroyed then raptoraioptimized_UnitDestroyed(...) end
+end
 function gadget:UnitCollision(...)
 if adaptivespawner_UnitCollision then adaptivespawner_UnitCollision(...) end
 end
@@ -3376,8 +3390,4 @@ if culling_UnitWeaponFire then culling_UnitWeaponFire(...) end
 end
 function gadget:UnitFinished(...)
 if fusioncore_UnitFinished then fusioncore_UnitFinished(...) end
-end
-function gadget:UnitDestroyed(...)
-if fusioncore_UnitDestroyed then fusioncore_UnitDestroyed(...) end
-if raptoraioptimized_UnitDestroyed then raptoraioptimized_UnitDestroyed(...) end
 end

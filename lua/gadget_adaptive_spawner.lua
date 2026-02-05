@@ -42,10 +42,27 @@ local GAIA_TEAM_ID = spGetGaiaTeamID()
 
 -- Counters for each unit type
 local spawnCounters = {}
+local tintedUnits = {}
 
 -- Caches
-local isRaptorCache = {} -- unitDefID -> boolean
+local isCompressibleCache = {} -- unitDefID -> boolean (Should I compress this unit?)
+local isGenericRaptorCache = {} -- unitDefID -> boolean (Is this any raptor?)
 local compressedDefCache = {} -- unitDefID .. ":" .. factor -> compressedDefID
+
+-- Helper for Generic Raptor check (Collision optimization)
+local function GetIsGenericRaptor(unitDefID)
+    local isRaptor = isGenericRaptorCache[unitDefID]
+    if isRaptor == nil then
+        local ud = UnitDefs[unitDefID]
+        if ud and string.find(ud.name, "raptor") then
+            isRaptor = true
+        else
+            isRaptor = false
+        end
+        isGenericRaptorCache[unitDefID] = isRaptor
+    end
+    return isRaptor
+end
 
 -- Dynamic Compression State
 local currentCompressionFactor = 1
@@ -111,27 +128,27 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
     -- Interceptor Pattern:
     if teamID ~= GAIA_TEAM_ID then return end
 
-    -- Cache Check for IsRaptor
-    local isRaptor = isRaptorCache[unitDefID]
-    if isRaptor == nil then
+    -- Cache Check for IsCompressible (formerly isRaptorCache)
+    local isCompressible = isCompressibleCache[unitDefID]
+    if isCompressible == nil then
         local ud = UnitDefs[unitDefID]
         if ud then
             if ud.customParams and ud.customParams.is_compressed_unit then
-                isRaptor = false -- Don't compress already compressed units
+                isCompressible = false -- Don't compress already compressed units
             else
                 if string.find(ud.name, "raptor_land") or string.find(ud.name, "raptor_air") then
-                    isRaptor = true
+                    isCompressible = true
                 else
-                    isRaptor = false
+                    isCompressible = false
                 end
             end
         else
-            isRaptor = false
+            isCompressible = false
         end
-        isRaptorCache[unitDefID] = isRaptor
+        isCompressibleCache[unitDefID] = isCompressible
     end
 
-    if not isRaptor then return end
+    if not isCompressible then return end
 
     local factor = currentCompressionFactor
 
@@ -162,7 +179,10 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
 
         -- Apply Boss Tint if enabled
         if BOSS_TINT_ENABLED and newUnitID and spSetUnitColor then
-            spSetUnitColor(newUnitID, 1, 0, 0, 1) -- Red tint
+            if not tintedUnits[newUnitID] then
+                spSetUnitColor(newUnitID, 1, 0, 0, 1) -- Red tint
+                tintedUnits[newUnitID] = true
+            end
         end
 
         -- Reset counter
@@ -171,6 +191,12 @@ function gadget:UnitCreated(unitID, unitDefID, teamID)
 
     -- Always destroy the original unit
     spDestroyUnit(unitID, false, true)
+end
+
+function gadget:UnitDestroyed(unitID, unitDefID, teamID)
+    if tintedUnits[unitID] then
+        tintedUnits[unitID] = nil
+    end
 end
 
 function gadget:UnitCollision(unitID, unitDefID, teamID, colliderID, colliderDefID, colliderTeamID)
@@ -192,9 +218,9 @@ function gadget:UnitCollision(unitID, unitDefID, teamID, colliderID, colliderDef
     local ud2 = UnitDefs[colliderDefID]
     if not (ud1 and ud2) then return end
 
-    -- Simple string check is probably fine here as it only runs on Gaia-Gaia collision in high lag.
-    local isRaptor1 = string.find(ud1.name, "raptor")
-    local isRaptor2 = string.find(ud2.name, "raptor")
+    -- Use cached generic check
+    local isRaptor1 = GetIsGenericRaptor(unitDefID)
+    local isRaptor2 = GetIsGenericRaptor(colliderDefID)
 
     if isRaptor1 and isRaptor2 then
         -- Merge Logic: Bias towards keeping the one with more health

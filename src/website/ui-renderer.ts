@@ -45,14 +45,10 @@ export function updateSimpleOutput() {
     let lobbyName = "[Mod] NuttyB (Static)";
 
     // Static Instructions / Base Commands if needed?
-    // For now, just the dynamic Mega Nuke option
     simpleConfig.forEach(opt => {
         const checkbox = document.querySelector(`input[data-mod-option="${opt.modOption}"]`) as HTMLInputElement;
         if (checkbox && checkbox.checked) {
             commands.push(`!bset ${opt.modOption} 1`);
-            if (opt.modOption === 'meganuke') {
-                lobbyName += " [MegaNuke]";
-            }
         } else {
              commands.push(`!bset ${opt.modOption} 0`);
         }
