@@ -26,6 +26,18 @@ export const mockUnitDefs = {
         windGenerator: 0,
         customParams: {}
     },
+    raptor_queen_veryeasy: {
+        name: 'raptor_queen_veryeasy',
+        health: 25000,
+        metalCost: 2500,
+        energyCost: 2500,
+        buildTime: 2500,
+        mass: 2500,
+        energyMake: 0,
+        metalMake: 0,
+        windGenerator: 0,
+        customParams: {}
+    },
     raptor_land_swarmer_heal: {
         name: 'raptor_land_swarmer_heal',
         health: 200,
