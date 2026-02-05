@@ -42,11 +42,35 @@ local spSetUnitLabel = Spring.SetUnitLabel
 local spSetUnitNeutral = Spring.SetUnitNeutral
 local spSpawnCEG = Spring.SpawnCEG
 local spValidUnitID = Spring.ValidUnitID
+local UnitDefs = UnitDefs
+local assert = assert
+local error = error
+local ipairs = ipairs
 local math_abs = math.abs
+local math_ceil = math.ceil
 local math_floor = math.floor
 local math_max = math.max
+local math_min = math.min
 local math_random = math.random
 local math_sqrt = math.sqrt
+local next = next
+local pairs = pairs
+local select = select
+local string_find = string.find
+local string_format = string.format
+local string_len = string.len
+local string_match = string.match
+local string_sub = string.sub
+local table_concat = table.concat
+local table_contains = table.contains
+local table_copy = table.copy
+local table_insert = table.insert
+local table_remove = table.remove
+local table_sort = table.sort
+local tonumber = tonumber
+local tostring = tostring
+local type = type
+local unpack = unpack
 
 -- Forward Declarations for Gadget Events
 local adaptivespawner_GameFrame
@@ -140,7 +164,7 @@ for unitName,def in pairs(unitDefs)do
 	if def.customparams and def.customparams.subfolder and(def.customparams.subfolder:match'Fact'or def.customparams.subfolder:match'Lab')and def.customparams.techlevel==2 then
 		local humanName=language and language.units.names[unitName]or unitName
 		tierTwoFactories[unitName]=true
-		taxedDefs[unitName..suffix]=table.merge(def,{
+		taxedDefs[unitName..suffix]=table_merge(def,{
 			energycost=def.energycost*taxMultiplier,
 			icontype=unitName,
 			metalcost=def.metalcost*taxMultiplier,
@@ -168,7 +192,7 @@ for builderName,builder in pairs(unitDefs)do
 	end
 end
 
-table.mergeInPlace(unitDefs,taxedDefs)
+table_mergeInPlace(unitDefs,taxedDefs)
 end
 
 -- Tweak: Defs_Main.lua
@@ -179,10 +203,10 @@ end
 
 
 
-local a, pairs, c = UnitDefs or {}, pairs, table.merge;
+local a, pairs, c = UnitDefs or {}, pairs, table_merge;
 
 for i,j in pairs(a)do
-    if string.sub(i,1,24)=='raptor_air_fighter_basic'then
+    if string_sub(i,1,24)=='raptor_air_fighter_basic'then
         if j.weapondefs then
             for g,k in pairs(j.weapondefs)do
                 k.name='Spike'
@@ -222,7 +246,7 @@ for i,j in pairs(a)do
         end
     else
     if i:match'^[acl][ore][rgm]com'and not i:match'_scav$'then
-        table.mergeInPlace(j, {
+        table_mergeInPlace(j, {
             customparams= {
                 combatradius=0,
                 fall_damage_multiplier=0,
@@ -622,7 +646,7 @@ local I= {
 end
 
 -- Tweak: Defs_Mega_Nuke.lua
-if (tonumber(Spring.GetModOptions().meganuke) == 1) then
+if (tonumber(spGetModOptions().meganuke) == 1) then
 -- Mega Nuke
 
 
@@ -631,7 +655,7 @@ if (tonumber(Spring.GetModOptions().meganuke) == 1) then
 
 do
 	local defs = UnitDefs or {}
-	local merge = table.mergeInPlace or table.merge
+	local merge = table_mergeInPlace or table_merge
 
 	merge(defs, {
 		armsilo = {
@@ -751,11 +775,11 @@ end
 do
 local a,b,c,d,e,f,
 g=UnitDefs or {}, {'arm','cor','leg'
-    },table.merge, {
+    },table_merge, {
     arm='Armada ',
     cor='Cortex ',
     leg='Legion '
-},'_taxed',1.5,table.contains;
+},'_taxed',1.5,table_contains;
 local
 function h(i,j,k)
     if a[i]and not a[j]then
@@ -931,14 +955,14 @@ for l,m in pairs(b)do
         if a[z]and a[z].buildoptions then
             local A=m..'t3aide'
             if not g(a[z].buildoptions,A)then
-                table.insert(a[z].buildoptions,A)
+                table_insert(a[z].buildoptions,A)
             end
         end
         z=m..'apt3'
         if a[z]and a[z].buildoptions then
             local B=m..'t3airaide'
             if not g(a[z].buildoptions,B)then
-                table.insert(a[z].buildoptions,B)
+                table_insert(a[z].buildoptions,B)
             end
         end
     end
@@ -970,7 +994,7 @@ local function ensureBuildOption(builderName, optionName)
 end
 
 for _,defName in pairs({'armmmkrt3','cormmkrt3','legadveconvt3'})do
-	table.mergeInPlace(a[defName], {
+	table_mergeInPlace(a[defName], {
 		footprintx=6,
 		footprintz=6
 	})
@@ -1000,7 +1024,7 @@ end
 ensureBuildOption('legck','legdtf')
 
 for _,defName in pairs({'coruwadves','legadvestore'})do
-	table.mergeInPlace(a[defName], {
+	table_mergeInPlace(a[defName], {
 		footprintx=4,
 		footprintz=4
 	})
@@ -1013,7 +1037,7 @@ end
 
 do
 	local defs = UnitDefs or {}
-	local merge = table.mergeInPlace or table.merge
+	local merge = table_mergeInPlace or table_merge
 
 	local payload = {
 		customparams = {
@@ -1185,7 +1209,7 @@ end
 
 
 do
-local a,b,c = UnitDefs or {}, table.merge, 'armannit4'
+local a,b,c = UnitDefs or {}, table_merge, 'armannit4'
 if a['armannit3'] then
     a[c] = b(a['armannit3'], {
         name='Legendary Pulsar',
@@ -1269,7 +1293,7 @@ end
 
 
 do
-local a,b,c = UnitDefs or {}, table.merge, 'legbastiont4'
+local a,b,c = UnitDefs or {}, table_merge, 'legbastiont4'
 if a['legbastion'] then
     a[c] = b(
     a['legbastion'], {
@@ -1369,7 +1393,7 @@ end
 
 
 do
-local a,b,c = UnitDefs or {}, table.merge, 'cordoomt4'
+local a,b,c = UnitDefs or {}, table_merge, 'cordoomt4'
 if a['cordoomt3'] then
     a[c] = b(
     a['cordoomt3'], {
@@ -1533,7 +1557,7 @@ end
 do
 
 local unitDefs = UnitDefs or {}
-local merge = table.merge
+local merge = table_merge
 local factions = {'arm', 'cor', 'leg'}
 local legendaryScale = 2.0
 local fusionEnergyScale = 1.3
@@ -1552,7 +1576,7 @@ end
 
 local function scaled(value, multiplier)
   if value then
-    return math.ceil(value * multiplier)
+    return math_ceil(value * multiplier)
   end
   return nil
 end
@@ -1746,7 +1770,7 @@ end
 
 
 do
-local a,b=UnitDefs or{},table.merge
+local a,b=UnitDefs or{},table_merge
 if a['armvulc'] then
     a.epic_ragnarok=b(a['armvulc'],{
       name='Epic Ragnarok',
@@ -1852,7 +1876,7 @@ if a['armvulc'] then
                 local buildoptions = builder.buildoptions
                 for j = #buildoptions, 1, -1 do
                     if buildoptions[j] == optionName then
-                        table.remove(buildoptions, j)
+                        table_remove(buildoptions, j)
                     end
                 end
             end
@@ -1867,7 +1891,7 @@ end
 
 
 do
-local a,b=UnitDefs or{},table.merge
+local a,b=UnitDefs or{},table_merge
 if a['corbuzz'] then
     a.epic_calamity=b(a['corbuzz'],{
       name='Epic Calamity',
@@ -1970,7 +1994,7 @@ if a['corbuzz'] then
                 local buildoptions = builder.buildoptions
                 for j = #buildoptions, 1, -1 do
                     if buildoptions[j] == optionName then
-                        table.remove(buildoptions, j)
+                        table_remove(buildoptions, j)
                     end
                 end
             end
@@ -1985,7 +2009,7 @@ end
 
 
 do
-local a,b=UnitDefs or{},table.merge
+local a,b=UnitDefs or{},table_merge
 if a['legstarfall'] then
     a.epic_starfall=b(a['legstarfall'],{
       name='Epic Starfall',
@@ -2091,7 +2115,7 @@ if a['legstarfall'] then
                 local buildoptions = builder.buildoptions
                 for j = #buildoptions, 1, -1 do
                     if buildoptions[j] == optionName then
-                        table.remove(buildoptions, j)
+                        table_remove(buildoptions, j)
                     end
                 end
             end
@@ -2106,7 +2130,7 @@ end
 
 
 do
-local a,b=UnitDefs or{},table.merge
+local a,b=UnitDefs or{},table_merge
 if a['legbastion'] then
     a.epic_bastion=b(a['legbastion'],{
       name='Epic Bastion',
@@ -2220,7 +2244,7 @@ end
 
 
 do
-local d,m=UnitDefs or{},table.merge
+local d,m=UnitDefs or{},table_merge
 local e=d.leggatet3
 if e then
 	local function c(t)
@@ -2232,7 +2256,7 @@ if e then
 	end
 	local function x(v,n)
 		if v then
-			return math.ceil(v*n)
+			return math_ceil(v*n)
 		end
 	end
 	local u=c(e)
@@ -2302,7 +2326,7 @@ if e then
         end
     end
     for i=3,10 do
-        table.insert(builders_leg_elysium,'legcomlvl'..i)
+        table_insert(builders_leg_elysium,'legcomlvl'..i)
     end
     ensureBuildOptions(builders_leg_elysium, 'epic_elysium')
 end
@@ -2312,7 +2336,7 @@ end
 
 
 do
-local a,b=UnitDefs or{},table.merge
+local a,b=UnitDefs or{},table_merge
 if a['legapopupdef'] then
     a.epic_fortress=b(a['legapopupdef'],{
       name='Epic Fortress',
@@ -2562,7 +2586,7 @@ if UnitDefs.cormandot4 then
     for c,d in pairs(b)do
         local e=a..'_'..c;
         if UnitDefs[a]and not UnitDefs[e]then
-            UnitDefs[e]=table.merge(
+            UnitDefs[e]=table_merge(
             UnitDefs[a],d)
             ensureBuildOption('cormandot4',e)
         end
@@ -2776,7 +2800,7 @@ do
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
+                table_mergeInPlace(UnitDefs[name], def)
             else
                 UnitDefs[name] = def
             end
@@ -2795,7 +2819,7 @@ end
 
 do
 local a,b,c,d,e,
-f=UnitDefs or {},table.merge,table.copy,'raptor_matriarch_basic','customfusionexplo',Spring;
+f=UnitDefs or {},table_merge,table_copy,'raptor_matriarch_basic','customfusionexplo',Spring;
 local g,
 h=1.3,1.3;
 if a[d] and a['raptor_queen_epic'] then
@@ -2809,29 +2833,29 @@ end
 local j=f.GetModOptions().raptor_spawncountmult or 3;
 local i=i*(j/3)
 local
-function j(a)return math.max(1,math.ceil(a*i))
+function j(a)return math_max(1,math_ceil(a*i))
 end
 local i= {70,85,90,105,110,125
 }
-local k=math.max(1,f.GetModOptions().raptor_queentimemult or 1.3)
+local k=math_max(1,f.GetModOptions().raptor_queentimemult or 1.3)
 local l,
 m=i[1],i[#i]
 local n=k*i[#i]/1.3;
 local m=(n-l)/(m-l)
 for a=2,#i do
-    i[a]=math.floor(l+(
+    i[a]=math_floor(l+(
     i[a]-l)*m)
 end
 local f=f.GetModOptions().raptor_queen_count or 1;
 local l=1;
-l=math.min(10,g/1.3*0.9)
+l=math_min(10,g/1.3*0.9)
 local g=20;
-local m=10*(1.06^math.max(0,math.min(f,g)-8))
-local g=math.max(0,f-g)
+local m=10*(1.06^math_max(0,math_min(f,g)-8))
+local g=math_max(0,f-g)
 local g=m+g;
-local g=math.ceil(l*g)
+local g=math_ceil(l*g)
 local g=k*100+g;
-local f=math.max(3,j(math.floor((21*f+36)/19)))
+local f=math_max(3,j(math_floor((21*f+36)/19)))
 local
 function k(c,d,e)
     if a[c]and not a[d]then
@@ -3176,7 +3200,7 @@ for b,c in pairs{
     }
 } do
     a[b]=a[b]or {}
-    table.mergeInPlace(
+    table_mergeInPlace(
     a[b],c,true)
 end
 local a= {
@@ -3198,7 +3222,7 @@ function UnitDef_Post(c,d)
 	end
 	for a,c in pairs(a)do
 		if UnitDefs[a]then
-			local b=math.floor(c*b)
+			local b=math_floor(c*b)
 			UnitDefs[a].metalcost=b
 		end
 	end
@@ -3207,7 +3231,7 @@ end
 
 -- Tweak: Units_EVO_XP.lua
 for name, ud in pairs(UnitDefs) do
-	if string.match(name, 'comlvl%d') or string.match(name, 'armcom') or string.match(name, 'corcom') or string.match(name, 'legcom') then
+	if string_match(name, 'comlvl%d') or string_match(name, 'armcom') or string_match(name, 'corcom') or string_match(name, 'legcom') then
 		ud.customparams = ud.customparams or {}
 		ud.customparams.inheritxpratemultiplier = 0.5
 		ud.customparams.childreninheritxp = 'TURRET MOBILEBUILT'
@@ -3223,7 +3247,7 @@ local UnitDefs = UnitDefs or {}
 
 -- Armada LRPC (Big Bertha)
 if UnitDefs.armbrtha then
-    table.mergeInPlace(UnitDefs.armbrtha, {
+    table_mergeInPlace(UnitDefs.armbrtha, {
         health = 13000,
         weapondefs = {
             ARMBRTHA_MAIN = {
@@ -3243,7 +3267,7 @@ end
 
 -- Cortex LRPC (Intimidator)
 if UnitDefs.corint then
-    table.mergeInPlace(UnitDefs.corint, {
+    table_mergeInPlace(UnitDefs.corint, {
         health = 13000,
         weapondefs = {
             CORINT_MAIN = {
@@ -3263,7 +3287,7 @@ end
 
 -- Legion LRPC
 if UnitDefs.leglrpc then
-    table.mergeInPlace(UnitDefs.leglrpc, {
+    table_mergeInPlace(UnitDefs.leglrpc, {
         health = 13000,
         weapondefs = {
             LEGLRPC_MAIN = {
@@ -3947,7 +3971,7 @@ do
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
+                table_mergeInPlace(UnitDefs[name], def)
             else
                 UnitDefs[name] = def
             end
@@ -4579,7 +4603,7 @@ do
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
+                table_mergeInPlace(UnitDefs[name], def)
             else
                 UnitDefs[name] = def
             end
@@ -5193,7 +5217,7 @@ do
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
+                table_mergeInPlace(UnitDefs[name], def)
             else
                 UnitDefs[name] = def
             end
@@ -5796,7 +5820,7 @@ do
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
-                table.mergeInPlace(UnitDefs[name], def)
+                table_mergeInPlace(UnitDefs[name], def)
             else
                 UnitDefs[name] = def
             end
@@ -5806,14 +5830,14 @@ end
 
 
 -- Static Tweaks Logic (Base)
-local tm = table.merge
+local tm = table_merge
 local ip = ipairs
-local mf = math.floor
+local mf = math_floor
 local p = pairs
-local sl = string.len
-local sm = string.match
-local ss = string.sub
-local ti = table.insert
+local sl = string_len
+local sm = string_match
+local ss = string_sub
+local ti = table_insert
 local k_health = "health"
 local k_metalCost = "metalCost"
 local k_buildTime = "buildTime"
@@ -5920,7 +5944,7 @@ local function CreateCompressedUnit(baseName, factor, humanName)
         newDef[k_metalMake] = newDef[k_metalMake] * factor
         newDef[k_windGenerator] = newDef[k_windGenerator] * factor
 
-        local aoeFactor = math.sqrt(factor)
+        local aoeFactor = math_sqrt(factor)
         if newDef.weapondefs then
              -- Clone weapondefs
             local newWeaponDefs = {}
@@ -6156,7 +6180,7 @@ local function Initialize_adaptivespawner()
 
 
 -- Always enabled
-local modOptions = Spring.GetModOptions() or {}
+local modOptions = spGetModOptions() or {}
 
 local MAX_COMPRESSION = tonumber(modOptions.adaptive_compression_max) or 10
 -- Vampire defaults to TRUE
@@ -6167,17 +6191,17 @@ if modOptions.adaptive_vampire == "0" then VAMPIRE_ENABLED = false end
 local BOSS_TINT_ENABLED = true
 if modOptions.adaptive_boss_tint == "0" then BOSS_TINT_ENABLED = false end
 
-local spGetUnitCount = Spring.GetUnitCount
-local spDestroyUnit = Spring.DestroyUnit
-local spCreateUnit = Spring.CreateUnit
-local spGetUnitPosition = Spring.GetUnitPosition
-local spGetGaiaTeamID = Spring.GetGaiaTeamID
-local spGetGameSpeed = Spring.GetGameSpeed
-local spGetFPS = Spring.GetFPS
-local spGetUnitHealth = Spring.GetUnitHealth
-local spSetUnitHealth = Spring.SetUnitHealth
-local spGetUnitExperience = Spring.GetUnitExperience
-local spSetUnitExperience = Spring.SetUnitExperience
+local spGetUnitCount = spGetUnitCount
+local spDestroyUnit = spDestroyUnit
+local spCreateUnit = spCreateUnit
+local spGetUnitPosition = spGetUnitPosition
+local spGetGaiaTeamID = spGetGaiaTeamID
+local spGetGameSpeed = spGetGameSpeed
+local spGetFPS = spGetFPS
+local spGetUnitHealth = spGetUnitHealth
+local spSetUnitHealth = spSetUnitHealth
+local spGetUnitExperience = spGetUnitExperience
+local spSetUnitExperience = spSetUnitExperience
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
 
@@ -6260,7 +6284,7 @@ adaptivespawner_UnitCreated = function(unitID, unitDefID, teamID)
             if ud.customParams and ud.customParams.is_compressed_unit then
                 isRaptor = false -- Don't compress already compressed units
             else
-                if string.find(ud.name, "raptor_land") or string.find(ud.name, "raptor_air") then
+                if string_find(ud.name, "raptor_land") or string_find(ud.name, "raptor_air") then
                     isRaptor = true
                 else
                     isRaptor = false
@@ -6334,8 +6358,8 @@ adaptivespawner_UnitCollision = function(unitID, unitDefID, teamID, colliderID, 
     if not (ud1 and ud2) then return end
 
     -- Simple string check is probably fine here as it only runs on Gaia-Gaia collision in high lag.
-    local isRaptor1 = string.find(ud1.name, "raptor")
-    local isRaptor2 = string.find(ud2.name, "raptor")
+    local isRaptor1 = string_find(ud1.name, "raptor")
+    local isRaptor2 = string_find(ud2.name, "raptor")
 
     if isRaptor1 and isRaptor2 then
         -- Merge Logic: Bias towards keeping the one with more health
@@ -6377,24 +6401,24 @@ local function Initialize_culling()
 
 
 
-local spGetGameFrame = Spring.GetGameFrame
-local spGetGameSpeed = Spring.GetGameSpeed
-local spDestroyUnit = Spring.DestroyUnit
-local spGetTeamUnits = Spring.GetTeamUnits
-local spGetGaiaTeamID = Spring.GetGaiaTeamID
-local spGetUnitDefID = Spring.GetUnitDefID
--- local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy -- Removed
-local spAddTeamResource = Spring.AddTeamResource
-local spGetTeamList = Spring.GetTeamList
-local spValidUnitID = Spring.ValidUnitID
-local spGetUnitPosition = Spring.GetUnitPosition
-local spSpawnCEG = Spring.SpawnCEG
-local spSendMessage = Spring.SendMessage
-local spGetUnitCount = Spring.GetUnitCount
-local spGetTeamStartPosition = Spring.GetTeamStartPosition
-local math_floor = math.floor
+local spGetGameFrame = spGetGameFrame
+local spGetGameSpeed = spGetGameSpeed
+local spDestroyUnit = spDestroyUnit
+local spGetTeamUnits = spGetTeamUnits
+local spGetGaiaTeamID = spGetGaiaTeamID
+local spGetUnitDefID = spGetUnitDefID
+-- local spGetUnitNearestEnemy = spGetUnitNearestEnemy -- Removed
+local spAddTeamResource = spAddTeamResource
+local spGetTeamList = spGetTeamList
+local spValidUnitID = spValidUnitID
+local spGetUnitPosition = spGetUnitPosition
+local spSpawnCEG = spSpawnCEG
+local spSendMessage = spSendMessage
+local spGetUnitCount = spGetUnitCount
+local spGetTeamStartPosition = spGetTeamStartPosition
+local math_floor = math_floor
 
-local modOptions = Spring.GetModOptions() or {}
+local modOptions = spGetModOptions() or {}
 local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
 local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
 -- Default to Enabled, unless explicitly disabled
@@ -6402,7 +6426,7 @@ local CULL_ENABLED = (modOptions.cull_enabled ~= "0")
 local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
 
 culling_Initialize = function()
-    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
+    spEcho("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
 end
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
@@ -6492,7 +6516,7 @@ culling_GameFrame = function(n)
                              if udID then
                                 local ud = UnitDefs[udID]
                                 if ud and cullableUnits[ud.name] then
-                                    table.insert(candidates, {id = uID, team = teamID, defId = udID})
+                                    table_insert(candidates, {id = uID, team = teamID, defId = udID})
                                 end
                              end
                         end
@@ -6612,18 +6636,18 @@ local function Initialize_fusioncore()
 
 
 -- Always enabled
-local modOptions = Spring.GetModOptions() or {}
+local modOptions = spGetModOptions() or {}
 
-local spGetUnitPosition = Spring.GetUnitPosition
-local spGetUnitDefID = Spring.GetUnitDefID
-local spCreateUnit = Spring.CreateUnit
-local spDestroyUnit = Spring.DestroyUnit
-local spSetUnitNeutral = Spring.SetUnitNeutral
-local spGetUnitHealth = Spring.GetUnitHealth
-local spSetUnitHealth = Spring.SetUnitHealth
-local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
-local spGetUnitExperience = Spring.GetUnitExperience
-local spSetUnitExperience = Spring.SetUnitExperience
+local spGetUnitPosition = spGetUnitPosition
+local spGetUnitDefID = spGetUnitDefID
+local spCreateUnit = spCreateUnit
+local spDestroyUnit = spDestroyUnit
+local spSetUnitNeutral = spSetUnitNeutral
+local spGetUnitHealth = spGetUnitHealth
+local spSetUnitHealth = spSetUnitHealth
+local spGetUnitsInCylinder = spGetUnitsInCylinder
+local spGetUnitExperience = spGetUnitExperience
+local spSetUnitExperience = spSetUnitExperience
 
 -- Map of Mergeable UnitDefID -> Next Tier UnitDefID
 local mergeMap = {}
@@ -6672,14 +6696,14 @@ fusioncore_UnitFinished = function(unitID, unitDefID, teamID)
     local fpZ = ud.footprintZ * 16
 
     -- Search radius slightly larger than 2x footprint
-    local searchRadius = math.max(fpX, fpZ) * 2
+    local searchRadius = math_max(fpX, fpZ) * 2
     local nearby = spGetUnitsInCylinder(x, z, searchRadius, teamID)
 
     local candidates = {}
     for _, uid in pairs(nearby) do
         if spGetUnitDefID(uid) == unitDefID and uid ~= unitID then
             local ux, _, uz = spGetUnitPosition(uid)
-            table.insert(candidates, {id=uid, x=ux, z=uz})
+            table_insert(candidates, {id=uid, x=ux, z=uz})
         end
     end
 
@@ -6688,7 +6712,7 @@ fusioncore_UnitFinished = function(unitID, unitDefID, teamID)
     -- Helper to find unit at specific relative coordinates with tolerance
     local function FindAt(targetX, targetZ)
         for _, c in pairs(candidates) do
-            if math.abs(c.x - targetX) < 8 and math.abs(c.z - targetZ) < 8 then
+            if math_abs(c.x - targetX) < 8 and math_abs(c.z - targetZ) < 8 then
                 return c.id
             end
         end
@@ -6775,8 +6799,8 @@ fusioncore_UnitDestroyed = function(unitID, unitDefID, teamID)
     if tier and tier >= 3 then
         local x, y, z = spGetUnitPosition(unitID)
         -- Spawn a large explosion
-        if Spring.SpawnCEG then
-            Spring.SpawnCEG("atomic_blast", x, y, z, 0, 1, 0)
+        if spSpawnCEG then
+            spSpawnCEG("atomic_blast", x, y, z, 0, 1, 0)
         end
         -- Could add Area Damage here if needed
     end
@@ -6792,24 +6816,24 @@ local function Initialize_raptoraioptimized()
 
 
 -- Localization of Global Functions
-local spGetUnitPosition = Spring.GetUnitPosition
-local spGetUnitDefID = Spring.GetUnitDefID
-local spGiveOrderToUnit = Spring.GiveOrderToUnit
-local spGetGameFrame = Spring.GetGameFrame
-local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
-local spGetTeamUnits = Spring.GetTeamUnits
-local spGetTeamList = Spring.GetTeamList
-local spValidUnitID = Spring.ValidUnitID
-local math_sqrt = math.sqrt
-local math_abs = math.abs
-local math_floor = math.floor
-local math_random = math.random
-local spSetUnitLabel = Spring.SetUnitLabel
-local spGetModOptions = Spring.GetModOptions
-local spGetUnitNearestEnemy = Spring.GetUnitNearestEnemy
+local spGetUnitPosition = spGetUnitPosition
+local spGetUnitDefID = spGetUnitDefID
+local spGiveOrderToUnit = spGiveOrderToUnit
+local spGetGameFrame = spGetGameFrame
+local spGetUnitsInCylinder = spGetUnitsInCylinder
+local spGetTeamUnits = spGetTeamUnits
+local spGetTeamList = spGetTeamList
+local spValidUnitID = spValidUnitID
+local math_sqrt = math_sqrt
+local math_abs = math_abs
+local math_floor = math_floor
+local math_random = math_random
+local spSetUnitLabel = spSetUnitLabel
+local spGetModOptions = spGetModOptions
+local spGetUnitNearestEnemy = spGetUnitNearestEnemy
 
 -- Constants
-local RAPTOR_TEAM_ID = Spring.GetGaiaTeamID()
+local RAPTOR_TEAM_ID = spGetGaiaTeamID()
 local BUCKET_COUNT = 30
 local SQUAD_SIZE = 20
 
