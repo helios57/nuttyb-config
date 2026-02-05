@@ -47,7 +47,7 @@ local tintedUnits = {}
 -- Caches
 local isCompressibleCache = {} -- unitDefID -> boolean (Should I compress this unit?)
 local isGenericRaptorCache = {} -- unitDefID -> boolean (Is this any raptor?)
-local compressedDefCache = {} -- unitDefID .. ":" .. factor -> compressedDefID
+local compressedDefCache = {} -- unitDefID -> { factor -> compressedDefID }
 
 -- Helper for Generic Raptor check (Collision optimization)
 local function GetIsGenericRaptor(unitDefID)
@@ -67,11 +67,15 @@ end
 -- Dynamic Compression State
 local currentCompressionFactor = 1
 
--- Mapping logic
+-- Mapping logic (Optimized Cache)
 local function GetCompressedDefID(unitDefID, factor)
-    local cacheKey = unitDefID .. ":" .. factor
-    if compressedDefCache[cacheKey] ~= nil then
-        return compressedDefCache[cacheKey]
+    if not compressedDefCache[unitDefID] then
+        compressedDefCache[unitDefID] = {}
+    end
+
+    local result = compressedDefCache[unitDefID][factor]
+    if result ~= nil then
+        return result
     end
 
     if not unitDefID then return nil end
@@ -82,8 +86,10 @@ local function GetCompressedDefID(unitDefID, factor)
     local newName = name .. suffix
     local newDef = UnitDefNames[newName]
 
-    local result = newDef and newDef.id or nil
-    compressedDefCache[cacheKey] = result
+    result = newDef and newDef.id or false -- Use false to cache nil result
+    compressedDefCache[unitDefID][factor] = result
+
+    if result == false then return nil end
     return result
 end
 

@@ -40,7 +40,7 @@ local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
 local SAFE_RADIUS_SQ = SAFE_RADIUS * SAFE_RADIUS
 
 function gadget:Initialize()
-    Spring.Echo("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
+    -- Debug print removed for Release
 end
 
 local GAIA_TEAM_ID = spGetGaiaTeamID()
@@ -55,9 +55,13 @@ local cullableUnits = {
     ["cormakr"] = true
 }
 
--- Batch Processing State
-local candidates = {} -- List of {id, team, defId}
+-- Batch Processing State (Parallel Arrays for Optimization)
+local candidatesID = {}
+local candidatesTeam = {}
+local candidatesDefID = {}
+local candidatesCount = 0
 local candidatesIndex = 1
+
 local processingActive = false
 local cullState = "IDLE" -- IDLE, WARNING, ACTIVE
 local warningStartTime = 0
@@ -95,7 +99,6 @@ end
 
 function gadget:GameFrame(n)
     if not CULL_ENABLED then return end
-    candidates = candidates or {}
 
     -- State Machine Update (Every 30 frames)
     if n % 30 == 0 then
@@ -118,8 +121,13 @@ function gadget:GameFrame(n)
                 spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
 
                 -- Collection Logic
-                -- Clear candidates table instead of creating new one
-                for i = 1, #candidates do candidates[i] = nil end
+                -- Clear candidates arrays
+                for i = 1, candidatesCount do
+                    candidatesID[i] = nil
+                    candidatesTeam[i] = nil
+                    candidatesDefID[i] = nil
+                end
+                candidatesCount = 0
                 candidatesIndex = 1
                 processingActive = false
 
@@ -132,14 +140,17 @@ function gadget:GameFrame(n)
                              if udID then
                                 local ud = UnitDefs[udID]
                                 if ud and cullableUnits[ud.name] then
-                                    table.insert(candidates, {id = uID, team = teamID, defId = udID})
+                                    candidatesCount = candidatesCount + 1
+                                    candidatesID[candidatesCount] = uID
+                                    candidatesTeam[candidatesCount] = teamID
+                                    candidatesDefID[candidatesCount] = udID
                                 end
                              end
                         end
                     end
                 end
 
-                if #candidates > 0 then
+                if candidatesCount > 0 then
                     processingActive = true
                 else
                     cullState = "IDLE"
@@ -158,12 +169,14 @@ function gadget:GameFrame(n)
         local processedCount = 0
         local currentFrame = spGetGameFrame()
 
-        while processedCount < batchSize and candidatesIndex <= #candidates do
-            local candidate = candidates[candidatesIndex]
+        while processedCount < batchSize and candidatesIndex <= candidatesCount do
+            local uID = candidatesID[candidatesIndex]
+            local teamID = candidatesTeam[candidatesIndex]
+            local defID = candidatesDefID[candidatesIndex]
+
             candidatesIndex = candidatesIndex + 1
             processedCount = processedCount + 1
 
-            local uID = candidate.id
             if spValidUnitID(uID) then
                  -- Check Safe Zone Cache (Combat Grid)
                  local x, y, z = spGetUnitPosition(uID)
@@ -186,8 +199,8 @@ function gadget:GameFrame(n)
                      end
 
                      if safe then
-                        -- Check Safe Radius from Start (approximate using 0,0 for now or assume commander/start pos)
-                        local sx, sy, sz = spGetTeamStartPosition(candidate.team)
+                        -- Check Safe Radius from Start
+                        local sx, sy, sz = spGetTeamStartPosition(teamID)
                         if sx then
                              local distSq = (x - sx)^2 + (z - sz)^2
                              if distSq < SAFE_RADIUS_SQ then
@@ -197,10 +210,10 @@ function gadget:GameFrame(n)
 
                         if safe then
                              -- Refund
-                            local ud = UnitDefs[candidate.defId]
+                            local ud = UnitDefs[defID]
                             if ud then
                                 local metalCost = ud.metalCost or 0
-                                spAddTeamResource(candidate.team, "metal", metalCost)
+                                spAddTeamResource(teamID, "metal", metalCost)
 
                             -- Visuals
                             spSpawnCEG("mediumexplosion", x, y, z, 0, 0, 0)
@@ -214,9 +227,14 @@ function gadget:GameFrame(n)
             end
         end
 
-        if candidatesIndex > #candidates then
+        if candidatesIndex > candidatesCount then
             processingActive = false
-            for i = 1, #candidates do candidates[i] = nil end
+            for i = 1, candidatesCount do
+                candidatesID[i] = nil
+                candidatesTeam[i] = nil
+                candidatesDefID[i] = nil
+            end
+            candidatesCount = 0
         end
     end
 end
