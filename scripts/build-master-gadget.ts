@@ -5,7 +5,6 @@ const STATIC_TWEAKS_FILE = path.join(__dirname, '../lua/StaticTweaks.lua');
 const IMPORTED_TWEAKS_DIR = path.join(__dirname, '../lua/imported_tweaks');
 const GADGETS_DIR = path.join(__dirname, '../lua');
 const OUTPUT_FILE = path.join(__dirname, '../lua/MasterGadget.lua');
-const MEGA_NUKE_OUTPUT_FILE = path.join(__dirname, '../lua/Defs_Mega_Nuke.lua');
 
 const GADGET_FILES = [
     'gadget_adaptive_spawner.lua',
@@ -124,17 +123,7 @@ end
             codeBlock = cleanedContent;
         }
 
-        if (file === 'Defs_Mega_Nuke.lua') {
-            // Write strictly isolated file (cleaned but NOT minified with luamin)
-            fs.writeFileSync(MEGA_NUKE_OUTPUT_FILE, codeBlock);
-            console.log(`Generated isolated file: ${MEGA_NUKE_OUTPUT_FILE}`);
-
-            result += `if (tonumber(Spring.GetModOptions().meganuke) == 1) then\n`;
-            result += `VFS.Include("lua/Defs_Mega_Nuke.lua")\n`;
-            result += `end\n`;
-        } else {
-            result += `${codeBlock}\n`;
-        }
+        result += `${codeBlock}\n`;
     }
     return result;
 }

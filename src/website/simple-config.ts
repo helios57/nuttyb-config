@@ -6,12 +6,4 @@ export interface ConfigOption {
     description: string;
 }
 
-export const simpleConfig: ConfigOption[] = [
-    {
-        label: 'Mega Nuke',
-        type: 'checkbox',
-        default: false,
-        modOption: 'meganuke',
-        description: 'Enables the Mega Nuke weapon (Atomic Blast on high-tier fusion destruction).'
-    }
-];
+export const simpleConfig: ConfigOption[] = [];
