@@ -1,7 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-// @ts-ignore
-import * as luamin from 'luamin';
 
 const STATIC_TWEAKS_FILE = path.join(__dirname, '../lua/StaticTweaks.lua');
 const IMPORTED_TWEAKS_DIR = path.join(__dirname, '../lua/imported_tweaks');
@@ -25,8 +23,21 @@ const MANDATORY_GLOBALS = [
     'UnitDefs'
 ];
 
+function cleanLuaCode(content: string): string {
+    // Remove block comments --[[ ... ]]
+    // Note: this is a simple regex and might fail on nested brackets in strings, but sufficient for this codebase
+    let cleaned = content.replace(/--\[\[[\s\S]*?\]\]/g, '');
+    // Remove line comments -- ...
+    cleaned = cleaned.replace(/--.*$/gm, '');
+    // Split into lines, trim, filter empty
+    const lines = cleaned.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    return lines.join('\n');
+}
+
 function generateCommonLua(): string {
-    return `
+    const code = `
 -- Common Utilities
 local function table_merge(dest, src)
     for k, v in pairs(src) do
@@ -68,6 +79,7 @@ if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
 if not table.copy then table.copy = table_copy end
 `;
+    return cleanLuaCode(code);
 }
 
 function processImportedTweaks(): string {
@@ -87,14 +99,15 @@ function processImportedTweaks(): string {
         console.log(`Processing tweak: ${file}`);
         let content = fs.readFileSync(filePath, 'utf-8');
 
-        // Simple strip for checking start character
-        const strippedToCheck = content.replace(/--.*$/gm, '').trim();
+        // Apply cleaning first to handle logic
+        let cleanedContent = cleanLuaCode(content);
+
         let codeBlock = "";
 
-        if (strippedToCheck.startsWith('{')) {
+        if (cleanedContent.startsWith('{')) {
             codeBlock = `
 do
-    local newUnits = ${content}
+    local newUnits = ${cleanedContent}
     if UnitDefs and newUnits then
         for name, def in pairs(newUnits) do
             if UnitDefs[name] then
@@ -106,16 +119,15 @@ do
     end
 end
 `;
+            codeBlock = cleanLuaCode(codeBlock);
         } else {
-            codeBlock = content;
+            codeBlock = cleanedContent;
         }
 
         if (file === 'Defs_Mega_Nuke.lua') {
-            // Write strictly isolated file
-            // Use luamin to minify the isolated file
-            const minifiedNuke = luamin.minify(codeBlock);
-            fs.writeFileSync(MEGA_NUKE_OUTPUT_FILE, minifiedNuke);
-            console.log(`Generated isolated file: ${MEGA_NUKE_OUTPUT_FILE} (${minifiedNuke.length} chars)`);
+            // Write strictly isolated file (cleaned but NOT minified with luamin)
+            fs.writeFileSync(MEGA_NUKE_OUTPUT_FILE, codeBlock);
+            console.log(`Generated isolated file: ${MEGA_NUKE_OUTPUT_FILE}`);
 
             result += `if (tonumber(Spring.GetModOptions().meganuke) == 1) then\n`;
             result += `VFS.Include("lua/Defs_Mega_Nuke.lua")\n`;
@@ -130,7 +142,8 @@ end
 function processStaticTweaks(): string {
     if (fs.existsSync(STATIC_TWEAKS_FILE)) {
         console.log(`Loading static tweaks from ${STATIC_TWEAKS_FILE}`);
-        return fs.readFileSync(STATIC_TWEAKS_FILE, 'utf-8');
+        const content = fs.readFileSync(STATIC_TWEAKS_FILE, 'utf-8');
+        return cleanLuaCode(content);
     } else {
         console.warn(`Static tweaks file not found: ${STATIC_TWEAKS_FILE}`);
         return "";
@@ -156,6 +169,8 @@ function processGadget(filename: string): ProcessedGadget {
     // Remove SyncedCode check
     content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
 
+    content = cleanLuaCode(content);
+
     // Identify events
     const events: string[] = [];
     const eventRegex = /function\s+gadget:([a-zA-Z0-9_]+)\s*\(/g;
@@ -180,6 +195,7 @@ ${content}
 end
 ${initFuncName}()
 `;
+    content = cleanLuaCode(content);
 
     return {
         name: filename,
@@ -336,14 +352,8 @@ ${localizedGlobalsBlock}
         finalFile += `end\n`;
     });
 
-    // Use luamin for final minification
-    console.log('Minifying MasterGadget.lua...');
-    try {
-        finalFile = luamin.minify(finalFile);
-    } catch (e) {
-        console.error('Error minifying Lua:', e);
-        process.exit(1);
-    }
+    // Final cleanup of the assembled file to ensure clean structure (but no luamin)
+    finalFile = cleanLuaCode(finalFile);
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
