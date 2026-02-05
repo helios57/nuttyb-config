@@ -3012,6 +3012,7 @@ local MIN_SIM_SPEED = tonumber(modOptions.cull_simspeed) or 0.9
 local MAX_UNITS = tonumber(modOptions.cull_maxunits) or 5000
 local CULL_ENABLED = (modOptions.cull_enabled ~= "0")
 local SAFE_RADIUS = tonumber(modOptions.cull_radius) or 2000
+local SAFE_RADIUS_SQ = SAFE_RADIUS * SAFE_RADIUS
 culling_Initialize = function()
 spEcho("[Eco Culler] Initialized with MIN_SIM_SPEED=" .. tostring(MIN_SIM_SPEED) .. ", MAX_UNITS=" .. tostring(MAX_UNITS) .. ", ENABLED=" .. tostring(CULL_ENABLED) .. ", RADIUS=" .. tostring(SAFE_RADIUS))
 end
@@ -3036,7 +3037,7 @@ local ACTIVE_DURATION = 900
 local function GetGridKey(x, z)
 local gx = math_floor(x / GRID_SIZE)
 local gz = math_floor(z / GRID_SIZE)
-return gx, gz, gx .. ":" .. gz
+return gx, gz, gx + (gz * 10000)
 end
 local function MarkActive(unitID)
 local x, _, z = spGetUnitPosition(unitID)
@@ -3054,6 +3055,7 @@ MarkActive(unitID)
 end
 culling_GameFrame = function(n)
 if not CULL_ENABLED then return end
+candidates = candidates or {}
 if n % 30 == 0 then
 local _, simSpeed = spGetGameSpeed()
 local currentUnits = spGetUnitCount()
@@ -3071,7 +3073,7 @@ spSendMessage("✅ Performance Stabilized. Culling Cancelled.")
 elseif (n - warningStartTime) >= WARNING_DURATION then
 cullState = "ACTIVE"
 spSendMessage("♻️ Eco Culling STARTED: Removing inactive T1 structures...")
-candidates = {}
+for i = 1, #candidates do candidates[i] = nil end
 candidatesIndex = 1
 processingActive = false
 local teamList = spGetTeamList()
@@ -3117,7 +3119,7 @@ if x then
 local gx, gz, _ = GetGridKey(x, z)
 for dx = -1, 1 do
 for dz = -1, 1 do
-local key = (gx + dx) .. ":" .. (gz + dz)
+local key = (gx + dx) + ((gz + dz) * 10000)
 local lastActive = combatGrid[key]
 if lastActive and (currentFrame - lastActive < ACTIVE_DURATION) then
 safe = false
@@ -3127,13 +3129,10 @@ end
 if not safe then break end
 end
 if safe then
-local commanders = spGetTeamUnits(candidate.team)
-local inSafeZone = false
 local sx, sy, sz = spGetTeamStartPosition(candidate.team)
 if sx then
 local distSq = (x - sx)^2 + (z - sz)^2
-if distSq < SAFE_RADIUS^2 then
-safe = false
+if distSq < SAFE_RADIUS_SQ then
 safe = false
 end
 end
@@ -3152,7 +3151,7 @@ end
 end
 if candidatesIndex > #candidates then
 processingActive = false
-candidates = {}
+for i = 1, #candidates do candidates[i] = nil end
 end
 end
 end
