@@ -110,12 +110,12 @@ if not table.copy then table.copy = table_copy end
 
 -- Tweak: Defs_Cross_Faction_T2.lua
 -- Cross Faction T2
--- Decoded from tweakdata.txt line 4
+
 
 --Cross Faction Tax 70%
--- Authors: TetrisCo
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
--- CROSS_FACTION_START
+
+
+
 do
 local unitDefs,taxMultiplier,tierTwoFactories,taxedDefs,language,suffix,labelSuffix=UnitDefs or{},1.7,{}, {},Json.decode(VFS.LoadFile('language/en/units.json')),'_taxed',' (Taxed)'
 
@@ -170,17 +170,15 @@ end
 
 table.mergeInPlace(unitDefs,taxedDefs)
 end
--- CROSS_FACTION_END
-
 
 -- Tweak: Defs_Main.lua
 -- Main tweakdefs
--- Decoded from tweakdata.txt line 1
 
---NuttyB v1.52b Def Main
--- Authors: ChrispyNut, BackBash
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
--- MAIN_DEFS_START
+
+
+
+
+
 local a, pairs, c = UnitDefs or {}, pairs, table.merge;
 
 for i,j in pairs(a)do
@@ -622,17 +620,15 @@ local I= {
 		end
 	end
 end
--- MAIN_DEFS_END
-
 
 -- Tweak: Defs_Mega_Nuke.lua
 if (tonumber(Spring.GetModOptions().meganuke) == 1) then
 -- Mega Nuke
--- Decoded from tweakdata.txt line 15
 
---NuttyB v1.52 Mega Nuke
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
--- MEGA_NUKE_START
+
+
+
+
 do
 	local defs = UnitDefs or {}
 	local merge = table.mergeInPlace or table.merge
@@ -742,18 +738,16 @@ do
 		}
 	})
 end
--- MEGA_NUKE_END
-
 end
 
 -- Tweak: Defs_T3_Builders.lua
 -- T3 Builders
--- Decoded from tweakdata.txt line 6
+
 
 --T3 Cons & Taxed Factories
--- Authors: Nervensaege, TetrisCo
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
--- T3_BUILDERS_START
+
+
+
 do
 local a,b,c,d,e,f,
 g=UnitDefs or {}, {'arm','cor','leg'
@@ -949,13 +943,11 @@ for l,m in pairs(b)do
         end
     end
 end
--- T3_BUILDERS_END
-
 
 -- Tweak: Defs_T3_Eco.lua
 -- T3 Eco
 
--- T3_ECO_START
+
 do
 local a,
 b=UnitDefs or {}, {'armack','armaca','armacv','corack','coraca','coracv','legack','legaca','legacv'}
@@ -1014,13 +1006,11 @@ for _,defName in pairs({'coruwadves','legadvestore'})do
 	})
 end
 end
--- T3_ECO_END
-
 
 -- Tweak: Defs_T4_Air.lua
 -- T4 Air Rework
--- Authors: BackBash
--- T4_AIR_START
+
+
 do
 	local defs = UnitDefs or {}
 	local merge = table.mergeInPlace or table.merge
@@ -1187,15 +1177,13 @@ do
 		defs.legfortt4 = payload
 	end
 end
--- T4_AIR_END
-
 
 -- Tweak: Defs_T4_Defenses.lua
 -- T4 Defences NuttyB Balance
--- Authors: Hedgehogzs
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
 
--- LEGENDARY_PULSAR_START
+
+
+
 do
 local a,b,c = UnitDefs or {}, table.merge, 'armannit4'
 if a['armannit3'] then
@@ -1277,9 +1265,9 @@ for _,builder_name in pairs(builders_arm)do
 	ensureBuildOption(builder_name,c)
 end
 end
--- LEGENDARY_PULSAR_END
 
--- LEGENDARY_BASTION_START
+
+
 do
 local a,b,c = UnitDefs or {}, table.merge, 'legbastiont4'
 if a['legbastion'] then
@@ -1377,9 +1365,9 @@ for _,builder_name in pairs(builders_leg)do
 	ensureBuildOption(builder_name,c)
 end
 end
--- LEGENDARY_BASTION_END
 
--- LEGENDARY_BULWARK_START
+
+
 do
 local a,b,c = UnitDefs or {}, table.merge, 'cordoomt4'
 if a['cordoomt3'] then
@@ -1540,11 +1528,8 @@ for _,builder_name in pairs(builders_cor)do
 	ensureBuildOption(builder_name,c)
 end
 end
--- LEGENDARY_BULWARK_END
-
 
 -- Tweak: Defs_T4_Eco.lua
--- T4_ECO_START
 do
 
 local unitDefs = UnitDefs or {}
@@ -1755,14 +1740,11 @@ for _, builderName in ipairs(sharedBuilders) do
 end
 end
 
--- T4_ECO_END
-
-
 -- Tweak: Defs_T4_Epics.lua
 --Epic Ragnarok, Calamity, Starfall, & Bastion
 --Authors: Altwaal
 
--- RAGNAROK_START
+
 do
 local a,b=UnitDefs or{},table.merge
 if a['armvulc'] then
@@ -1881,9 +1863,9 @@ if a['armvulc'] then
     ensureBuildOptions(builders_arm, 'epic_ragnarok')
 end
 end
--- RAGNAROK_END
 
--- CALAMITY_START
+
+
 do
 local a,b=UnitDefs or{},table.merge
 if a['corbuzz'] then
@@ -1999,9 +1981,9 @@ if a['corbuzz'] then
     ensureBuildOptions(builders_cor, 'epic_calamity')
 end
 end
--- CALAMITY_END
 
--- STARFALL_START
+
+
 do
 local a,b=UnitDefs or{},table.merge
 if a['legstarfall'] then
@@ -2120,9 +2102,9 @@ if a['legstarfall'] then
     ensureBuildOptions(builders_leg_starfall, 'epic_starfall')
 end
 end
--- STARFALL_END
 
--- BASTION_START
+
+
 do
 local a,b=UnitDefs or{},table.merge
 if a['legbastion'] then
@@ -2234,9 +2216,9 @@ if a['legbastion'] then
     ensureBuildOptions(builders_leg_bastion, 'epic_bastion')
 end
 end
--- BASTION_END
 
--- EPIC_ELYSIUM_START
+
+
 do
 local d,m=UnitDefs or{},table.merge
 local e=d.leggatet3
@@ -2325,9 +2307,9 @@ if e then
     ensureBuildOptions(builders_leg_elysium, 'epic_elysium')
 end
 end
--- EPIC_ELYSIUM_END
 
--- FORTRESS_START
+
+
 
 do
 local a,b=UnitDefs or{},table.merge
@@ -2475,14 +2457,12 @@ if a['legapopupdef'] then
     ensureBuildOptions(builders_leg, 'epic_fortress')
 end
 end
--- FORTRESS_END
-
 
 -- Tweak: Defs_Unit_Launchers.lua
 -- Unit Launchers
 
 --Meatballlunch Reloaded
--- UNIT_LAUNCHERS_START
+
 do
 local UnitDefs,
 a=UnitDefs or {},'armbotrail'
@@ -2589,15 +2569,14 @@ if UnitDefs.cormandot4 then
     end
 end
 end
--- UNIT_LAUNCHERS_END
-
 
 -- Tweak: Defs_Waves_Experimental_Wave_Challenge.lua
 
-                local newUnits = -- Experimental Wave Challenge
--- Authors: BackBash
+do
+    local newUnits = -- Experimental Wave Challenge
 
--- EXP_WAVE_START
+
+
 {
     raptor_air_scout_basic_t2_v1= {
         customparams= {
@@ -2794,28 +2773,26 @@ end
         }
     }
 }
-
--- EXP_WAVE_END
-
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
 
 
 -- Tweak: Defs_Waves_Mini_Bosses.lua
 -- Mini Bosses
--- Decoded from tweakdata.txt line 3
+
 
 --Mini Bosses v2f
--- Authors: RCore
--- docs.google.com/spreadsheets/d/1QSVsuAAMhBrhiZdTihVfSCwPzbbZWDLCtXWP23CU0ko
--- MINI_BOSSES_START
+
+
+
 do
 local a,b,c,d,e,
 f=UnitDefs or {},table.merge,table.copy,'raptor_matriarch_basic','customfusionexplo',Spring;
@@ -3227,11 +3204,8 @@ function UnitDef_Post(c,d)
 	end
 end
 end
--- MINI_BOSSES_END
-
 
 -- Tweak: Units_EVO_XP.lua
--- EVO_XP_START
 for name, ud in pairs(UnitDefs) do
 	if string.match(name, 'comlvl%d') or string.match(name, 'armcom') or string.match(name, 'corcom') or string.match(name, 'legcom') then
 		ud.customparams = ud.customparams or {}
@@ -3240,12 +3214,10 @@ for name, ud in pairs(UnitDefs) do
 		ud.customparams.parentsinheritxp = 'TURRET MOBILEBUILT'
 	end
 end
--- EVO_XP_END
-
 
 -- Tweak: Units_LRPC_v2.lua
 -- LRPC Rebalance v2
--- LRPC_START
+
 do
 local UnitDefs = UnitDefs or {}
 
@@ -3308,15 +3280,11 @@ if UnitDefs.leglrpc then
     })
 end
 end
--- LRPC_END
-
 
 -- Tweak: Units_Main.lua
 
-                local newUnits = --NuttyB v1.52 Units Main
--- Authors: ChrispyNut, BackBash
--- MAIN_UNITS_START
-{
+do
+    local newUnits = {
     cortron= {
         energycost=42000,
         metalcost=3600,
@@ -3976,24 +3944,22 @@ end
         }
 	}
 }
--- MAIN_UNITS_END
-
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
 
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Armada.lua
 
-                local newUnits = -- ARMADA_COMMANDER_START
---NuttyB v1.52c Armada Com
-{
+do
+    local newUnits = {
   armcom = {
     footprintx = 2,
     footprintz = 2,
@@ -4610,24 +4576,22 @@ end
     },
   },
 }
--- ARMADA_COMMANDER_END
-
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
 
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Cortex.lua
 
-                local newUnits = -- CORTEX_COMMANDER_START
---NuttyB v1.52c Cortex Com
-{
+do
+    local newUnits = {
   corcom = {
     footprintx = 2,
     footprintz = 2,
@@ -5226,24 +5190,22 @@ end
     },
   },
 }
--- CORTEX_COMMANDER_END
-
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
 
 
 -- Tweak: Units_NuttyB_Evolving_Commanders_Legion.lua
 
-                local newUnits = -- LEGION_COMMANDER_START
---NuttyB v1.52c Legion Com
-{
+do
+    local newUnits = {
   legcom = {
     footprintx = 2,
     footprintz = 2,
@@ -5831,20 +5793,16 @@ end
     },
   },
 }
-
-
-
--- LEGION_COMMANDER_END
-
-                if UnitDefs and newUnits then
-                    for name, def in pairs(newUnits) do
-                        if UnitDefs[name] then
-                            table.mergeInPlace(UnitDefs[name], def)
-                        else
-                            UnitDefs[name] = def
-                        end
-                    end
-                end
+    if UnitDefs and newUnits then
+        for name, def in pairs(newUnits) do
+            if UnitDefs[name] then
+                table.mergeInPlace(UnitDefs[name], def)
+            else
+                UnitDefs[name] = def
+            end
+        end
+    end
+end
 
 
 -- Static Tweaks Logic (Base)
@@ -5895,6 +5853,12 @@ local function GetCustomParams(def)
     return cp
 end
 
+local function CloneTable(t)
+    local newT = {}
+    for k,v in pairs(t) do newT[k] = v end
+    return newT
+end
+
 local function CreateTieredUnit(baseName, tier, humanName)
     local sourceName = (tier == 2) and baseName or (baseName .. "_t" .. (tier - 1))
     local destName = baseName .. "_t" .. tier
@@ -5910,9 +5874,18 @@ local function CreateTieredUnit(baseName, tier, humanName)
         newDef[k_windGenerator] = newDef[k_windGenerator] * 4.2
 
         if newDef.weapondefs then
-            for wName, wDef in p(newDef.weapondefs) do
-                wDef.damage.default = wDef.damage.default * 4.2
+            local newWeaponDefs = {}
+            for wk, wv in pairs(newDef.weapondefs) do
+                local newWv = CloneTable(wv)
+                if newWv.damage then
+                    newWv.damage = CloneTable(newWv.damage)
+                    if newWv.damage.default then
+                        newWv.damage.default = newWv.damage.default * 4.2
+                    end
+                end
+                newWeaponDefs[wk] = newWv
             end
+            newDef.weapondefs = newWeaponDefs
         end
 
         newDef[k_footprintX] = newDef[k_footprintX] * 1.5
@@ -5920,9 +5893,14 @@ local function CreateTieredUnit(baseName, tier, humanName)
         newDef[k_name] = humanName .. " T" .. tier
 
         local cp = GetCustomParams(newDef)
-        cp[k_is_fusion_unit] = true
-        cp[k_fusion_tier] = tier
-        cp[k_model_scale] = 1.5
+        -- Clone CP to break reference
+        local newCp = CloneTable(cp)
+        newDef.customparams = newCp
+        if newDef.customParams then newDef.customParams = newCp end
+
+        newCp[k_is_fusion_unit] = true
+        newCp[k_fusion_tier] = tier
+        newCp[k_model_scale] = 1.5
 
         UnitDefs[destName] = newDef
     end
@@ -5944,28 +5922,45 @@ local function CreateCompressedUnit(baseName, factor, humanName)
 
         local aoeFactor = math.sqrt(factor)
         if newDef.weapondefs then
-            for wName, wDef in p(newDef.weapondefs) do
-                wDef.damage.default = wDef.damage.default * factor
-                wDef[k_areaOfEffect] = wDef[k_areaOfEffect] * aoeFactor
+             -- Clone weapondefs
+            local newWeaponDefs = {}
+            for wk, wv in pairs(newDef.weapondefs) do
+                local newWv = CloneTable(wv)
+                if newWv.damage then
+                     newWv.damage = CloneTable(newWv.damage)
+                     if newWv.damage.default then
+                         newWv.damage.default = newWv.damage.default * factor
+                     end
+                end
+                if newWv[k_areaOfEffect] then
+                    newWv[k_areaOfEffect] = newWv[k_areaOfEffect] * aoeFactor
+                end
+                newWeaponDefs[wk] = newWv
             end
+            newDef.weapondefs = newWeaponDefs
         end
 
         newDef[k_name] = humanName .. " x" .. factor
 
         local cp = GetCustomParams(newDef)
-        cp[k_is_compressed_unit] = true
-        cp[k_compression_factor] = factor
-        cp[k_color_tint] = k_1_0_5_0_5
+        -- Clone CP
+        local newCp = CloneTable(cp)
+        newDef.customparams = newCp
+        if newDef.customParams then newDef.customParams = newCp end
+
+        newCp[k_is_compressed_unit] = true
+        newCp[k_compression_factor] = factor
+        newCp[k_color_tint] = k_1_0_5_0_5
 
         -- Factor specific settings
         if factor == 2 then
-            cp[k_model_scale] = 1.2
+            newCp[k_model_scale] = 1.2
         elseif factor == 5 then
-            cp[k_model_scale] = 1.5
+            newCp[k_model_scale] = 1.5
             newDef[k_footprintX] = newDef[k_footprintX] * 1.5
             newDef[k_footprintZ] = newDef[k_footprintZ] * 1.5
         elseif factor == 10 then
-            cp[k_model_scale] = 1.5
+            newCp[k_model_scale] = 1.5
             newDef[k_footprintX] = newDef[k_footprintX] * 1.5
             newDef[k_footprintZ] = newDef[k_footprintZ] * 1.5
         end

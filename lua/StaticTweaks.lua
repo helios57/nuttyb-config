@@ -66,21 +66,8 @@ local function CreateTieredUnit(baseName, tier, humanName)
         newDef[k_windGenerator] = newDef[k_windGenerator] * 4.2
 
         if newDef.weapondefs then
-            -- We should probably clone weapondefs too if we modify them?
-            -- Original code: for wName, wDef in p(newDef.weapondefs) do wDef.damage.default = ... end
-            -- newDef.weapondefs is reference.
-            -- So we are modifying the source's weapondefs too!
-            -- This implies the damage scaling is cumulative but also affects T1 if we are not careful?
-            -- Wait, if T2 modifies T1's weapondefs, T1 gets 4.2x damage.
-            -- This assumes UnitDefs are mutable.
-            -- I should clone weapondefs too.
-
             local newWeaponDefs = {}
             for wk, wv in pairs(newDef.weapondefs) do
-                -- wv is a weapon definition table.
-                -- We modify wv.damage.default.
-                -- So we need to clone wv. And wv.damage.
-
                 local newWv = CloneTable(wv)
                 if newWv.damage then
                     newWv.damage = CloneTable(newWv.damage)
