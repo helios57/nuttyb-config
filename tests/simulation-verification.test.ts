@@ -28,6 +28,7 @@ describe('Simulation Verification', () => {
             _G.mockFPS = 60
             _G.mockUnitsInCylinder = {}
             _G.mockUnitPositions = {}
+            _G.mockUnitTeams = {}
             _G.mockModOptions = { adaptive_spawner = "1", fusion_mode = "1" }
 
             Spring = {
@@ -38,6 +39,7 @@ describe('Simulation Verification', () => {
                 GetFPS = function() return _G.mockFPS end,
                 DestroyUnit = function(uID) log("DestroyUnit:" .. uID) end,
                 CreateUnit = function(defID) log("CreateUnit:" .. defID) return 9999 end,
+                GetUnitTeam = function(uID) return _G.mockUnitTeams[uID] or 100 end,
                 GetUnitPosition = function(uID)
                     if _G.mockUnitPositions[uID] then
                         return _G.mockUnitPositions[uID][1], 0, _G.mockUnitPositions[uID][2]
@@ -120,6 +122,9 @@ describe('Simulation Verification', () => {
 
         // Trigger Finish on Top-Left unit
         await lua.doString(`gadget:UnitFinished(101, 10, 100)`);
+
+        // Advance GameFrame to process queue (101 % 30 = 11)
+        await lua.doString(`gadget:GameFrame(11)`);
 
         const result = await lua.doString(`
             local creates = 0
