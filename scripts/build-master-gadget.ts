@@ -30,11 +30,41 @@ const MANDATORY_GLOBALS = [
     // 'UnitDefs', 'UnitDefNames' -- Removed to ensure global access and avoid shadowing issues
 ];
 
-// Helper to mask strings to protect them during regex operations
+/**
+ * Minifies Lua code by removing comments and whitespace, while preserving strings.
+ * Uses a single-pass regex to handle block comments, line comments, and strings robustly.
+ */
+function MinifyLua(content: string): string {
+    const store: string[] = [];
+    // Regex breakdown:
+    // 1. Block Comments: --\[(=*)\[[\s\S]*?\]\2\]
+    // 2. Line Comments: --.*$
+    // 3. Double Quote String: "(\.|[^"\\])*"
+    // 4. Single Quote String: '(\.|[^'\\])*'
+    // 5. Long Bracket String: \[(=*)\[[\s\S]*?\]\9\]
+    const regex = /(--\[(=*)\[[\s\S]*?\]\2\])|(--.*$)|("(\\.|[^"\\])*")|('(\\.|[^'\\])*')|(\[(=*)\[[\s\S]*?\]\9\])/gm;
+
+    let masked = content.replace(regex, (match, blockComment, blockEq, lineComment, doubleQuoteStr, doubleQuoteBody, singleQuoteStr, singleQuoteBody, longBracketStr, longBracketEq) => {
+        if (blockComment || lineComment) {
+            return " "; // Replace comment with space
+        }
+        // It's a string, store it
+        store.push(match);
+        return `__STR_${store.length - 1}__`;
+    });
+
+    // Normalize whitespace: collapse multiple spaces/tabs/newlines into single space
+    masked = masked.replace(/\s+/g, ' ').trim();
+
+    // Restore strings
+    return masked.replace(/__STR_(\d+)__/g, (_, index) => store[parseInt(index)]);
+}
+
+// Helper to mask strings (kept for legacy or specific partial uses if needed, though MinifyLua is superior)
 function maskStrings(content: string): { masked: string, store: string[] } {
     const store: string[] = [];
-    // Match double quotes, single quotes, and long strings [[ ... ]] or [=[ ... ]=]
-    const masked = content.replace(/("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|\[(=*)\[[\s\S]*?\]\4\])/g, (match) => {
+    const regex = /("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|\[(=*)\[[\s\S]*?\]\4\])/g;
+    const masked = content.replace(regex, (match) => {
         store.push(match);
         return `__STR_${store.length - 1}__`;
     });
@@ -46,7 +76,8 @@ function restoreStrings(content: string, store: string[]): string {
 }
 
 function stripDebugPrints(content: string): string {
-    // Mask strings first so we don't mess up parens inside strings
+    // We use the robust MinifyLua logic to protect strings, but we only want to strip debug prints here.
+    // So we use maskStrings first.
     const { masked, store } = maskStrings(content);
 
     let cleaned = masked;
@@ -56,28 +87,6 @@ function stripDebugPrints(content: string): string {
     const debugRegex = /\b(Spring\.Echo|print)\s*\((?:[^()]*|\([^()]*\))*\)/g;
 
     cleaned = cleaned.replace(debugRegex, '');
-
-    return restoreStrings(cleaned, store);
-}
-
-function MinifyLua(content: string): string {
-    const { masked, store } = maskStrings(content);
-
-    let cleaned = masked;
-
-    // 1. Remove block comments --[[ ... ]]
-    // Note: Lua block comments can have equals signs: --[==[ ... ]==]
-    cleaned = cleaned.replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, ' ');
-
-    // 2. Remove single line comments
-    cleaned = cleaned.replace(/--.*$/gm, ' ');
-
-    // 3. Normalize whitespace
-    // Replace tabs/newlines with space, then collapse multiple spaces
-    cleaned = cleaned.replace(/\s+/g, ' ');
-
-    // 4. Trim
-    cleaned = cleaned.trim();
 
     return restoreStrings(cleaned, store);
 }
@@ -141,8 +150,9 @@ function processImportedTweaks(): string {
 
     content = stripDebugPrints(content);
 
-    // Minify
-    // return MinifyLua(content);
+    // Note: We don't remove table_merge definitions via regex because it is risky with nested ends.
+    // Minification will handle the size. CommonLua provides the locals in scope.
+
     return content;
 }
 
@@ -166,12 +176,6 @@ function processGadget(filename: string): ProcessedGadget {
     // Remove GetInfo
     let content = raw.replace(/function\s+gadget:GetInfo\(\)([\s\S]*?)end/g, '');
 
-    // Remove SyncedCode check (we wrap strictly in MasterGadget)
-    // content = content.replace(/if\s*\(?\s*not\s+gadgetHandler:IsSyncedCode\(\)\s*\)?\s*then[\s\S]*?end/g, '');
-
-    // Minify partial
-    // content = MinifyLua(content);
-
     // Identify events
     const events: string[] = [];
     const eventRegex = /function\s+gadget:([a-zA-Z0-9_]+)\s*\(/g;
@@ -183,14 +187,14 @@ function processGadget(filename: string): ProcessedGadget {
     }
 
     // Rename events
+    // We expect 'prefix_EventName' to be declared as local in the main scope
     content = content.replace(/function\s+gadget:([a-zA-Z0-9_]+)\s*\(/g, (m, eventName) => {
         return `${prefix}${eventName} = function(`;
     });
 
-    const initFuncName = `Initialize_${prefix.slice(0, -1)}`;
-
-    // Wrap
-    content = ` local function ${initFuncName}() ${content} end ${initFuncName}() `;
+    // Wrap in do ... end for scope isolation (Single-Pass Merging)
+    // No "Initialize" function wrapper to reduce call overhead.
+    content = ` do ${content} end `;
 
     return {
         name: filename,
@@ -259,7 +263,6 @@ async function main() {
 
     const commonLua = generateCommonLua();
     const importedTweaksLua = processImportedTweaks();
-    // Static Tweaks removed/merged
 
     const gadgets = GADGET_FILES.map(processGadget);
 
@@ -267,10 +270,17 @@ async function main() {
     const allGlobals = new Set<string>(MANDATORY_GLOBALS);
 
     // Scan all content
-    // Note: We don't scan commonLua because it defines its own locals and polyfills
     const allContentToScan = [importedTweaksLua, ...gadgets.map(g => g.content)];
+
+    // Global Localization Audit
     allContentToScan.forEach(c => {
-        scanContent(c).forEach(g => allGlobals.add(g));
+        const found = scanContent(c);
+        found.forEach(g => {
+            if (!MANDATORY_GLOBALS.includes(g)) {
+                console.warn(`[WARNING] Found global '${g}' which is not in MANDATORY_GLOBALS.`);
+            }
+            allGlobals.add(g);
+        });
     });
 
     // Generate Localized Globals Block
@@ -283,8 +293,6 @@ async function main() {
         if (g === 'table.merge' || g === 'table.mergeInPlace' || g === 'table.copy') return;
 
         const localName = generateLocalName(g);
-        // Only generate if different (e.g. pairs -> pairs doesn't need alias unless we want local pairs = pairs)
-        // Creating local alias for built-ins is good for upvalue perf.
         localizedGlobalsBlock += `local ${localName} = ${g}; `;
         localizedMap.push(g);
     });
@@ -331,8 +339,7 @@ async function main() {
     });
 
     // Final minification pass to ensure everything is compact (Using Safe Minify)
-    // We mask strings again because assembly introduced newlines/spaces between blocks
-    // finalFile = MinifyLua(finalFile);
+    finalFile = MinifyLua(finalFile);
 
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
