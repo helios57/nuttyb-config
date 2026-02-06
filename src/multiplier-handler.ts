@@ -161,6 +161,7 @@ export function generateLuaTweakRaw(type: string, multiplierValue: any) {
 }
 
 import { encodeBase64Url } from './utils';
+import { minify } from './lua-minifier';
 
 /**
  * Generate Lua tweak code for HP multipliers (base64-encoded for legacy use)
@@ -173,12 +174,7 @@ export function generateLuaTweak(type: string, multiplierValue: any) {
 
     try {
         const firstLineComment = originalCode.split('\n')[0];
-        const hasLuaMinifier = typeof (window as any).LuaMinifier !== 'undefined' && typeof (window as any).LuaMinifier.minify === 'function';
-        if (!hasLuaMinifier) {
-            throw new Error('LuaMinifier not loaded');
-        }
-
-        const minifiedCode = (window as any).LuaMinifier.minify(originalCode);
+        const minifiedCode = minify(originalCode);
         const finalCodeToEncode = firstLineComment + '\n' + minifiedCode;
         return encodeBase64Url(finalCodeToEncode);
     } catch (e: any) {
