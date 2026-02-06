@@ -135,8 +135,8 @@ if not table.merge then table.merge = table_merge end
 if not table.mergeInPlace then table.mergeInPlace = table_mergeInPlace end
 if not table.copy then table.copy = table_copy end
 `;
-    // We don't strip debug prints from common lua (there shouldn't be any), but we minify
-    return MinifyLua(code);
+    // Return unminified common lua for readability in main file
+    return code;
 }
 
 function processImportedTweaks(): string {
@@ -194,7 +194,8 @@ function processGadget(filename: string): ProcessedGadget {
 
     // Wrap in do ... end for scope isolation (Single-Pass Merging)
     // No "Initialize" function wrapper to reduce call overhead.
-    content = ` do ${content} end `;
+    // We add newlines for readability in non-minified output
+    content = `\ndo\n${content}\nend\n`;
 
     return {
         name: filename,
@@ -293,21 +294,36 @@ async function main() {
         if (g === 'table.merge' || g === 'table.mergeInPlace' || g === 'table.copy') return;
 
         const localName = generateLocalName(g);
-        localizedGlobalsBlock += `local ${localName} = ${g}; `;
+        localizedGlobalsBlock += `local ${localName} = ${g};\n`;
         localizedMap.push(g);
     });
     localizedGlobalsBlock += '\n';
 
     // Localize Content
     // Wrap in do ... end to ensure scope isolation and block closure
-    const localizedImportedTweaks = " do " + localizeContent(importedTweaksLua, localizedMap) + " end ";
+    const localizedImportedTweaks = "\ndo\n" + localizeContent(importedTweaksLua, localizedMap) + "\nend\n";
 
     gadgets.forEach(g => {
         g.content = localizeContent(g.content, localizedMap);
     });
 
     // Header
-    let finalFile = `function gadget:GetInfo() return { name="NuttyB Master Gadget", desc="Combined logic and tweaks for NuttyB Mod", author="NuttyB Team (Generated)", date="${new Date().getFullYear()}", license="GPL", layer=0, enabled=true } end if (not gadgetHandler:IsSyncedCode()) then return end `;
+    let finalFile = `function gadget:GetInfo()
+  return {
+    name="NuttyB Master Gadget",
+    desc="Combined logic and tweaks for NuttyB Mod",
+    author="NuttyB Team (Generated)",
+    date="${new Date().getFullYear()}",
+    license="GPL",
+    layer=0,
+    enabled=true
+  }
+end
+
+if (not gadgetHandler:IsSyncedCode()) then
+  return
+end
+`;
 
     finalFile += localizedGlobalsBlock;
 
@@ -316,15 +332,15 @@ async function main() {
     gadgets.forEach(g => {
         g.events.forEach(e => allEvents.add(e));
         g.events.forEach(e => {
-             finalFile += `local ${g.prefix}${e}; `;
+             finalFile += `local ${g.prefix}${e};\n`;
         });
     });
 
-    finalFile += commonLua + " ";
-    finalFile += localizedImportedTweaks + " ";
+    finalFile += commonLua + "\n";
+    finalFile += localizedImportedTweaks + "\n";
 
     gadgets.forEach(g => {
-        finalFile += g.content + " ";
+        finalFile += g.content + "\n";
     });
 
     // Events Dispatch
@@ -332,17 +348,21 @@ async function main() {
         finalFile += `function gadget:${evt}(...)\n`;
         gadgets.forEach(g => {
             if (g.events.includes(evt)) {
-                 finalFile += `if ${g.prefix}${evt} then ${g.prefix}${evt}(...) end\n`;
+                 finalFile += `  if ${g.prefix}${evt} then ${g.prefix}${evt}(...) end\n`;
             }
         });
         finalFile += `end\n`;
     });
 
-    // Final minification pass to ensure everything is compact (Using Safe Minify)
-    finalFile = MinifyLua(finalFile);
-
+    // Write unminified file
     fs.writeFileSync(OUTPUT_FILE, finalFile);
     console.log(`Generated ${OUTPUT_FILE} (${finalFile.length} chars)`);
+
+    // Create minified copy
+    const minifiedFile = MinifyLua(finalFile);
+    const minifiedPath = OUTPUT_FILE.replace('.lua', '.min.lua');
+    fs.writeFileSync(minifiedPath, minifiedFile);
+    console.log(`Generated ${minifiedPath} (${minifiedFile.length} chars)`);
 }
 
 main().catch(err => {
