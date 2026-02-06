@@ -6,7 +6,8 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "serve": "webpack serve --mode development",
-    "test:unit": "echo 'No unit tests yet'"
+    "test:unit": "echo 'No unit tests yet'",
+    "test:e2e": "playwright test"
   },
   "author": "",
   "license": "ISC",
