@@ -1,95 +1,17 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/BarTweakSchema.json",
-  "title": "Bar Tweak Schema",
-  "description": "A comprehensive schema for unit tweaks, enforcing a 'No-Code' policy.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BarTweak",
   "type": "object",
   "properties": {
-    "label": { "type": "string" },
-    "variable": { "type": "string" },
-    "generator": { "type": "string" },
-    "definitions": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/TweakDefinition" }
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
     }
   },
-  "required": ["label", "variable", "generator", "definitions"],
-  "unevaluatedProperties": false,
-  "$defs": {
-    "TweakScope": {
-      "type": "string",
-      "enum": ["UnitDefsLoop", "UnitDef_Post", "Global"]
-    },
-    "TweakCondition": {
-      "type": "object",
-      "discriminator": { "propertyName": "type" },
-      "oneOf": [
-        { "properties": { "type": { "const": "nameMatch" }, "regex": { "type": "string" } }, "required": ["type", "regex"] },
-        { "properties": { "type": { "const": "nameNotMatch" }, "regex": { "type": "string" } }, "required": ["type", "regex"] },
-        { "properties": { "type": { "const": "nameStartsWith" }, "prefix": { "type": "string" } }, "required": ["type", "prefix"] },
-        { "properties": { "type": { "const": "nameEndsWith" }, "suffix": { "type": "string" } }, "required": ["type", "suffix"] },
-        { "properties": { "type": { "const": "nameInList" }, "names": { "type": "array", "items": { "type": "string" } } }, "required": ["type", "names"] },
-        { "properties": { "type": { "const": "customParam" }, "key": { "type": "string" }, "value": { "type": ["string", "number", "boolean"] } }, "required": ["type", "key", "value"] },
-        { "properties": { "type": { "const": "customParamMatch" }, "key": { "type": "string" }, "regex": { "type": "string" } }, "required": ["type", "key", "regex"] },
-        { "properties": { "type": { "const": "fieldValue" }, "field": { "type": "string" }, "value": { "type": ["string", "number", "boolean"] } }, "required": ["type", "field", "value"] },
-        { "properties": { "type": { "const": "category" }, "value": { "type": "string" } }, "required": ["type", "value"] }
-      ],
-      "unevaluatedProperties": false
-    },
-    "MutationOperation": {
-      "type": "object",
-      "discriminator": { "propertyName": "op" },
-      "properties": {
-        "weapon_target": {
-          "description": "Target weapon(s) for this operation. Can be 'all', 'primary', 'secondary', a specific weapon name, or an index.",
-          "oneOf": [{ "type": "string" }, { "type": "integer" }]
-        }
-      },
-      "oneOf": [
-        {
-          "properties": { "op": { "const": "set" }, "target": { "type": "string" }, "value": {} },
-          "required": ["op", "target", "value"],
-          "if": { "properties": { "target": { "const": "customparams" } } },
-          "then": { "properties": { "value": { "type": "object" } } }
-        },
-        { "properties": { "op": { "const": "multiply" }, "target": { "type": "string" }, "value": { "type": "number" } }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "add" }, "target": { "type": "string" }, "value": { "type": "number" } }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "subtract" }, "target": { "type": "string" }, "value": { "type": "number" } }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "divide" }, "target": { "type": "string" }, "value": { "type": "number", "exclusiveMinimum": 0 } }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "append" }, "target": { "type": "string" }, "suffix": { "type": "string" } }, "required": ["op", "target", "suffix"] },
-        { "properties": { "op": { "const": "prepend" }, "target": { "type": "string" }, "prefix": { "type": "string" } }, "required": ["op", "target", "prefix"] },
-        { "properties": { "op": { "const": "list_append" }, "target": { "type": "string" }, "value": {} }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "list_remove" }, "target": { "type": "string" }, "value": {} }, "required": ["op", "target", "value"] },
-        { "properties": { "op": { "const": "table_merge" }, "target": { "type": "string" }, "value": { "type": "object" } }, "required": ["op", "target", "value"] },
-        {
-          "properties": {
-            "op": { "const": "clone_unit" },
-            "source": { "type": "string" },
-            "target": { "type": "string" },
-            "mutations": { "type": "array", "items": { "$ref": "#/$defs/MutationOperation" } }
-          },
-          "required": ["op", "source", "target"]
-        }
-      ],
-      "unevaluatedProperties": false
-    },
-    "TweakDefinition": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "scope": { "$ref": "#/$defs/TweakScope" },
-        "conditions": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/TweakCondition" }
-        },
-        "mutations": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/MutationOperation" }
-        }
-      },
-      "required": ["name", "scope", "conditions", "mutations"],
-      "unevaluatedProperties": false
-    }
-  }
+  "required": ["id", "name"]
 }

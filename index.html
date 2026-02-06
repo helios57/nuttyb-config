@@ -4,183 +4,186 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NuttyB Configurator</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23000'/><text x='8' y='12' font-size='10' text-anchor='middle' fill='%23fff'>B</text></svg>">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Space+Mono:wght@700&display=swap">
+
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js" defer></script>
+
+    <script>
+        window.BUILD_VERSION = "v2.33";
+        if (window.BUILD_VERSION === "v2.33") {
+            window.BUILD_VERSION = "dev";
+        }
+        window.ASSET_CACHE_BUSTER = window.BUILD_VERSION === "dev"
+            ? Date.now().toString()
+            : window.BUILD_VERSION;
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css?v=v2.33">
+
+    <!-- Partial Loader -->
+    <script>
+        const ASSET_CACHE_BUSTER = window.ASSET_CACHE_BUSTER || Date.now().toString();
+        const UPDATE_CHECK_THRESHOLD_MS = 60 * 60 * 1000;
+
+        function withAssetVersion(url) {
+            const resolvedUrl = new URL(url, window.location.href);
+            resolvedUrl.searchParams.set('v', ASSET_CACHE_BUSTER);
+            return resolvedUrl.toString();
+        }
+
+        function withLiveCheck(url) {
+            const resolvedUrl = new URL(url, window.location.href);
+            resolvedUrl.searchParams.set('ts', Date.now().toString());
+            return resolvedUrl.toString();
+        }
+
+        // Load HTML partials
+        async function loadPartial(url, targetId) {
+            try {
+                const response = await fetch(withAssetVersion(url));
+                if (!response.ok) throw new Error(`Failed to load ${url}`);
+                const html = await response.text();
+                document.getElementById(targetId).innerHTML = html;
+            } catch (error) {
+                console.error(`Error loading partial ${url}:`, error);
+                document.getElementById(targetId).innerHTML = `<p style="color: red;">Failed to load ${url}</p>`;
+            }
+        }
+
+        function showUpdateBanner(newVersion) {
+            const banner = document.getElementById('update-banner');
+            const message = document.getElementById('update-banner-message');
+            if (!banner || !message) return;
+            message.textContent = newVersion
+                ? `Update available (${newVersion}). Refresh to load it.`
+                : 'Update available. Refresh to load it.';
+            banner.classList.remove('hidden');
+        }
+
+        async function checkForUpdate() {
+            const currentVersion = window.BUILD_VERSION || 'dev';
+            if (currentVersion === 'dev') return;
+
+            try {
+                const response = await fetch(withLiveCheck('version.json'), { cache: 'no-store' });
+                if (!response.ok) {
+                    return;
+                }
+                const data = await response.json();
+                if (data && data.version && data.version !== currentVersion) {
+                    showUpdateBanner(data.version);
+                }
+            } catch (error) {
+                console.warn('Update check failed:', error);
+            }
+        }
+
+        let lastInactiveAt = Date.now();
+        let updateCheckInFlight = false;
+
+        function markInactive() {
+            lastInactiveAt = Date.now();
+        }
+
+        function maybeCheckForUpdate() {
+            if (updateCheckInFlight) return;
+            const inactiveMs = Date.now() - lastInactiveAt;
+            if (inactiveMs < UPDATE_CHECK_THRESHOLD_MS) return;
+
+            updateCheckInFlight = true;
+            checkForUpdate().finally(() => {
+                updateCheckInFlight = false;
+            });
+        }
+
+        // Load all partials when DOM is ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            const buildInfoElement = document.getElementById('build-info');
+            if (buildInfoElement) {
+                const version = buildInfoElement.dataset.version || 'dev';
+                const dateText = buildInfoElement.dataset.date || 'Dev build';
+                const iso = buildInfoElement.dataset.iso || '';
+
+                const versionNode = buildInfoElement.querySelector('.build-version');
+                const dateNode = buildInfoElement.querySelector('.build-date');
+
+                if (versionNode) versionNode.textContent = version;
+                if (dateNode) {
+                    dateNode.textContent = dateText;
+                    if (iso) dateNode.dataset.iso = iso;
+                }
+            }
+
+            const refreshButton = document.getElementById('update-refresh-button');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('v', Date.now().toString());
+                    window.location.replace(url.toString());
+                });
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    markInactive();
+                } else {
+                    maybeCheckForUpdate();
+                }
+            });
+
+            window.addEventListener('focus', maybeCheckForUpdate);
+            window.addEventListener('blur', markInactive);
+
+            await Promise.all([
+                loadPartial('partials/config-tab.html', 'config-tab'),
+                loadPartial('partials/custom-tab.html', 'custom-tab'),
+                loadPartial('partials/links-tab.html', 'links-tab')
+            ]);
+        });
+    </script>
+
 </head>
 <body>
     <div class="container">
-        <h1>NuttyB Configurator</h1>
-        
+        <div class="header-bar">
+            <h1>Pyrem - NuttyB Configurator</h1>
+            <div id="build-info" aria-label="Build metadata" data-version="v2.33" data-date="01/15/2026, 03:01:26 AM PST" data-iso="2026-01-15T11:01:26.233Z">
+                <span class="build-label">Build</span>
+                <span class="build-version">v2.33</span>
+                <span class="build-separator">&bull;</span>
+                <span class="build-date">01/15/2026, 03:01:26 AM PST</span>
+            </div>
+        </div>
+
+        <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+            <div id="update-banner-message" class="update-banner-message">Update available. Refresh to load it.</div>
+            <button id="update-refresh-button" class="action-button" type="button">Refresh</button>
+        </div>
+
         <div class="tabs">
+
             <button class="tab-button active" data-tab="config">Configuration</button>
-            <button class="tab-button" data-tab="data">Data</button>
             <button class="tab-button" data-tab="custom">Custom</button>
-            <button class="tab-button" data-tab="links">Links</button>
-            <button class="tab-button" data-tab="comments">Comments</button>
+            <button class="tab-button" data-tab="links">Widgets/Links</button>
         </div>
 
+        <!-- Tab Content (loaded dynamically) -->
         <div id="config-tab" class="tab-content active">
-            <div class="settings-container">
-                <h2>Game Tweaks</h2>
-                <div id="options-form-columns">
-                    <div class="options-column" id="left-column">
-                        <p>Loading configuration data...</p>
-                    </div>
-                    <div class="options-column" id="right-column"></div>
-                </div>
-                <div class="action-buttons-container">
-                    <button id="reset-default-btn" class="action-button">Reset</button>
-                    <button id="reset-none-btn" class="action-button">None</button>
-                </div>
-            </div>
-
-            <div id="custom-settings-container" class="settings-container" style="display: none;">
-                <h2>Custom Tweaks</h2>
-                <div id="custom-options-form-columns">
-                    <div class="options-column" id="custom-left-column"></div>
-                    <div class="options-column" id="custom-right-column"></div>
-                </div>
-                <div id="slot-warning-messages"></div>
-            </div>
-
-            <div class="output-container">
-                <h2>Generated Commands</h2>
-                <p>Copy and paste all parts separately to the lobby</p>
-                <div id="part-1-section" class="command-output-section">
-                    <button class="copy-button" data-target="command-output-1">Copy Part 1</button>
-                    <textarea id="command-output-1" rows="5" readonly></textarea>
-                </div>
-                <div id="part-2-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-2">Copy Part 2</button>
-                    <textarea id="command-output-2" rows="5" readonly></textarea>
-                </div>
-                <div id="part-3-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-3">Copy Part 3</button>
-                    <textarea id="command-output-3" rows="5" readonly></textarea>
-                </div>
-                <div id="part-4-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-4">Copy Part 4</button>
-                    <textarea id="command-output-4" rows="5" readonly></textarea>
-                </div>
-                <div id="part-5-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-5">Copy Part 5</button>
-                    <textarea id="command-output-5" rows="5" readonly></textarea>
-                </div>
-                <div id="part-6-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-6">Copy Part 6</button>
-                    <textarea id="command-output-6" rows="5" readonly></textarea>
-                </div>
-                <div id="part-7-section" class="command-output-section" style="display: none;">
-                    <button class="copy-button" data-target="command-output-7">Copy Part 7</button>
-                    <textarea id="command-output-7" rows="5" readonly></textarea>
-                </div>
-
-                <div class="lobby-name-output">
-                    <strong>Lobby Name:</strong> <span id="lobby-name-display">Loading...</span>
-                </div>
-
-                <div id="reset-section" class="command-output-section" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 20px;">
-                    <button class="copy-button" data-target="reset-output">Copy Reset All</button>
-                    <textarea id="reset-output" rows="10" readonly>!bset tweakdefs1 ""
-!bset tweakunits1 ""
-!bset tweakdefs2 ""
-!bset tweakunits2 ""
-!bset tweakdefs3 ""
-!bset tweakunits3 ""
-!bset tweakdefs4 ""
-!bset tweakunits4 ""
-!bset tweakdefs5 ""
-!bset tweakunits5 ""
-!bset tweakdefs6 ""
-!bset tweakunits6 ""
-!bset tweakdefs7 ""
-!bset tweakunits7 ""
-!bset tweakdefs8 ""
-!bset tweakunits8 ""
-!bset tweakdefs9 ""
-!bset tweakunits9 ""</textarea>
-                </div>
-            </div>
-        </div>
-        
-        <div id="data-tab" class="tab-content">
-            <h2>Configuration Data</h2>
-            <p>This table shows a summary for each configurable option</p>
-            <table id="data-table">
-                <thead>
-                    <tr><th>Option</th><th>Status</th><th>Summary</th><th>Command Blocks</th></tr>
-                </thead>
-                <tbody>
-                     <tr><td colspan="4">Loading data...</td></tr>
-                </tbody>
-            </table>
-
-            <h2 style="margin-top: 30px;">Maps and Modes</h2>
-            <p>This table shows the available maps and modes</p>
-            <table id="maps-modes-table">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Name</th>
-                        <th>Commands</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="3">Loading data...</td></tr>
-                </tbody>
-            </table>
+            <p>Loading...</p>
         </div>
 
         <div id="custom-tab" class="tab-content">
-            <p>Save your custom tweaks for use in the configurator</p>
-            <h2>Add Custom Tweak</h2>
-            <form id="custom-tweak-form">
-                <label for="custom-option-desc">Description:</label>
-                <input type="text" id="custom-option-desc" placeholder="e.g., Super Fast Tanks" required>
-                <label for="custom-option-type">Type:</label>
-                <select id="custom-option-type">
-                    <option value="tweakdefs">tweakdefs</option>
-                    <option value="tweakunits">tweakunits</option>
-                </select>
-                <label for="custom-tweak-code">Tweak Code (Base64URL):</label>
-                <textarea id="custom-tweak-code" placeholder="Paste your base64url encoded tweak code here" required></textarea>
-                <label></label>
-                <button type="submit">Save Tweak</button>
-            </form>
-
-            <h2>Saved Tweaks</h2>
-            <table id="custom-tweaks-table">
-                <thead>
-                    <tr><th>Tweak</th><th>Type</th><th>Code</th><th>Actions</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <p>Loading...</p>
         </div>
 
         <div id="links-tab" class="tab-content">
-            <p>Loading links...</p>
+            <p>Loading...</p>
         </div>
 
-        <div id="comments-tab" class="tab-content">
-            <p>Share feedback, tips, tweaks or widgets here. Edit comments by clicking on the timestamp.</a></p>
-		<script src="https://giscus.app/client.js"
-			data-repo="rcorex/nuttyb-config"
-			data-repo-id="R_kgDOPJlKyQ"
-			data-category="Announcements"
-			data-category-id="DIC_kwDOPJlKyc4CtRUV"
-			data-mapping="pathname"
-			data-strict="0"
-			data-reactions-enabled="0"
-			data-emit-metadata="0"
-			data-input-position="bottom"
-			data-theme="dark"
-			data-lang="en"
-			data-loading="lazy"
-			crossorigin="anonymous"
-			async>
-		</script>
-        </div>
     </div>
-    <script src="dist/bundle.js"></script>
 </body>
 </html>
