@@ -19,7 +19,6 @@ local spGetUnitPosition = Spring.GetUnitPosition
 local spGetUnitDefID = Spring.GetUnitDefID
 local spGiveOrderToUnit = Spring.GiveOrderToUnit
 local spGetGameFrame = Spring.GetGameFrame
-local spGetUnitsInCylinder = Spring.GetUnitsInCylinder
 local spGetTeamUnits = Spring.GetTeamUnits
 local spGetTeamList = Spring.GetTeamList
 local spValidUnitID = Spring.ValidUnitID
@@ -38,6 +37,10 @@ local SQUAD_SIZE = 20
 
 -- State
 local raptorUnits = {} -- Map: unitID -> { bucket, isLeader, leaderID, squadID }
+
+-- Reusable Tables (Memory Hygiene)
+local cmdParams = {}
+local cmdOptions = {}
 
 -- Squad Management State
 local currentSquadID = 1
@@ -61,12 +64,18 @@ local function ProcessLeader(unitID)
 
     if bestTarget then
         -- Attack specific target
-        spGiveOrderToUnit(unitID, CMD.ATTACK, {bestTarget}, {})
+        cmdParams[1] = bestTarget
+        cmdParams[2] = nil
+        cmdParams[3] = nil
+        spGiveOrderToUnit(unitID, CMD.ATTACK, cmdParams, cmdOptions)
     else
         -- Attack move to center/base
         -- Optimization: Only issue if command queue is empty?
         -- For now, issue every few seconds (governed by Time Slicing) is fine.
-        spGiveOrderToUnit(unitID, CMD.FIGHT, {Game.mapSizeX/2, 0, Game.mapSizeZ/2}, {})
+        cmdParams[1] = Game.mapSizeX/2
+        cmdParams[2] = 0
+        cmdParams[3] = Game.mapSizeZ/2
+        spGiveOrderToUnit(unitID, CMD.FIGHT, cmdParams, cmdOptions)
     end
 end
 
@@ -82,7 +91,10 @@ local function ProcessFollower(unitID, leaderID)
             -- CMD.MOVE is cheaper than CMD.FIGHT/ATTACK usually, but doesn't engage.
             -- CMD.FIGHT allows engaging enemies on the way.
             -- Plan said "CMD.FIGHT or CMD.MOVE". MOVE is strictly cheaper pathing-wise (no enemy scan).
-            spGiveOrderToUnit(unitID, CMD.MOVE, {lx + ox, 0, lz + oz}, {})
+            cmdParams[1] = lx + ox
+            cmdParams[2] = 0
+            cmdParams[3] = lz + oz
+            spGiveOrderToUnit(unitID, CMD.MOVE, cmdParams, cmdOptions)
             return
         end
     end
