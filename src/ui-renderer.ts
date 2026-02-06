@@ -95,25 +95,26 @@ export function renderOptions(formOptionsConfig: any[], gameConfigs: any, update
             }
             if (!inputElement.disabled) inputElement.addEventListener('change', updateOutput);
         } else if (optionGroup.type === 'select') {
-            inputElement = document.createElement('select');
-            inputElement.dataset.optionType = optionGroup.label;
+            const selectElement = document.createElement('select');
+            inputElement = selectElement;
+            selectElement.dataset.optionType = optionGroup.label;
 
             if (optionGroup.id) {
-                inputElement.id = optionGroup.id;
+                selectElement.id = optionGroup.id;
             }
             if (optionGroup.id === 'difficulty-select') {
                 label.classList.add('difficulty-group');
             }
 
             if (optionGroup.isHpGenerator) {
-                if (!inputElement.id) {
-                    inputElement.id = optionGroup.hpType === 'qhp' ? 'queen-hp-select' : 'raptor-hp-select';
+                if (!selectElement.id) {
+                    selectElement.id = optionGroup.hpType === 'qhp' ? 'queen-hp-select' : 'raptor-hp-select';
                 }
-                inputElement.dataset.isHpGenerator = 'true';
-                inputElement.dataset.hpType = optionGroup.hpType;
-                inputElement.dataset.slot = optionGroup.slot;
-                inputElement.dataset.slotType = optionGroup.slotType;
-                inputElement.disabled = true;
+                selectElement.dataset.isHpGenerator = 'true';
+                selectElement.dataset.hpType = optionGroup.hpType;
+                selectElement.dataset.slot = optionGroup.slot;
+                selectElement.dataset.slotType = optionGroup.slotType;
+                selectElement.disabled = true;
             }
 
             optionGroup.choices.forEach((choice: any) => {
@@ -124,12 +125,12 @@ export function renderOptions(formOptionsConfig: any[], gameConfigs: any, update
                     optionElement.selected = true;
                 }
                 optionElement.dataset.shortLabel = choice.shortLabel || "";
-                inputElement.appendChild(optionElement);
+                selectElement.appendChild(optionElement);
             });
-            inputElement.dataset.defaultValue = optionGroup.defaultValue || "";
+            selectElement.dataset.defaultValue = optionGroup.defaultValue || "";
             label.textContent = optionGroup.label + ': ';
-            label.appendChild(inputElement);
-            inputElement.addEventListener('change', updateOutput);
+            label.appendChild(selectElement);
+            selectElement.addEventListener('change', updateOutput);
         } else if (optionGroup.type === 'dynamic') {
             // Store config globally for reset functionality
             if (!(window as any).dynamicTweaksConfig) {

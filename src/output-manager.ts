@@ -81,6 +81,8 @@ export async function updateOutput(event?: Event) {
         return;
     }
 
+    if (!generatedData) return;
+
     // Update lobby name display
     if (lobbyNameDisplay) {
         lobbyNameDisplay.textContent = generatedData.lobbyName;
