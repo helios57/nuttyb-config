@@ -143,6 +143,7 @@
                 loadPartial('partials/custom-tab.html', 'custom-tab'),
                 loadPartial('partials/links-tab.html', 'links-tab')
             ]);
+            document.dispatchEvent(new Event('PartialsLoaded'));
         });
     </script>
 

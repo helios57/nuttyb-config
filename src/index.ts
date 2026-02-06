@@ -22,6 +22,10 @@ let tweakFileCache: any = null;
 const renderMultipliers = () => { console.log('renderMultipliers called'); };
 const renderAllCustomComponents = () => { console.log('renderAllCustomComponents called'); };
 
+// Default implementation to prevent crashes if modules are missing
+(window as any).getMultiplierValues = () => ({});
+(window as any).multipliersConfig = [];
+
 async function initializeApp() {
     try {
         // Load configurations
@@ -58,4 +62,10 @@ async function initializeApp() {
 }
 
 // Start the app
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('left-column')) {
+        initializeApp();
+    } else {
+        document.addEventListener('PartialsLoaded', initializeApp);
+    }
+});

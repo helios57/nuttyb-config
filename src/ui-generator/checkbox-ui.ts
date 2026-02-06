@@ -305,6 +305,10 @@ export async function generateDynamicCheckboxUI(tweakFileCache: any, updateOutpu
                     parentCheckbox.dataset.marker = section.name;
                     parentCheckbox.dataset.type = section.type;
                     parentCheckbox.id = `section-${section.name}`;
+                    // Fix: Update label association when ID changes
+                    if (fileLabel) {
+                        fileLabel.htmlFor = parentCheckbox.id;
+                    }
                     if (typeof parentCheckbox.dataset.defaultChecked === 'undefined') {
                         const defaultFlag = isMainGroup ? true : (forceDefaultAll ? true : (matchedOption && typeof matchedOption.default !== 'undefined' ? matchedOption.default : false));
                         parentCheckbox.dataset.defaultChecked = defaultFlag ? 'true' : 'false';
