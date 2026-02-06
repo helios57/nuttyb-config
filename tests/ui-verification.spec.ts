@@ -25,6 +25,7 @@ test.describe('NuttyB Configurator UI Verification', () => {
         if (!(await checkbox.isChecked())) {
             await checkbox.check();
         }
+        await expect(checkbox).toBeChecked();
 
         // Wait for update
         await page.waitForTimeout(2000);
@@ -90,7 +91,8 @@ test.describe('NuttyB Configurator UI Verification', () => {
     test('should verify copy buttons exist and have content', async ({ page }) => {
         await page.waitForTimeout(3000);
         const slotUsage = page.locator('#slot-usage-display');
-        await expect(slotUsage).toBeVisible();
+        // Wait for card to appear
+        await expect(page.locator('.slot-usage-card')).toBeVisible({ timeout: 10000 });
         await expect(slotUsage).toContainText(/Total Slot Usage/);
     });
 });
